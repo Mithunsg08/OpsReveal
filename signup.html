@@ -75,32 +75,30 @@
       </button>
     </form>
 
-    <!-- Privacy Disclaimer Banner -->
     <div class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-3 text-[11px] text-slate-400 leading-relaxed">
-      🔒 <strong>We value your privacy:</strong> We only require your work email to connect and secure your account. Optional fields are purely at your discretion—we will never force you to provide them.
+      🔒 <strong>We value your privacy:</strong> We only require your work email to connect and secure your account. Optional fields are purely at your discretion.
     </div>
 
     <p class="text-center text-xs text-slate-400">
-      Already have an account? <a href="/login.html" class="text-cyan-400 hover:underline font-semibold">Sign In</a>
+      Already have an account? <a href="/login" class="text-cyan-400 hover:underline font-semibold">Sign In</a>
     </p>
   </div>
 
-  <!-- Email Verification Popup Modal -->
   <div id="verifyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm space-y-4 text-center shadow-2xl">
       <div class="h-12 w-12 bg-cyan-500/10 text-cyan-400 rounded-full flex items-center justify-center mx-auto text-xl font-bold">✉️</div>
       <h3 class="text-lg font-bold text-white">Verify Your Email</h3>
       <p class="text-xs text-slate-400 leading-relaxed">
-        We sent a verification link to <span id="modalEmail" class="text-cyan-400 font-medium"></span>. Please check your inbox and click the link to activate your account.
+        We sent a verification link to <span id="modalEmail" class="text-cyan-400 font-medium"></span>. Please verify your email to log in.
       </p>
       <button onclick="goToLogin()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 rounded-xl transition">
-        Got It, Proceed to Login
+        Proceed to Login
       </button>
     </div>
   </div>
 
   <script type="module">
-    import { auth } from '/app/auth-guard.js';
+    import { auth, ensureUserProfile } from '/app/auth-guard.js';
     import { 
       createUserWithEmailAndPassword, 
       sendEmailVerification, 
@@ -109,36 +107,37 @@
       signInWithPopup 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // Google Sign Up
     window.handleGoogleSignup = async () => {
       const provider = new GoogleAuthProvider();
       try {
-        await signInWithPopup(auth, provider);
-        window.location.href = '/app/index.html';
+        const res = await signInWithPopup(auth, provider);
+        await ensureUserProfile(res.user);
+        window.location.href = '/app/dashboard';
       } catch (err) {
         showError(err.message);
       }
     };
 
-    // Email + Password Sign Up
     window.handleEmailSignup = async (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      const fullName = document.getElementById('fullName').value;
+
+      const meta = {
+        fullName: document.getElementById('fullName').value,
+        company: document.getElementById('company').value,
+        country: document.getElementById('country').value,
+        position: document.getElementById('position').value
+      };
 
       try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        
-        // Update display name if provided
-        if (fullName) {
-          await updateProfile(userCredential.user, { displayName: fullName });
+        if (meta.fullName) {
+          await updateProfile(userCredential.user, { displayName: meta.fullName });
         }
-
-        // Trigger Firebase Verification Email
+        await ensureUserProfile(userCredential.user, meta);
         await sendEmailVerification(userCredential.user);
 
-        // Display verification popup modal
         document.getElementById('modalEmail').innerText = email;
         document.getElementById('verifyModal').classList.remove('hidden');
       } catch (err) {
@@ -146,9 +145,7 @@
       }
     };
 
-    window.goToLogin = () => {
-      window.location.href = '/login.html';
-    };
+    window.goToLogin = () => { window.location.href = '/login'; };
 
     function showError(msg) {
       const errBox = document.getElementById('signupError');

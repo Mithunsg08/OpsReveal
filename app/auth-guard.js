@@ -4,9 +4,14 @@ import {
   onAuthStateChanged, 
   signOut 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { 
+  getFirestore, 
+  doc, 
+  setDoc, 
+  getDoc 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // PUBLIC FIREBASE CONFIG
-// Public API keys are safe in client code when locked down with Firebase Authorized Domains.
 const firebaseConfig = {
   apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
   authDomain: "opsreveal.firebaseapp.com",
@@ -18,28 +23,50 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
+export const db = getFirestore(app);
+
+// Helper to ensure User Profile Document Exists in Firestore
+export async function ensureUserProfile(user, additionalData = {}) {
+  if (!user) return;
+  const userRef = doc(db, "users", user.uid);
+  const snap = await getDoc(userRef);
+
+  if (!snap.exists()) {
+    await setDoc(userRef, {
+      uid: user.uid,
+      email: user.email,
+      fullName: additionalData.fullName || user.displayName || "",
+      company: additionalData.company || "",
+      country: additionalData.country || "",
+      position: additionalData.position || "",
+      createdAt: new Date().toISOString()
+    });
+  }
+}
 
 // Global Logout Utility
 window.logoutUser = async () => {
   await signOut(auth);
-  window.location.href = '/login.html';
+  window.location.href = '/login';
 };
 
-// Route Guard execution
-onAuthStateChanged(auth, (user) => {
-  const currentPath = window.location.pathname;
-  const isAuthPage = currentPath.includes('login.html') || currentPath.includes('signup.html');
+// Route Protection Logic for Clean URLs
+onAuthStateChanged(auth, async (user) => {
+  const path = window.location.pathname.replace(/\/$/, ""); // Strip trailing slashes
+  const isAuthPage = path.endsWith('/login') || path.endsWith('/signup') || path === '';
 
   if (!user && !isAuthPage) {
-    // 1. Unauthenticated users get booted to login
-    window.location.href = '/login.html';
+    // Lock down all app routes if unauthenticated
+    window.location.href = '/login';
   } else if (user && !user.emailVerified && !isAuthPage) {
-    // 2. Unverified email users get booted to login with notice
-    alert("Please verify your email address via the link sent to your inbox before continuing.");
-    signOut(auth);
-    window.location.href = '/login.html';
-  } else if (user && user.emailVerified && isAuthPage) {
-    // 3. Authenticated & verified users trying to see login/signup get sent directly to app
-    window.location.href = '/app/index.html';
+    alert("Please verify your email address before continuing.");
+    await signOut(auth);
+    window.location.href = '/login';
+  } else if (user && user.emailVerified) {
+    await ensureUserProfile(user);
+    if (isAuthPage) {
+      // Redirect to dashboard after login/signup
+      window.location.href = '/app/dashboard';
+    }
   }
 });
