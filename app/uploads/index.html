@@ -2,21 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>OpsReveal | Upload Reports</title>
+  <title>OpsReveal | Upload & Audit Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>body { font-family: 'Inter', sans-serif; }</style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+  </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex antialiased">
 
-  <!-- Sidebar -->
+  <!-- Sidebar Nav -->
   <aside class="w-64 border-r border-slate-800 bg-slate-950 p-6 flex flex-col justify-between shrink-0">
     <div class="space-y-8">
       <div class="flex items-center space-x-3">
         <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-black text-slate-950">O</div>
-        <div><h1 class="font-bold text-white text-base">OpsReveal</h1><span class="text-[10px] text-slate-500">Prevent Capital Loss</span></div>
+        <div>
+          <h1 class="font-bold text-white text-base">OpsReveal</h1>
+          <span class="text-[10px] text-slate-500">Prevent Capital Loss</span>
+        </div>
       </div>
       <nav class="space-y-1.5 text-sm font-medium">
         <a href="/app/dashboard" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Dashboard</a>
@@ -27,118 +32,497 @@
     </div>
   </aside>
 
-  <!-- Main Content -->
-  <main class="flex-1 p-8 space-y-6 max-w-4xl mx-auto">
-    <h2 class="text-2xl font-bold text-white">Upload Reports</h2>
-
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+  <!-- Main Container -->
+  <main class="flex-1 p-8 space-y-8 max-w-6xl mx-auto overflow-y-auto">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-5">
       <div>
-        <label class="block text-xs font-semibold text-slate-300 mb-2">Type of Upload</label>
-        <select id="uploadType" onchange="updateSchema()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white">
-          <option value="receiving">Receiving / GRN report</option>
-          <option value="sales">Sales report</option>
-          <option value="writeoff">WriteOff report</option>
-        </select>
+        <h2 class="text-2xl font-bold text-white">Upload & Audit Center</h2>
+        <p class="text-xs text-slate-400">Process raw GRN and Sales logs to identify financial leakages instantly.</p>
       </div>
+    </div>
 
-      <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex justify-between items-center">
+    <!-- Upload Card -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <span class="block text-xs font-semibold text-white">Required Format Schema</span>
-          <span id="schema-text" class="font-mono text-[11px] text-cyan-400">receiving_grn_date, supplier_name, product_sku, product_name, category, receiving_cp, receiving_mrp, received_qty, manufacturing_date, expiry_date</span>
+          <label class="block text-xs font-semibold text-slate-300 mb-2">Select Upload Type</label>
+          <select id="uploadType" onchange="switchSchema()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
+            <option value="receiving">Receiving / GRN Report</option>
+            <option value="sales">Sales Report</option>
+            <option value="writeoff">Write-Off Report (Coming Soon)</option>
+          </select>
         </div>
-        <button onclick="downloadBlankTemplate()" class="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded text-white shrink-0">↓ Download Excel</button>
+        <div class="flex items-end">
+          <button onclick="downloadBlankTemplate()" class="w-full bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 py-3 rounded-xl border border-slate-700 font-semibold transition">
+            ↓ Download Blank Template Sheet
+          </button>
+        </div>
       </div>
 
-      <div onclick="document.getElementById('fileInput').click()" class="border-2 border-dashed border-slate-800 bg-slate-950/50 rounded-2xl p-10 text-center cursor-pointer">
-        <span class="text-sm font-semibold text-slate-200 block">Click or Drop Report File Here</span>
-        <input type="file" id="fileInput" accept=".csv, .xlsx" class="hidden" onchange="handleFile(event)">
+      <!-- Schema Box -->
+      <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-1">
+        <span class="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Required Column Headers Schema</span>
+        <span id="schema-text" class="font-mono text-xs text-cyan-400 break-all block"></span>
       </div>
 
-      <div id="err-box" class="hidden bg-rose-950 border border-rose-500/40 text-rose-200 p-4 rounded-xl text-xs">
-        ❌ Header format incorrect! Please download the required template format.
+      <!-- Upload Zone -->
+      <div id="drop-zone" onclick="document.getElementById('fileInput').click()" class="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 bg-slate-950/40 rounded-2xl p-8 text-center cursor-pointer transition">
+        <svg class="mx-auto h-10 w-10 text-slate-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+        <span class="text-sm font-semibold text-slate-200 block" id="file-label">Click or Drop CSV / XLSX File Here</span>
+        <span class="text-xs text-slate-500 block mt-1">Supports .csv or .xlsx exports</span>
+        <input type="file" id="fileInput" accept=".csv, .xlsx" class="hidden" onchange="handleFileSelect(event)">
       </div>
 
-      <button id="procBtn" disabled onclick="processFile()" class="w-full bg-cyan-500 opacity-50 text-slate-950 font-bold py-3.5 rounded-xl">Process Reports</button>
+      <div id="err-box" class="hidden bg-rose-950/50 border border-rose-500/50 text-rose-200 p-4 rounded-xl text-xs">
+        ❌ Invalid file header structure! Ensure column headers match the exact schema specifications above.
+      </div>
+
+      <button id="procBtn" disabled onclick="processDataset()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3.5 rounded-xl opacity-50 cursor-not-allowed transition">
+        Process & Audit Dataset
+      </button>
+    </div>
+
+    <!-- Processing Logs / Realtime History Summary -->
+    <div class="space-y-4">
+      <h3 class="text-lg font-bold text-white">Recent Upload History</h3>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+        <table class="w-full text-left text-xs">
+          <thead class="border-b border-slate-800 text-slate-400">
+            <tr>
+              <th class="pb-3">Timestamp</th>
+              <th class="pb-3">Type</th>
+              <th class="pb-3">Total Lines</th>
+              <th class="pb-3">Processed Lines</th>
+              <th class="pb-3">Total Leakage</th>
+              <th class="pb-3">Risk Score</th>
+              <th class="pb-3">Action</th>
+            </tr>
+          </thead>
+          <tbody id="upload-history-rows" class="divide-y divide-slate-800 text-slate-300">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
     </div>
   </main>
 
   <script>
     const SCHEMAS = {
       receiving: ["receiving_grn_date", "supplier_name", "product_sku", "product_name", "category", "receiving_cp", "receiving_mrp", "received_qty", "manufacturing_date", "expiry_date"],
-      sales: ["sales_date", "product_sku", "product_name", "sold_qty", "cp", "total_sales_price"],
-      writeoff: ["writeoff_date", "product_sku", "product_name", "writeoff_reason", "qty", "value"]
+      sales: ["sales_date", "product_sku", "product_name", "sold_qty", "cp", "sales_price"]
     };
 
-    let parsedRows = [];
+    let rawData = [];
+    let selectedFile = null;
 
-    function updateSchema() {
+    function switchSchema() {
       const type = document.getElementById('uploadType').value;
-      document.getElementById('schema-text').innerText = SCHEMAS[type].join(", ");
+      const procBtn = document.getElementById('procBtn');
+      if (type === 'writeoff') {
+        document.getElementById('schema-text').innerText = "Module Coming Soon.";
+        procBtn.disabled = true;
+        procBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        return;
+      }
+      document.getElementById('schema-text').innerText = SCHEMAS[type].join(" | ");
     }
+    switchSchema();
 
     function downloadBlankTemplate() {
       const type = document.getElementById('uploadType').value;
+      if (type === 'writeoff') return alert("Write-off module is under maintenance.");
       const ws = XLSX.utils.aoa_to_sheet([SCHEMAS[type]]);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Template");
       XLSX.writeFile(wb, `Template_${type}.xlsx`);
     }
 
-    function handleFile(e) {
-      const file = e.target.files[0];
-      const type = document.getElementById('uploadType').value;
-      Papa.parse(file, {
-        header: true,
-        complete: function(res) {
-          const fields = res.meta.fields || [];
-          const match = SCHEMAS[type].every(col => fields.includes(col));
-          if (!match) {
-            document.getElementById('err-box').classList.remove('hidden');
-            document.getElementById('procBtn').disabled = true;
-          } else {
-            document.getElementById('err-box').classList.add('hidden');
-            parsedRows = res.data;
-            const btn = document.getElementById('procBtn');
-            btn.disabled = false;
-            btn.classList.remove('opacity-50');
-          }
-        }
-      });
+    function handleFileSelect(evt) {
+      const file = evt.target.files[0];
+      if (!file) return;
+      selectedFile = file;
+      document.getElementById('file-label').innerText = `Selected File: ${file.name}`;
+
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext === 'csv') {
+        Papa.parse(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: function(results) { validateAndLoad(results.data); }
+        });
+      } else {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.SheetNames[0];
+          const json = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet], { defval: "" });
+          validateAndLoad(json);
+        };
+        reader.readAsArrayBuffer(file);
+      }
     }
 
-    function processFile() {
+    function validateAndLoad(data) {
       const type = document.getElementById('uploadType').value;
-      let totalLeakage = 0;
-      const annotated = parsedRows.map(row => {
-        let leakage = 0;
-        let note = "OK";
-        if (type === 'receiving') {
-          leakage = parseFloat(row.receiving_cp || 0) * parseFloat(row.received_qty || 1);
-          note = "FLAGGED: Audit Check Required";
-        } else if (type === 'sales') {
-          const cp = parseFloat(row.cp || 0) * parseFloat(row.sold_qty || 1);
-          const sp = parseFloat(row.total_sales_price || 0);
-          if (sp < cp) { leakage = cp - sp; note = "FLAGGED: Below CP"; }
-        } else {
-          leakage = parseFloat(row.value || 0);
-          note = "SUMMARIZED: Write-off";
-        }
-        totalLeakage += leakage;
-        return { ...row, Audit_Status: note, Financial_Leakage_USD: leakage.toFixed(2) };
-      });
+      const required = SCHEMAS[type];
+      const errBox = document.getElementById('err-box');
+      const procBtn = document.getElementById('procBtn');
 
-      const records = JSON.parse(localStorage.getItem('opsreveal_history') || '[]');
-      const newRec = { id: Date.now(), date: new Date().toISOString(), type, rows: parsedRows.length, leakageUSD: totalLeakage, data: annotated };
-      records.unshift(newRec);
-      localStorage.setItem('opsreveal_history', JSON.stringify(records));
+      if (!data || data.length === 0) {
+        errBox.classList.remove('hidden');
+        errBox.innerText = "❌ File is empty or could not be parsed.";
+        return;
+      }
 
-      const ws = XLSX.utils.json_to_sheet(annotated);
+      const keys = Object.keys(data[0]).map(k => k.trim());
+      const hasAll = required.every(r => keys.includes(r));
+
+      if (!hasAll) {
+        errBox.classList.remove('hidden');
+        errBox.innerText = `❌ Header mismatch! File must contain columns: ${required.join(", ")}`;
+        procBtn.disabled = true;
+        procBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      } else {
+        errBox.classList.add('hidden');
+        rawData = data;
+        procBtn.disabled = false;
+        procBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    // Helper Utility Functions
+    const parseDate = (dStr) => {
+      if (!dStr) return null;
+      const d = new Date(dStr);
+      return isNaN(d.getTime()) ? null : d;
+    };
+
+    const formatDateStr = (dStr) => {
+      const d = parseDate(dStr);
+      if (!d) return dStr || "";
+      return d.toISOString().split('T')[0];
+    };
+
+    const formatCurrency = (val) => Number(val || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
+    const formatPercent = (val) => isNaN(val) ? "0.0%" : (val * 100).toFixed(1) + "%";
+
+    function processDataset() {
+      const type = document.getElementById('uploadType').value;
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Analysis");
-      XLSX.writeFile(wb, `OpsReveal_Audited_${type}.xlsx`);
 
-      window.location.href = '/app/dashboard.html';
+      if (type === 'receiving') {
+        processReceivingReport(wb);
+      } else if (type === 'sales') {
+        processSalesReport(wb);
+      }
     }
+
+    // --- RECEIVING / GRN AUDIT ENGINE ---
+    function processReceivingReport(wb) {
+      // Step 1: Pre-calculations & Aggregate Lookup Sets
+      const cleanData = rawData.map(r => ({
+        receiving_grn_date: formatDateStr(r.receiving_grn_date),
+        supplier_name: r.supplier_name,
+        product_sku: String(r.product_sku).trim(),
+        product_name: r.product_name,
+        category: r.category,
+        receiving_cp: parseFloat(r.receiving_cp) || 0,
+        receiving_mrp: parseFloat(r.receiving_mrp) || 0,
+        received_qty: parseFloat(r.received_qty) || 0,
+        manufacturing_date: formatDateStr(r.manufacturing_date),
+        expiry_date: formatDateStr(r.expiry_date)
+      }));
+
+      // Aggregations for MINIFS equivalent logic
+      const globalMinMargin = {};
+      const globalMinCP = {};
+      const sameDayMinCP = {};
+
+      cleanData.forEach(r => {
+        const margin = r.receiving_mrp > 0 ? (r.receiving_mrp - r.receiving_cp) / r.receiving_mrp : 0;
+        
+        // Whole Data Min Margin per SKU
+        if (!(r.product_sku in globalMinMargin) || margin < globalMinMargin[r.product_sku]) {
+          globalMinMargin[r.product_sku] = margin;
+        }
+        // Whole Data Min CP per SKU
+        if (!(r.product_sku in globalMinCP) || r.receiving_cp < globalMinCP[r.product_sku]) {
+          globalMinCP[r.product_sku] = r.receiving_cp;
+        }
+        // Same Day/Month Min CP per SKU
+        const sameDayKey = `${r.receiving_grn_date}_${r.product_sku}`;
+        if (!(sameDayKey in sameDayMinCP) || r.receiving_cp < sameDayMinCP[sameDayKey]) {
+          sameDayMinCP[sameDayKey] = r.receiving_cp;
+        }
+      });
+
+      // Step 2: Build Master Table Data
+      let totalLeakageSum = 0;
+      let flaggedLinesCount = 0;
+
+      const masterRows = cleanData.map(r => {
+        const totalGrnValue = r.receiving_cp * r.received_qty;
+
+        // Shelf Life Computations
+        let shelfLifePctStr = "";
+        let shelfLifePctVal = null;
+        let shelfLifeExp = "Ok";
+
+        const recDate = parseDate(r.receiving_grn_date);
+        const expDate = parseDate(r.expiry_date);
+        const mfgDate = parseDate(r.manufacturing_date);
+
+        if (!expDate) {
+          shelfLifePctStr = "Dates Not Provided";
+          shelfLifeExp = "Dates Not Provided";
+        } else if (recDate && expDate < recDate) {
+          shelfLifePctStr = "Expired before receving";
+          shelfLifeExp = "Expired before receving";
+        } else if (!mfgDate) {
+          shelfLifePctStr = "Dates Not Provided";
+          shelfLifeExp = "Dates Not Provided";
+        } else if (expDate < mfgDate) {
+          shelfLifePctStr = "Data is wrong";
+          shelfLifeExp = "Data is wrong";
+        } else {
+          const totalDays = (expDate - mfgDate) / (1000 * 60 * 60 * 24);
+          const remainingDays = (expDate - recDate) / (1000 * 60 * 60 * 24);
+          shelfLifePctVal = totalDays > 0 ? (remainingDays / totalDays) : 0;
+          shelfLifePctStr = formatPercent(shelfLifePctVal);
+
+          if (shelfLifePctVal <= 0) shelfLifeExp = "Expired before receving";
+          else if (shelfLifePctVal < 0.6) shelfLifeExp = "Low Shelf life";
+          else shelfLifeExp = "Ok";
+        }
+
+        // Margin Exceptions
+        const marginPct = r.receiving_mrp > 0 ? (r.receiving_mrp - r.receiving_cp) / r.receiving_mrp : 0;
+        const minMargin = globalMinMargin[r.product_sku] ?? 0;
+        const diffMargin = marginPct - minMargin;
+        const marginExp = diffMargin < 0 ? "There is a Margin decrease" : "No Exception";
+        const marginLeakageVal = diffMargin < 0 ? (r.receiving_cp * Math.abs(diffMargin)) * r.received_qty : 0;
+
+        // CP Exception (Whole Data)
+        const minCpGlobal = globalMinCP[r.product_sku] ?? r.receiving_cp;
+        const cpLeakageGlobal = (r.receiving_cp - minCpGlobal) * r.received_qty;
+        const cpExpGlobal = cpLeakageGlobal > 0 ? "You Got Charged More" : "Suppliers providing same price for the Sku's";
+
+        // CP Exception (Same Day/Month)
+        const sameDayKey = `${r.receiving_grn_date}_${r.product_sku}`;
+        const minCpSameDay = sameDayMinCP[sameDayKey] ?? r.receiving_cp;
+        const cpLeakageSameDay = (r.receiving_cp - minCpSameDay) * r.received_qty;
+        const cpExpSameDay = cpLeakageSameDay > 0 ? "You Got Charged More" : "Suppliers providing same price for the Sku's";
+
+        // Aggregate Row Leakages
+        const rowLeakage = marginLeakageVal + cpLeakageGlobal + cpLeakageSameDay + (shelfLifeExp.includes("Expired") ? totalGrnValue : 0);
+        if (rowLeakage > 0) flaggedLinesCount++;
+        totalLeakageSum += rowLeakage;
+
+        return {
+          "receiving_grn_date/month": r.receiving_grn_date,
+          "supplier_name": r.supplier_name,
+          "product_sku": r.product_sku,
+          "product_name": r.product_name,
+          "category": r.category,
+          "receiving_cp": formatCurrency(r.receiving_cp),
+          "receiving_mrp": formatCurrency(r.receiving_mrp),
+          "received_qty": r.received_qty.toLocaleString("en-US"),
+          "manufacturing_date": r.manufacturing_date,
+          "expiry_date": r.expiry_date,
+          "Total GRN Value": formatCurrency(totalGrnValue),
+          "Shelf Life %": shelfLifePctStr,
+          "Shelf Life Exception": shelfLifeExp,
+          "Margin %": formatPercent(marginPct),
+          "Min margin": formatPercent(minMargin),
+          "Diff margin": formatPercent(diffMargin),
+          "Margin Exception": marginExp,
+          "Margin Leakage Value": formatCurrency(marginLeakageVal),
+          "Min CP(whole data)": formatCurrency(minCpGlobal),
+          "CP Leakage (whole data)": formatCurrency(cpLeakageGlobal),
+          "CP Exception (whole data)": cpExpGlobal,
+          "Min CP(Same day/Same month)": formatCurrency(minCpSameDay),
+          "CP Leakage (Same day/Same month)": formatCurrency(cpLeakageSameDay),
+          "CP Exception (Same day/Same month)": cpExpSameDay,
+          
+          // Raw values for secondary sheet filtering
+          _rawGrnVal: totalGrnValue,
+          _rawMarginLeakage: marginLeakageVal,
+          _rawCpLeakageGlobal: cpLeakageGlobal,
+          _rawCpLeakageSameDay: cpLeakageSameDay
+        };
+      });
+
+      // Sheet 1: Master
+      const cleanMaster = masterRows.map(({ _rawGrnVal, _rawMarginLeakage, _rawCpLeakageGlobal, _rawCpLeakageSameDay, ...rest }) => rest);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cleanMaster), "Master GRN Analysis");
+
+      // Sheet 2: Shelf Life Exception Summary
+      const sheet2Data = masterRows
+        .filter(r => ["Low Shelf life", "Expired before receving"].includes(r["Shelf Life Exception"]))
+        .map(r => ({
+          "product_sku": r.product_sku,
+          "product_name": r.product_name,
+          "receiving_grn_date": r["receiving_grn_date/month"],
+          "expiry_date": r.expiry_date,
+          "Shelf Life %": r["Shelf Life %"],
+          "Shelf Life Exception": r["Shelf Life Exception"],
+          "Leakage Value (Total GRN)": r["Total GRN Value"]
+        }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet2Data), "Shelf Life Exceptions");
+
+      // Sheet 3: Margin Exception Summary
+      const sheet3Data = masterRows
+        .filter(r => r["Margin Exception"] === "There is a Margin decrease")
+        .map(r => ({
+          "product_sku": r.product_sku,
+          "product_name": r.product_name,
+          "supplier_name": r.supplier_name,
+          "Margin %": r["Margin %"],
+          "Min margin": r["Min margin"],
+          "Margin Exception": r["Margin Exception"],
+          "Margin Leakage Value": r["Margin Leakage Value"]
+        }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet3Data), "Margin Exceptions");
+
+      // Sheet 4: CP Exception (Whole Data)
+      const sheet4Data = masterRows
+        .filter(r => r["CP Exception (whole data)"] === "You Got Charged More")
+        .map(r => ({
+          "product_sku": r.product_sku,
+          "product_name": r.product_name,
+          "supplier_name": r.supplier_name,
+          "receiving_cp": r.receiving_cp,
+          "Min CP(whole data)": r["Min CP(whole data)"],
+          "CP Exception": r["CP Exception (whole data)"],
+          "CP Leakage (whole data)": r["CP Leakage (whole data)"]
+        }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet4Data), "CP Exceptions (Global)");
+
+      // Sheet 5: CP Exception (Same Day / Month)
+      const sheet5Data = masterRows
+        .filter(r => r["CP Exception (Same day/Same month)"] === "You Got Charged More")
+        .map(r => ({
+          "product_sku": r.product_sku,
+          "product_name": r.product_name,
+          "receiving_grn_date": r["receiving_grn_date/month"],
+          "supplier_name": r.supplier_name,
+          "receiving_cp": r.receiving_cp,
+          "Min CP(Same Day)": r["Min CP(Same day/Same month)"],
+          "CP Exception": r["CP Exception (Same day/Same month)"],
+          "CP Leakage (Same Day)": r["CP Leakage (Same day/Same month)"]
+        }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet5Data), "CP Exceptions (Same Day)");
+
+      saveAndDownload(wb, "receiving", masterRows.length, totalLeakageSum, flaggedLinesCount);
+    }
+
+    // --- SALES AUDIT ENGINE ---
+    function processSalesReport(wb) {
+      let totalLeakageSum = 0;
+      let flaggedLinesCount = 0;
+
+      const masterRows = rawData.map(r => {
+        const soldQty = parseFloat(r.sold_qty) || 0;
+        const cp = parseFloat(r.cp) || 0;
+        const salesPrice = parseFloat(r.sales_price) || 0;
+
+        const salesLeakage = (salesPrice - cp) * soldQty; // (F2 - E2) * D2
+        const salesException = salesLeakage < 0 ? "Sold in Negative margin" : "No Exception";
+
+        if (salesLeakage < 0) {
+          totalLeakageSum += Math.abs(salesLeakage);
+          flaggedLinesCount++;
+        }
+
+        return {
+          "sales_date": formatDateStr(r.sales_date),
+          "product_sku": String(r.product_sku).trim(),
+          "product_name": r.product_name,
+          "sold_qty": soldQty.toLocaleString("en-US"),
+          "cp": formatCurrency(cp),
+          "sales_price": formatCurrency(salesPrice),
+          "Sales Leakages": formatCurrency(salesLeakage),
+          "Sales Exception": salesException,
+          _rawLeakage: salesLeakage
+        };
+      });
+
+      // Sheet 1: Master Sales Analysis
+      const cleanMaster = masterRows.map(({ _rawLeakage, ...rest }) => rest);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(cleanMaster), "Master Sales Audit");
+
+      // Sheet 2: Negative Margin Summary Sheet
+      const summarySheetData = masterRows
+        .filter(r => r["Sales Exception"] === "Sold in Negative margin")
+        .map(r => ({
+          "sales_date": r.sales_date,
+          "product_sku": r.product_sku,
+          "product_name": r.product_name,
+          "sold_qty": r.sold_qty,
+          "cp": r.cp,
+          "sales_price": r.sales_price,
+          "Sales Exception": r["Sales Exception"],
+          "Sales Leakages": r["Sales Leakages"]
+        }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summarySheetData), "Negative Margin Summary");
+
+      saveAndDownload(wb, "sales", masterRows.length, totalLeakageSum, flaggedLinesCount);
+    }
+
+    // Store analysis state locally & trigger export
+    function saveAndDownload(wb, type, totalLines, totalLeakage, flaggedLines) {
+      const riskScore = Math.min(100, Math.round((flaggedLines / totalLines) * 100));
+      
+      const record = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        type: type,
+        lines: totalLines,
+        processed: totalLines,
+        leakageUSD: totalLeakage,
+        riskScore: riskScore
+      };
+
+      // Save into global system memory (localStorage / Cloudflare sync state)
+      const history = JSON.parse(localStorage.getItem('opsreveal_history') || '[]');
+      history.unshift(record);
+      localStorage.setItem('opsreveal_history', JSON.stringify(history));
+
+      // Trigger excel file download
+      XLSX.writeFile(wb, `OpsReveal_Audited_${type}_${Date.now()}.xlsx`);
+
+      // Refresh Upload History View
+      renderHistoryTable();
+    }
+
+    function renderHistoryTable() {
+      const history = JSON.parse(localStorage.getItem('opsreveal_history') || '[]');
+      const tbody = document.getElementById('upload-history-rows');
+      
+      if (history.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="py-6 text-center text-slate-500">No upload history found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = history.map(h => `
+        <tr>
+          <td class="py-3 text-slate-400">${new Date(h.date).toLocaleString()}</td>
+          <td class="py-3 font-semibold text-white uppercase">${h.type}</td>
+          <td class="py-3">${h.lines}</td>
+          <td class="py-3 text-cyan-400 font-semibold">${h.processed}</td>
+          <td class="py-3 font-bold text-rose-400">${formatCurrency(h.leakageUSD)}</td>
+          <td class="py-3">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${h.riskScore > 40 ? 'bg-rose-950 text-rose-400 border border-rose-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
+              ${h.riskScore}% Risk
+            </span>
+          </td>
+          <td class="py-3"><a href="/app/dashboard.html" class="text-cyan-400 hover:underline">View in Dash →</a></td>
+        </tr>
+      `).join('');
+    }
+
+    renderHistoryTable();
   </script>
 </body>
 </html>
