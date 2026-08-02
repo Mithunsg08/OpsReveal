@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script>
+    // Automatically redirect clean URLs like /app/dashboard to /app/dashboard.html
+    var path = window.location.pathname;
+    if (!path.endsWith('.html') && !path.endsWith('/')) {
+      window.location.replace(path + '.html' + window.location.search);
+    } else {
+      window.location.replace('/login.html');
+    }
+  </script>
+</head>
+<body></body>
+</html>
