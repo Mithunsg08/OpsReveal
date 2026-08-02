@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OpsReveal | Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex antialiased">
+
+  <!-- Sidebar -->
+  <aside class="w-64 border-r border-slate-800 bg-slate-950 p-6 flex flex-col justify-between shrink-0">
+    <div class="space-y-8">
+      <div class="flex items-center space-x-3">
+        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-black text-slate-950">O</div>
+        <div>
+          <h1 class="font-bold text-white text-base">OpsReveal</h1>
+          <span class="text-[10px] text-slate-500">Prevent Capital Loss</span>
+        </div>
+      </div>
+      <nav class="space-y-1.5 text-sm font-medium">
+        <a href="/app/dashboard.html" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-slate-900 text-white">Dashboard</a>
+        <a href="/app/uploads.html" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Upload Reports</a>
+        <a href="/app/reports.html" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Reports</a>
+        <a href="/app/settings.html" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Settings</a>
+      </nav>
+    </div>
+    <div class="border-t border-slate-800 pt-4 space-y-2">
+      <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs">
+        <span class="text-[10px] text-slate-500 block">ACTIVE PLAN</span>
+        <span id="plan-label" class="font-bold text-cyan-400">Free Tier</span>
+      </div>
+      <a href="/" class="block text-xs text-rose-400 hover:underline">Sign Out</a>
+    </div>
+  </aside>
+
+  <!-- Content -->
+  <main class="flex-1 p-8 space-y-6">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-5">
+      <div>
+        <h2 class="text-2xl font-bold text-white">Dashboard Overview</h2>
+        <p class="text-xs text-slate-400">Total accumulated audit metrics.</p>
+      </div>
+      <select id="dash-filter" onchange="renderDashboard()" class="bg-slate-900 border border-slate-800 text-xs rounded-lg px-3 py-1.5 text-slate-200">
+        <option value="till_date">Till Date (All Time)</option>
+        <option value="today">Today</option>
+        <option value="yesterday">Yesterday</option>
+        <option value="this_week">This Week</option>
+        <option value="this_month">This Month</option>
+      </select>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <span class="text-xs text-slate-400">Total Reports</span>
+        <span id="m-count" class="text-3xl font-bold text-white block mt-2">0</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <span class="text-xs text-slate-400">Receiving Leakage</span>
+        <span id="m-rec" class="text-3xl font-bold text-cyan-400 block mt-2">$0.00</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <span class="text-xs text-slate-400">Sales Margin Erosion</span>
+        <span id="m-sales" class="text-3xl font-bold text-amber-400 block mt-2">$0.00</span>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
+        <span class="text-xs text-slate-400">Write-Off Inventory</span>
+        <span id="m-write" class="text-3xl font-bold text-rose-400 block mt-2">$0.00</span>
+      </div>
+    </div>
+
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+      <h3 class="text-base font-bold text-white mb-4">Audit History</h3>
+      <table class="w-full text-left text-xs">
+        <thead class="border-b border-slate-800 text-slate-400">
+          <tr>
+            <th class="pb-3">Date</th>
+            <th class="pb-3">Type</th>
+            <th class="pb-3">Rows</th>
+            <th class="pb-3">Flagged SKUs</th>
+            <th class="pb-3">Financial Value</th>
+          </tr>
+        </thead>
+        <tbody id="history-rows" class="divide-y divide-slate-800 text-slate-300"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    const history = JSON.parse(localStorage.getItem('opsreveal_history') || '[]');
+    document.getElementById('plan-label').innerText = localStorage.getItem('opsreveal_plan') || 'Free Tier';
+
+    function renderDashboard() {
+      let rec = 0, sales = 0, write = 0;
+      history.forEach(item => {
+        if (item.type === 'receiving') rec += item.leakageUSD;
+        if (item.type === 'sales') sales += item.leakageUSD;
+        if (item.type === 'writeoff') write += item.leakageUSD;
+      });
+
+      document.getElementById('m-count').innerText = history.length;
+      document.getElementById('m-rec').innerText = `$${rec.toFixed(2)}`;
+      document.getElementById('m-sales').innerText = `$${sales.toFixed(2)}`;
+      document.getElementById('m-write').innerText = `$${write.toFixed(2)}`;
+
+      const tbody = document.getElementById('history-rows');
+      if (history.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-500">No data found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = history.map(h => `
+        <tr>
+          <td class="py-3 text-slate-400">${new Date(h.date).toLocaleDateString()}</td>
+          <td class="py-3 font-semibold text-white uppercase">${h.type}</td>
+          <td class="py-3">${h.rows}</td>
+          <td class="py-3">${h.data.filter(d => d.Audit_Status !== 'OK').length}</td>
+          <td class="py-3 font-bold text-cyan-400">$${h.leakageUSD.toFixed(2)}</td>
+        </tr>
+      `).join('');
+    }
+    renderDashboard();
+  </script>
+</body>
+</html>
