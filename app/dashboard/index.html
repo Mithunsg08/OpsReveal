@@ -2,32 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>OpsReveal | Dashboard</title>
 
-  <!-- Step A: Instant Script Guard before DOM loads -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Inter', sans-serif; } </style>
+
+  <!-- Firebase Auth Guard -->
   <script type="module">
-    import { auth } from '/app/auth-guard.js';
+    import { auth, ensureUserProfile } from '/app/auth-guard.js';
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (!user || !user.emailVerified) {
-        // Stop execution and force redirect immediately
         window.location.replace('/login.html');
       } else {
-        // Only unhide the app content if verified user exists
-        document.body.style.display = 'block';
+        await ensureUserProfile(user);
+        document.body.style.display = 'flex';
+        renderDashboard();
       }
     });
   </script>
 </head>
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>body { font-family: 'Inter', sans-serif; }</style>
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex antialiased">
+<!-- Hidden by default to prevent screen flash before auth verification -->
+<body style="display: none;" class="bg-slate-950 text-slate-100 min-h-screen flex antialiased">
 
-  <!-- Sidebar -->
+  <!-- Sidebar Nav -->
   <aside class="w-64 border-r border-slate-800 bg-slate-950 p-6 flex flex-col justify-between shrink-0">
     <div class="space-y-8">
       <div class="flex items-center space-x-3">
@@ -43,101 +46,156 @@
         <a href="/app/settings" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Settings</a>
       </nav>
     </div>
-    <div class="border-t border-slate-800 pt-4 space-y-2">
+
+    <div class="border-t border-slate-800 pt-4 space-y-3">
       <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs">
-        <span class="text-[10px] text-slate-500 block">ACTIVE PLAN</span>
-        <span id="plan-label" class="font-bold text-cyan-400">Free Tier</span>
+        <span class="text-[10px] text-slate-500 block font-semibold">ACTIVE PLAN</span>
+        <span id="plan-label" class="font-bold text-cyan-400">Starter Tier</span>
       </div>
-      <a href="/" class="block text-xs text-rose-400 hover:underline">Sign Out</a>
+      <button onclick="logoutUser()" class="w-full bg-slate-900 hover:bg-slate-800 text-xs text-slate-400 py-2.5 rounded-xl border border-slate-800 font-semibold transition">
+        Sign Out
+      </button>
     </div>
   </aside>
 
-  <!-- Content -->
-  <main class="flex-1 p-8 space-y-6">
+  <!-- Main Content -->
+  <main class="flex-1 p-8 space-y-6 max-w-6xl mx-auto overflow-y-auto">
     <div class="flex items-center justify-between border-b border-slate-800 pb-5">
       <div>
         <h2 class="text-2xl font-bold text-white">Dashboard Overview</h2>
-        <p class="text-xs text-slate-400">Total accumulated audit metrics.</p>
+        <p class="text-xs text-slate-400">Total accumulated audit metrics and risk telemetry.</p>
       </div>
-      <select id="dash-filter" onchange="renderDashboard()" class="bg-slate-900 border border-slate-800 text-xs rounded-lg px-3 py-1.5 text-slate-200">
-        <option value="till_date">Till Date (All Time)</option>
-        <option value="today">Today</option>
-        <option value="yesterday">Yesterday</option>
-        <option value="this_week">This Week</option>
-        <option value="this_month">This Month</option>
-      </select>
+      <div class="flex items-center space-x-3">
+        <select id="dash-filter" onchange="renderDashboard()" class="bg-slate-900 border border-slate-800 text-xs rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500">
+          <option value="till_date">Till Date (All Time)</option>
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="this_week">This Week</option>
+          <option value="this_month">This Month</option>
+        </select>
+        <a href="/app/uploads" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">
+          + New Audit
+        </a>
+      </div>
     </div>
 
+    <!-- Summary Metric Cards -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-        <span class="text-xs text-slate-400">Total Reports</span>
+        <span class="text-xs text-slate-400 font-medium">Total Audited Reports</span>
         <span id="m-count" class="text-3xl font-bold text-white block mt-2">0</span>
       </div>
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-        <span class="text-xs text-slate-400">Receiving Leakage</span>
+        <span class="text-xs text-slate-400 font-medium">Receiving / GRN Leakage</span>
         <span id="m-rec" class="text-3xl font-bold text-cyan-400 block mt-2">$0.00</span>
       </div>
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-        <span class="text-xs text-slate-400">Sales Margin Erosion</span>
+        <span class="text-xs text-slate-400 font-medium">Sales Margin Erosion</span>
         <span id="m-sales" class="text-3xl font-bold text-amber-400 block mt-2">$0.00</span>
       </div>
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-        <span class="text-xs text-slate-400">Write-Off Inventory</span>
+        <span class="text-xs text-slate-400 font-medium">Write-Off Inventory Loss</span>
         <span id="m-write" class="text-3xl font-bold text-rose-400 block mt-2">$0.00</span>
       </div>
     </div>
 
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-      <h3 class="text-base font-bold text-white mb-4">Audit History</h3>
-      <table class="w-full text-left text-xs">
-        <thead class="border-b border-slate-800 text-slate-400">
-          <tr>
-            <th class="pb-3">Date</th>
-            <th class="pb-3">Type</th>
-            <th class="pb-3">Rows</th>
-            <th class="pb-3">Flagged SKUs</th>
-            <th class="pb-3">Financial Value</th>
-          </tr>
-        </thead>
-        <tbody id="history-rows" class="divide-y divide-slate-800 text-slate-300"></tbody>
-      </table>
+    <!-- Detailed Audit History Table -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">Recent Audit History</h3>
+        <span class="text-xs text-slate-500" id="filtered-count-label">Showing 0 runs</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="border-b border-slate-800 text-slate-400">
+            <tr>
+              <th class="pb-3">Timestamp</th>
+              <th class="pb-3">Report Type</th>
+              <th class="pb-3">Lines Analyzed</th>
+              <th class="pb-3">Flagged Exceptions</th>
+              <th class="pb-3">Risk Assessment</th>
+              <th class="pb-3">Financial Leakage</th>
+            </tr>
+          </thead>
+          <tbody id="history-rows" class="divide-y divide-slate-800 text-slate-300">
+            <!-- Dynamically Rendered -->
+          </tbody>
+        </table>
+      </div>
     </div>
   </main>
 
   <script>
-    const history = JSON.parse(localStorage.getItem('opsreveal_history') || '[]');
-    document.getElementById('plan-label').innerText = localStorage.getItem('opsreveal_plan') || 'Free Tier';
+    const formatUSD = (val) => Number(val || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
+
+    function isDateInFilter(dateStr, filter) {
+      const date = new Date(dateStr);
+      const now = new Date();
+      if (isNaN(date.getTime())) return true;
+
+      if (filter === 'today') {
+        return date.toDateString() === now.toDateString();
+      } else if (filter === 'yesterday') {
+        const yest = new Date(now);
+        yest.setDate(now.getDate() - 1);
+        return date.toDateString() === yest.toDateString();
+      } else if (filter === 'this_week') {
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        return date >= startOfWeek;
+      } else if (filter === 'this_month') {
+        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+      }
+      return true; // "till_date"
+    }
 
     function renderDashboard() {
+      const rawHistory = JSON.parse(localStorage.getItem('opsreveal_history') || '[]');
+      const filter = document.getElementById('dash-filter').value;
+      
+      const filteredHistory = rawHistory.filter(item => isDateInFilter(item.date, filter));
+
       let rec = 0, sales = 0, write = 0;
-      history.forEach(item => {
-        if (item.type === 'receiving') rec += item.leakageUSD;
-        if (item.type === 'sales') sales += item.leakageUSD;
-        if (item.type === 'writeoff') write += item.leakageUSD;
+      filteredHistory.forEach(item => {
+        const loss = item.leakageUSD || 0;
+        if (item.type === 'receiving') rec += loss;
+        if (item.type === 'sales') sales += loss;
+        if (item.type === 'writeoff') write += loss;
       });
 
-      document.getElementById('m-count').innerText = history.length;
-      document.getElementById('m-rec').innerText = `$${rec.toFixed(2)}`;
-      document.getElementById('m-sales').innerText = `$${sales.toFixed(2)}`;
-      document.getElementById('m-write').innerText = `$${write.toFixed(2)}`;
+      document.getElementById('m-count').innerText = filteredHistory.length;
+      document.getElementById('m-rec').innerText = formatUSD(rec);
+      document.getElementById('m-sales').innerText = formatUSD(sales);
+      document.getElementById('m-write').innerText = formatUSD(write);
+      document.getElementById('filtered-count-label').innerText = `Showing ${filteredHistory.length} audit runs`;
 
       const tbody = document.getElementById('history-rows');
-      if (history.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-500">No data found.</td></tr>';
+      if (filteredHistory.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">No audit records found for this period.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = history.map(h => `
-        <tr>
-          <td class="py-3 text-slate-400">${new Date(h.date).toLocaleDateString()}</td>
-          <td class="py-3 font-semibold text-white uppercase">${h.type}</td>
-          <td class="py-3">${h.rows}</td>
-          <td class="py-3">${h.data.filter(d => d.Audit_Status !== 'OK').length}</td>
-          <td class="py-3 font-bold text-cyan-400">$${h.leakageUSD.toFixed(2)}</td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = filteredHistory.map(h => {
+        const totalLines = h.lines || h.rows || 0;
+        const flaggedCount = h.flaggedLines ?? (h.data ? h.data.filter(d => d.Audit_Status !== 'OK').length : 0);
+        const riskScore = h.riskScore ?? (totalLines > 0 ? Math.round((flaggedCount / totalLines) * 100) : 0);
+
+        return `
+          <tr>
+            <td class="py-3.5 text-slate-400">${new Date(h.date).toLocaleString()}</td>
+            <td class="py-3.5 font-semibold text-white uppercase">${h.type}</td>
+            <td class="py-3.5 text-slate-300 font-medium">${totalLines.toLocaleString()}</td>
+            <td class="py-3.5 text-amber-400 font-semibold">${flaggedCount.toLocaleString()}</td>
+            <td class="py-3.5">
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${riskScore > 30 ? 'bg-rose-950 text-rose-400 border border-rose-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
+                ${riskScore}% Risk
+              </span>
+            </td>
+            <td class="py-3.5 font-bold text-rose-400">${formatUSD(h.leakageUSD)}</td>
+          </tr>
+        `;
+      }).join('');
     }
-    renderDashboard();
   </script>
 </body>
 </html>

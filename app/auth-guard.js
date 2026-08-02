@@ -25,7 +25,7 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
-// Helper to guarantee individual user record exists in Firestore
+// Helper to check user profile
 export async function ensureUserProfile(user, additionalData = {}) {
   if (!user) return;
   const userRef = doc(db, "users", user.uid);
@@ -39,32 +39,36 @@ export async function ensureUserProfile(user, additionalData = {}) {
       company: additionalData.company || "",
       country: additionalData.country || "",
       position: additionalData.position || "",
-      plan: "starter", // Default Plan
+      plan: "starter",
       createdAt: new Date().toISOString()
     });
   }
 }
 
-// Global Logout Utility
 window.logoutUser = async () => {
   await signOut(auth);
   window.location.replace('/login.html');
 };
 
-// Route Protection Logic
+// Unified Route Guard
+let isInitialAuthCheck = true;
+
 onAuthStateChanged(auth, async (user) => {
-  const path = window.location.pathname.replace(/\/$/, ""); // Normalize path
+  const path = window.location.pathname.replace(/\/$/, "");
   const isProtectedArea = path.includes('/app');
   const isAuthPage = path.endsWith('/login') || path.endsWith('/signup') || path.endsWith('login.html') || path.endsWith('signup.html');
 
-  if (isProtectedArea && (!user || !user.emailVerified)) {
-    // 1. Kick unauthenticated or unverified users back to login
-    window.location.replace('/login.html');
-  } else if (user && user.emailVerified) {
-    await ensureUserProfile(user);
-    if (isAuthPage || path === '') {
-      // 2. Verified users landing on auth pages get redirected directly to dashboard
-      window.location.replace('/app/dashboard');
+  if (isProtectedArea) {
+    if (!user || !user.emailVerified) {
+      // Redirect to login ONLY if Firebase explicitly confirms no valid session exists
+      window.location.replace('/login.html');
+    } else {
+      // Valid session found: display page body
+      document.body.style.display = 'block';
     }
+  } else if (isAuthPage && user && user.emailVerified) {
+    window.location.replace('/app/dashboard');
   }
+
+  isInitialAuthCheck = false;
 });

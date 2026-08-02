@@ -2,35 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>OpsReveal | Settings</title>
-  <!-- Step A: Instant Script Guard before DOM loads -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>OpsReveal | Account Settings</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style> body { font-family: 'Inter', sans-serif; } </style>
+
+  <!-- Firebase Auth Guard -->
   <script type="module">
-    import { auth } from '/app/auth-guard.js';
+    import { auth, ensureUserProfile } from '/app/auth-guard.js';
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (!user || !user.emailVerified) {
-        // Stop execution and force redirect immediately
         window.location.replace('/login.html');
       } else {
-        // Only unhide the app content if verified user exists
-        document.body.style.display = 'block';
+        await ensureUserProfile(user);
+        document.body.style.display = 'flex';
+        initSettingsPage(user);
       }
     });
   </script>
 </head>
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style>body { font-family: 'Inter', sans-serif; }</style>
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex antialiased">
+<!-- Hidden by default to prevent screen flash before auth verification -->
+<body style="display: none;" class="bg-slate-950 text-slate-100 min-h-screen flex antialiased">
 
+  <!-- Sidebar Nav -->
   <aside class="w-64 border-r border-slate-800 bg-slate-950 p-6 flex flex-col justify-between shrink-0">
     <div class="space-y-8">
       <div class="flex items-center space-x-3">
         <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-black text-slate-950">O</div>
-        <div><h1 class="font-bold text-white text-base">OpsReveal</h1><span class="text-[10px] text-slate-500">Prevent Capital Loss</span></div>
+        <div>
+          <h1 class="font-bold text-white text-base">OpsReveal</h1>
+          <span class="text-[10px] text-slate-500">Prevent Capital Loss</span>
+        </div>
       </div>
       <nav class="space-y-1.5 text-sm font-medium">
         <a href="/app/dashboard" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Dashboard</a>
@@ -38,42 +46,350 @@
         <a href="/app/settings" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-slate-900 text-white">Settings</a>
       </nav>
     </div>
+
+    <div class="border-t border-slate-800 pt-4 space-y-3">
+      <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs">
+        <span class="text-[10px] text-slate-500 block font-semibold">ACTIVE PLAN</span>
+        <span id="plan-label" class="font-bold text-cyan-400">Starter Tier</span>
+      </div>
+      <button onclick="logoutUser()" class="w-full bg-slate-900 hover:bg-slate-800 text-xs text-slate-400 py-2.5 rounded-xl border border-slate-800 font-semibold transition">
+        Sign Out
+      </button>
+    </div>
   </aside>
 
-  <main class="flex-1 p-8 space-y-6 max-w-3xl mx-auto">
-    <h2 class="text-2xl font-bold text-white">Account Settings</h2>
+  <!-- Main Container -->
+  <main class="flex-1 p-8 space-y-6 max-w-4xl mx-auto overflow-y-auto">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-5">
+      <div>
+        <h2 class="text-2xl font-bold text-white">Account Settings</h2>
+        <p class="text-xs text-slate-400">Manage your profile details, security settings, and team access.</p>
+      </div>
+    </div>
 
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-      <h3 class="font-bold text-white border-b border-slate-800 pb-2">Profile Info</h3>
-      <div class="grid grid-cols-2 gap-4 text-xs">
-        <div><label class="block mb-1">Name</label><input type="text" value="Manager" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white"></div>
-        <div><label class="block mb-1">Email ID</label><input type="email" value="user@preventloss.org" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white"></div>
-        <div><label class="block mb-1">Country (Optional)</label><input type="text" placeholder="India" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white"></div>
-        <div><label class="block mb-1">Usage</label><input type="text" disabled value="1 / 4 Uploads Used" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-slate-500"></div>
+    <div id="status-msg" class="hidden p-4 rounded-xl text-xs font-semibold"></div>
+
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-8">
+      
+      <!-- Profile Settings -->
+      <div class="space-y-4">
+        <h3 class="font-bold text-white border-b border-slate-800 pb-3 text-base">Profile Info</h3>
+        <form id="profileForm" onsubmit="updateProfileInfo(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div>
+            <label class="block mb-1 text-slate-300 font-medium">Full Name</label>
+            <input type="text" id="prof-name" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500">
+          </div>
+          <div>
+            <label class="block mb-1 text-slate-300 font-medium">Email Address</label>
+            <input type="email" id="prof-email" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500">
+          </div>
+          <div>
+            <label class="block mb-1 text-slate-300 font-medium">Country</label>
+            <input type="text" id="prof-country" placeholder="United States" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500">
+          </div>
+          <div>
+            <label class="block mb-1 text-slate-300 font-medium">Company Name</label>
+            <input type="text" id="prof-company" placeholder="Acme Corp" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500">
+          </div>
+          <div class="md:col-span-2 flex justify-end">
+            <button type="submit" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition">
+              Save Profile Changes
+            </button>
+          </div>
+        </form>
       </div>
 
-      <h3 class="font-bold text-white border-b border-slate-800 pb-2">Security</h3>
-      <div class="space-y-3 text-xs max-w-sm">
-        <input type="password" placeholder="Current Password" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white">
-        <input type="password" placeholder="New Password" class="w-full bg-slate-950 border border-slate-800 rounded p-2 text-white">
-        <button onclick="alert('Password updated!')" class="bg-slate-800 p-2 rounded text-white font-semibold">Change Password</button>
-      </div>
-
-      <h3 class="font-bold text-white border-b border-slate-800 pb-2">Upgrade</h3>
-      <div class="flex justify-between items-center bg-slate-950 p-4 rounded-xl border border-slate-800">
-        <div>
-          <span class="block text-sm font-bold text-white">Professional Plan ($99/mo)</span>
-          <span class="text-xs text-slate-400">Unlimited uploads and full analysis</span>
+      <!-- Security Settings -->
+      <div class="space-y-4">
+        <h3 class="font-bold text-white border-b border-slate-800 pb-3 text-base">Security</h3>
+        <div class="flex items-center justify-between bg-slate-950 p-4 rounded-xl border border-slate-800">
+          <div>
+            <span class="block text-sm font-semibold text-white">Password Reset</span>
+            <span class="text-xs text-slate-400">Send an automated password reset link to your verified email.</span>
+          </div>
+          <button onclick="sendPasswordResetEmail()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2 rounded-xl text-xs transition">
+            Send Reset Link
+          </button>
         </div>
-        <button onclick="upgrade()" class="bg-cyan-500 text-slate-950 font-bold px-4 py-2 rounded text-xs">Upgrade</button>
       </div>
+
+      <!-- Plan Management -->
+      <div class="space-y-4">
+        <h3 class="font-bold text-white border-b border-slate-800 pb-3 text-base">Subscription Plan</h3>
+        <div class="flex items-center justify-between bg-slate-950 p-4 rounded-xl border border-slate-800">
+          <div>
+            <span class="block text-sm font-bold text-white" id="plan-card-title">Starter Tier ($0/mo)</span>
+            <span class="text-xs text-slate-400" id="plan-card-desc">Basic single-user access with standard report capacity.</span>
+          </div>
+          <button id="plan-btn" onclick="togglePlanUpgrade()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">
+            Upgrade to Professional ($99/mo)
+          </button>
+        </div>
+      </div>
+
+      <!-- Team Access Management (Professional Only) -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <h3 class="font-bold text-white text-base">Team Collaborators</h3>
+            <p class="text-xs text-slate-400">Invite up to 5 team members to access your uploads and dashboard.</p>
+          </div>
+          <span id="collab-count-badge" class="bg-slate-950 border border-slate-800 px-3 py-1 rounded-full text-xs font-bold text-cyan-400">
+            0 / 5 Seats Used
+          </span>
+        </div>
+
+        <div id="collab-locked-overlay" class="bg-slate-950/60 border border-slate-800 p-6 rounded-xl text-center space-y-2">
+          <span class="text-lg">🔒</span>
+          <h4 class="text-sm font-bold text-white">Professional Feature</h4>
+          <p class="text-xs text-slate-400 max-w-md mx-auto">
+            Upgrade your account to the Professional Plan to add up to 5 colleagues and share your OpsReveal dashboard access.
+          </p>
+        </div>
+
+        <div id="collab-active-panel" class="hidden space-y-4">
+          <div class="flex gap-2">
+            <input type="email" id="invite-email" placeholder="colleague@company.com" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
+            <button onclick="promptInviteColleague()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs transition">
+              + Send Invite
+            </button>
+          </div>
+
+          <div class="bg-slate-950 rounded-xl border border-slate-800 p-4">
+            <h4 class="text-xs font-semibold text-slate-400 mb-3">Active Invites & Members</h4>
+            <ul id="collab-list" class="divide-y divide-slate-800 text-xs text-slate-300">
+              <!-- Dynamically rendered -->
+            </ul>
+          </div>
+        </div>
+      </div>
+
     </div>
   </main>
 
-  <script>
-    function upgrade() {
-      localStorage.setItem('opsreveal_plan', 'Professional');
-      alert('Upgraded to Professional Plan!');
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+      <div class="h-12 w-12 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center mx-auto text-xl font-bold">⚠️</div>
+      <h3 class="text-lg font-bold text-white text-center">Confirm Team Access</h3>
+      <p class="text-xs text-slate-300 leading-relaxed text-center">
+        The invited colleague (<span id="modal-collab-email" class="text-cyan-400 font-bold"></span>) will receive **full administrative access** to your uploaded financial files, reports, and dashboard metrics.
+      </p>
+      <p class="text-[11px] text-amber-400 bg-amber-950/30 border border-amber-800/50 p-3 rounded-xl text-center">
+        Are you sure you want to share complete access with this colleague?
+      </p>
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button onclick="closeModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition">
+          Cancel
+        </button>
+        <button onclick="confirmAndSendInvite()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition">
+          Yes, Send Invite
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from '/app/auth-guard.js';
+    import { 
+      updateEmail, 
+      sendPasswordResetEmail as fbSendReset 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { 
+      doc, 
+      getDoc, 
+      updateDoc 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    let activeUser = null;
+    let pendingInviteEmail = "";
+    let userProfileData = {};
+
+    window.initSettingsPage = async (user) => {
+      activeUser = user;
+      document.getElementById('prof-email').value = user.email || "";
+
+      // Load User Profile from Firestore
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists()) {
+        userProfileData = snap.data();
+        document.getElementById('prof-name').value = userProfileData.fullName || user.displayName || "";
+        document.getElementById('prof-country').value = userProfileData.country || "";
+        document.getElementById('prof-company').value = userProfileData.company || "";
+        
+        renderPlanUI(userProfileData.plan || "starter");
+        renderCollabsUI(userProfileData.invitedColleagues || []);
+      }
+    };
+
+    function renderPlanUI(plan) {
+      const planLabel = document.getElementById('plan-label');
+      const planTitle = document.getElementById('plan-card-title');
+      const planDesc = document.getElementById('plan-card-desc');
+      const planBtn = document.getElementById('plan-btn');
+      const collabOverlay = document.getElementById('collab-locked-overlay');
+      const collabPanel = document.getElementById('collab-active-panel');
+
+      if (plan === 'Professional') {
+        planLabel.innerText = "Professional Tier";
+        planTitle.innerText = "Professional Plan ($99/mo)";
+        planDesc.innerText = "Unlimited uploads, full leakage analysis, and up to 5 team seats.";
+        planBtn.innerText = "Downgrade to Starter";
+        planBtn.className = "bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2 rounded-xl text-xs transition";
+        
+        collabOverlay.classList.add('hidden');
+        collabPanel.classList.remove('hidden');
+      } else {
+        planLabel.innerText = "Starter Tier";
+        planTitle.innerText = "Starter Plan ($0/mo)";
+        planDesc.innerText = "Basic single-user access with standard report capacity.";
+        planBtn.innerText = "Upgrade to Professional ($99/mo)";
+        planBtn.className = "bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition";
+
+        collabOverlay.classList.remove('hidden');
+        collabPanel.classList.add('hidden');
+      }
+    }
+
+    function renderCollabsUI(list) {
+      const countBadge = document.getElementById('collab-count-badge');
+      const listContainer = document.getElementById('collab-list');
+
+      countBadge.innerText = `${list.length} / 5 Seats Used`;
+
+      if (list.length === 0) {
+        listContainer.innerHTML = `<li class="py-3 text-slate-500 text-center">No colleagues invited yet.</li>`;
+        return;
+      }
+
+      listContainer.innerHTML = list.map((item, idx) => `
+        <li class="py-3 flex items-center justify-between">
+          <div>
+            <span class="font-semibold text-white block">${item.email}</span>
+            <span class="text-[10px] text-slate-500">Invited: ${new Date(item.invitedAt).toLocaleDateString()}</span>
+          </div>
+          <div class="flex items-center space-x-3">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-800">
+              Pending Verification
+            </span>
+            <button onclick="removeColleague(${idx})" class="text-rose-400 hover:underline text-xs">Remove</button>
+          </div>
+        </li>
+      `).join('');
+    }
+
+    window.updateProfileInfo = async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('prof-name').value;
+      const email = document.getElementById('prof-email').value;
+      const country = document.getElementById('prof-country').value;
+      const company = document.getElementById('prof-company').value;
+
+      try {
+        if (email !== activeUser.email) {
+          await updateEmail(activeUser, email);
+        }
+
+        const userRef = doc(db, "users", activeUser.uid);
+        await updateDoc(userRef, {
+          fullName: name,
+          email: email,
+          country: country,
+          company: company
+        });
+
+        showStatus("Profile information updated successfully!", "success");
+      } catch (err) {
+        showStatus(err.message, "error");
+      }
+    };
+
+    window.sendPasswordResetEmail = async () => {
+      try {
+        await fbSendReset(auth, activeUser.email);
+        showStatus(`Password reset email sent to ${activeUser.email}`, "success");
+      } catch (err) {
+        showStatus(err.message, "error");
+      }
+    };
+
+    window.togglePlanUpgrade = async () => {
+      const currentPlan = userProfileData.plan || "starter";
+      const newPlan = currentPlan === "Professional" ? "starter" : "Professional";
+
+      const userRef = doc(db, "users", activeUser.uid);
+      await updateDoc(userRef, { plan: newPlan });
+
+      userProfileData.plan = newPlan;
+      localStorage.setItem('opsreveal_plan', newPlan);
+      renderPlanUI(newPlan);
+      showStatus(`Plan successfully updated to ${newPlan}!`, "success");
+    };
+
+    window.promptInviteColleague = () => {
+      const emailInput = document.getElementById('invite-email');
+      const email = emailInput.value.trim();
+
+      const currentCollabs = userProfileData.invitedColleagues || [];
+      if (currentCollabs.length >= 5) {
+        showStatus("You have reached the maximum limit of 5 collaborator seats.", "error");
+        return;
+      }
+
+      if (!email || !email.includes('@')) {
+        showStatus("Please enter a valid email address.", "error");
+        return;
+      }
+
+      pendingInviteEmail = email;
+      document.getElementById('modal-collab-email').innerText = email;
+      document.getElementById('confirmModal').classList.remove('hidden');
+    };
+
+    window.confirmAndSendInvite = async () => {
+      closeModal();
+      const currentCollabs = userProfileData.invitedColleagues || [];
+
+      const newInvite = {
+        email: pendingInviteEmail,
+        invitedAt: new Date().toISOString(),
+        status: "pending"
+      };
+
+      currentCollabs.push(newInvite);
+
+      const userRef = doc(db, "users", activeUser.uid);
+      await updateDoc(userRef, { invitedColleagues: currentCollabs });
+
+      userProfileData.invitedColleagues = currentCollabs;
+      renderCollabsUI(currentCollabs);
+      document.getElementById('invite-email').value = "";
+
+      showStatus(`Invite registered for ${pendingInviteEmail}. Once they register with this email, they can access your shared data!`, "success");
+    };
+
+    window.removeColleague = async (index) => {
+      const currentCollabs = userProfileData.invitedColleagues || [];
+      currentCollabs.splice(index, 1);
+
+      const userRef = doc(db, "users", activeUser.uid);
+      await updateDoc(userRef, { invitedColleagues: currentCollabs });
+
+      userProfileData.invitedColleagues = currentCollabs;
+      renderCollabsUI(currentCollabs);
+      showStatus("Collaborator removed.", "success");
+    };
+
+    window.closeModal = () => {
+      document.getElementById('confirmModal').classList.add('hidden');
+    };
+
+    function showStatus(msg, type) {
+      const box = document.getElementById('status-msg');
+      box.innerText = msg;
+      box.className = `p-4 rounded-xl text-xs font-semibold ${type === 'success' ? 'bg-emerald-950/80 border border-emerald-800 text-emerald-300' : 'bg-rose-950/80 border border-rose-800 text-rose-300'}`;
+      box.classList.remove('hidden');
+      setTimeout(() => box.classList.add('hidden'), 6000);
     }
   </script>
 </body>
