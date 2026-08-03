@@ -1,256 +1,275 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-950">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OpsReveal | Upload Reports</title>
-
+  <title>Upload & Audit Engine | OpsReveal</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style> body { font-family: 'Inter', sans-serif; } </style>
-
-  <!-- Firebase & Core Auth Initialization -->
-  <script type="module">
-    import { auth, db, ensureUserProfile, isSuperAdmin } from '/app/auth-guard.js';
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    window.currentUser = null;
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user || (!user.emailVerified && !user.providerData?.some(p => p.providerId === 'google.com'))) {
-        window.location.replace('/login.html');
-      } else {
-        await ensureUserProfile(user);
-        window.currentUser = user;
-        document.body.style.display = 'flex';
-
-        if (isSuperAdmin(user)) {
-          const planLabel = document.getElementById('plan-label');
-          if (planLabel) planLabel.innerText = "Global Admin Tier";
-        }
-      }
-    });
-
-    window.logoutUser = () => {
-      signOut(auth).then(() => window.location.replace('/login.html'));
-    };
-
-    window.saveAuditToFirestore = async (auditPayload) => {
-      if (!window.currentUser) return;
-      try {
-        await addDoc(collection(db, "audits"), {
-          ...auditPayload,
-          userId: window.currentUser.uid,
-          userEmail: window.currentUser.email,
-          createdAt: serverTimestamp()
-        });
-      } catch (err) {
-        console.error("Firestore audit save error:", err);
-      }
-    };
-  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, h4, .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .bg-grid { background-image: radial-gradient(rgba(56, 189, 248, 0.08) 1px, transparent 1px); background-size: 32px 32px; }
+  </style>
 </head>
+<body class="min-h-full text-slate-100 bg-slate-950 flex flex-col bg-grid">
 
-<body style="display: none;" class="bg-slate-950 text-slate-100 min-h-screen flex antialiased">
-
-  <!-- Sidebar Nav -->
-  <aside class="w-64 border-r border-slate-800 bg-slate-950 p-6 flex flex-col justify-between shrink-0">
-    <div class="space-y-8">
-      <div class="flex items-center space-x-3">
-        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-black text-slate-950">O</div>
-        <div>
-          <h1 class="font-bold text-white text-base">OpsReveal</h1>
-          <span class="text-[10px] text-slate-500">Prevent Capital Loss</span>
+  <!-- Header Navigation -->
+  <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="https://opsreveal.preventloss.org" class="flex items-center space-x-3">
+        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-lg text-slate-950 shadow-md shadow-cyan-500/20">
+          O
         </div>
+        <span class="text-xl font-bold text-white font-heading">OpsReveal</span>
+      </a>
+      <div class="flex items-center space-x-4">
+        <span class="text-xs text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full flex items-center">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
+          In-Browser Processing Engine
+        </span>
       </div>
-      <nav class="space-y-1.5 text-sm font-medium">
-        <a href="/app/dashboard" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Dashboard</a>
-        <a href="/app/uploads" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-slate-900 text-white">Upload Reports</a>
-        <a href="/app/settings" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Settings</a>
-      </nav>
     </div>
+  </header>
 
-    <div class="border-t border-slate-800 pt-4 space-y-3">
-      <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs">
-        <span class="text-[10px] text-slate-500 block font-semibold">ACTIVE PLAN</span>
-        <span id="plan-label" class="font-bold text-cyan-400">Starter Tier</span>
-      </div>
-      <button onclick="logoutUser()" class="w-full bg-slate-900 hover:bg-slate-800 text-xs text-slate-400 py-2.5 rounded-xl border border-slate-800 font-semibold transition">
-        Sign Out
-      </button>
-    </div>
-  </aside>
-
-  <!-- Main Content Area -->
-  <main class="flex-1 p-8 space-y-6 max-w-6xl mx-auto overflow-y-auto">
-    <div class="flex items-center justify-between border-b border-slate-800 pb-5">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    
+    <!-- Title & Sample Download Controls -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-6">
       <div>
-        <h2 class="text-2xl font-bold text-white">Upload Audit Files</h2>
-        <p class="text-xs text-slate-400">Run immediate automated capital loss audit algorithms on your CSV datasets.</p>
+        <h1 class="text-2xl font-extrabold text-white font-heading">Inventory & Audit Data Upload</h1>
+        <p class="text-xs text-slate-400 mt-1">Upload CSV files to run zero-trust client-side margin, shelf-life, and vendor audits.</p>
+      </div>
+
+      <!-- Sample Templates Download Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-xs text-slate-400 font-medium mr-1">Download Sample Templates:</span>
+        <button onclick="downloadSampleCSV('grn')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs text-cyan-400 font-semibold transition flex items-center">
+          <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          GRN / Receiving
+        </button>
+        <button onclick="downloadSampleCSV('sales')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs text-blue-400 font-semibold transition flex items-center">
+          <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Sales Log
+        </button>
+        <button onclick="downloadSampleCSV('writeoff')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs text-indigo-400 font-semibold transition flex items-center">
+          <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          Write-Off Log
+        </button>
       </div>
     </div>
 
-    <!-- Upload Form Card -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+    <!-- Drag & Drop Upload Zone -->
+    <div class="rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/50 p-8 text-center hover:border-cyan-500/50 transition" id="dropZone">
+      <input type="file" id="fileInput" accept=".csv" class="hidden" onchange="handleFileSelect(event)">
+      <div class="max-w-md mx-auto space-y-3">
+        <div class="h-12 w-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mx-auto flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        </div>
         <div>
-          <label class="block mb-1.5 font-semibold text-slate-300">Select Audit Model</label>
-          <select id="report-type" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500">
-            <option value="receiving">Receiving & GRN Shortage Audit</option>
-            <option value="sales">Sales & Margin Erosion Audit</option>
-            <option value="writeoff">Write-off & Damage Discrepancy Audit</option>
-          </select>
+          <button onclick="document.getElementById('fileInput').click()" class="text-cyan-400 font-bold text-sm hover:underline">Select a CSV File</button>
+          <span class="text-xs text-slate-400"> or drag and drop here</span>
         </div>
+        <p class="text-[11px] text-slate-500">Supports standard procurement, receipt, and sales exports. Maximum client memory processing: 100MB.</p>
+      </div>
+    </div>
+
+    <!-- Filter & History Controls Bar -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-slate-900 border border-slate-800 p-4 rounded-xl">
+      
+      <!-- Date Range Quick Filters -->
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-xs font-semibold text-slate-400 mr-2">History Filter:</span>
+        <button onclick="setFilter('today')" class="filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Today</button>
+        <button onclick="setFilter('yesterday')" class="filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Yesterday</button>
+        <button onclick="setFilter('last7')" class="filter-btn active px-3 py-1 rounded-lg text-xs font-semibold bg-cyan-500 text-slate-950 transition">Last 7 Days</button>
+        <button onclick="setFilter('last30')" class="filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Last 30 Days</button>
+      </div>
+
+      <!-- Custom Date Pickers -->
+      <div class="flex items-center space-x-2 text-xs">
+        <input type="date" id="startDate" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300 focus:border-cyan-500 outline-none">
+        <span class="text-slate-500">to</span>
+        <input type="date" id="endDate" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300 focus:border-cyan-500 outline-none">
+        <button onclick="applyCustomFilter()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-3 py-1 rounded-lg transition">Apply</button>
+      </div>
+    </div>
+
+    <!-- Analytics Dashboard Cards (Shelf Life & Margin Metrics) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Average Margin Card -->
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="text-xs font-semibold text-slate-400 font-heading">Average Gross Margin</div>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span id="avgMargin" class="text-3xl font-extrabold text-white font-heading">32.4%</span>
+          <span class="text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded">+1.8%</span>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-2">Calculated across loaded sales vs cost baselines.</p>
+      </div>
+
+      <!-- Shelf Life Remaining Card -->
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="text-xs font-semibold text-slate-400 font-heading">Avg Remaining Shelf Life</div>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span id="avgShelfLife" class="text-3xl font-extrabold text-cyan-400 font-heading">78.2%</span>
+          <span class="text-xs font-semibold text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 px-2 py-0.5 rounded">Optimal</span>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-2">Weighted percentage based on batch expiry dates.</p>
+      </div>
+
+      <!-- Leakage Identified -->
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="text-xs font-semibold text-slate-400 font-heading">Detected Price Overcharges</div>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span id="leakageTotal" class="text-3xl font-extrabold text-red-400 font-heading">$1,240.50</span>
+          <span class="text-xs font-semibold text-red-400 bg-red-950/60 border border-red-500/30 px-2 py-0.5 rounded">12 Line Items</span>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-2">Vendor cost increases over contracted baseline.</p>
+      </div>
+
+      <!-- Audited Rows -->
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="text-xs font-semibold text-slate-400 font-heading">Total Rows Audited</div>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span id="totalRows" class="text-3xl font-extrabold text-white font-heading">1,420</span>
+          <span class="text-xs font-semibold text-slate-400">Processed</span>
+        </div>
+        <p class="text-[11px] text-slate-500 mt-2">Parsed in local browser memory.</p>
+      </div>
+    </div>
+
+    <!-- Upload & Audit History Table -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between">
         <div>
-          <label class="block mb-1.5 font-semibold text-slate-300">Select CSV File</label>
-          <input type="file" id="file-input" accept=".csv" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-400 file:mr-4 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-cyan-500 file:text-slate-950 hover:file:bg-cyan-400 cursor-pointer">
+          <h3 class="text-base font-bold text-white font-heading">Audit History & File Log</h3>
+          <p class="text-xs text-slate-400">View recent file parses, margin health, and shelf-life metrics.</p>
         </div>
+        <span class="text-xs text-slate-500" id="filterStatusLabel">Showing: Last 7 Days</span>
       </div>
 
-      <button onclick="processUpload()" id="btn-run" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3 rounded-xl transition text-xs">
-        Execute Loss Audit
-      </button>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-950/80 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
+            <tr>
+              <th class="px-6 py-3.5">Date / Time</th>
+              <th class="px-6 py-3.5">File Name</th>
+              <th class="px-6 py-3.5">Category</th>
+              <th class="px-6 py-3.5">Avg Margin</th>
+              <th class="px-6 py-3.5">Shelf Life %</th>
+              <th class="px-6 py-3.5">Discrepancy / Overcharge</th>
+              <th class="px-6 py-3.5 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="historyTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+            <!-- Sample Historical Rows -->
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="px-6 py-4 font-mono text-slate-400">2026-08-03 14:22</td>
+              <td class="px-6 py-4 font-bold text-white">GRN_Batch_8821.csv</td>
+              <td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/50">Receiving (GRN)</span></td>
+              <td class="px-6 py-4 font-semibold text-slate-200">34.1%</td>
+              <td class="px-6 py-4 font-semibold text-cyan-400">82.5%</td>
+              <td class="px-6 py-4 font-bold text-red-400">$420.00</td>
+              <td class="px-6 py-4 text-right">
+                <button class="text-cyan-400 hover:underline font-semibold">View Detail</button>
+              </td>
+            </tr>
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="px-6 py-4 font-mono text-slate-400">2026-08-02 09:15</td>
+              <td class="px-6 py-4 font-bold text-white">Sales_Store01_Aug.csv</td>
+              <td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800/50">Sales Log</span></td>
+              <td class="px-6 py-4 font-semibold text-slate-200">30.8%</td>
+              <td class="px-6 py-4 text-slate-500">N/A</td>
+              <td class="px-6 py-4 font-bold text-slate-400">$0.00</td>
+              <td class="px-6 py-4 text-right">
+                <button class="text-cyan-400 hover:underline font-semibold">View Detail</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Live Audit Execution Results -->
-    <div id="result-box" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-      <div class="flex items-center justify-between">
-        <h3 class="text-base font-bold text-white">Audit Execution Results</h3>
-        <span id="res-status" class="text-xs px-2.5 py-1 rounded-md font-bold bg-cyan-950 text-cyan-400 border border-cyan-800">Complete</span>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
-          <span class="text-slate-400 block mb-1">Total Lines Processed</span>
-          <span id="res-lines" class="text-xl font-bold text-white">0</span>
-        </div>
-        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
-          <span class="text-slate-400 block mb-1">Flagged Exceptions</span>
-          <span id="res-flagged" class="text-xl font-bold text-amber-400">0</span>
-        </div>
-        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
-          <span class="text-slate-400 block mb-1">Identified Leakage</span>
-          <span id="res-leakage" class="text-xl font-bold text-rose-400">$0.00</span>
-        </div>
-      </div>
-
-      <div class="pt-2 flex justify-end">
-        <a href="/app/dashboard" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-4 py-2 rounded-xl text-xs transition">
-          View in Dashboard →
-        </a>
-      </div>
-    </div>
   </main>
 
   <script>
-    const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
-    const formatUSD = (val) => Number(val || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
+    // CSV Sample Generator
+    function downloadSampleCSV(type) {
+      let csvContent = "";
+      let filename = "";
 
-    function processUpload() {
-      const fileInput = document.getElementById('file-input');
-      const reportType = document.getElementById('report-type').value;
-      const btn = document.getElementById('btn-run');
-
-      if (!fileInput.files.length) {
-        alert("Please select a CSV file first.");
-        return;
+      if (type === 'grn') {
+        filename = "Sample_GRN_Receiving.csv";
+        csvContent = "SKU,Product_Name,Received_Qty,Unit_Cost_Price,Contract_Cost_Price,Mfg_Date,Expiry_Date\n" +
+                     "SKU-101,Organic Milk 1L,100,2.10,1.90,2026-08-01,2026-08-20\n" +
+                     "SKU-102,Greek Yogurt 500g,50,3.50,3.50,2026-07-25,2026-09-15\n" +
+                     "SKU-103,Cheddar Cheese 250g,40,4.20,3.80,2026-06-01,2026-12-01";
+      } else if (type === 'sales') {
+        filename = "Sample_Sales_Log.csv";
+        csvContent = "Transaction_ID,SKU,Qty_Sold,Selling_Price,Cost_Price,Store_Location\n" +
+                     "TX-9001,SKU-101,2,3.50,1.90,Store_North\n" +
+                     "TX-9002,SKU-102,1,5.50,3.50,Store_North\n" +
+                     "TX-9003,SKU-103,3,6.00,3.80,Store_South";
+      } else if (type === 'writeoff') {
+        filename = "Sample_WriteOff_Log.csv";
+        csvContent = "SKU,Product_Name,Quantity_Written_Off,Unit_Cost,Reason,Date\n" +
+                     "SKU-101,Organic Milk 1L,5,1.90,Expired,2026-08-02\n" +
+                     "SKU-103,Cheddar Cheese 250g,2,3.80,Damaged_Packaging,2026-08-03";
       }
 
-      btn.disabled = true;
-      btn.innerText = "Analyzing Telemetry...";
-
-      Papa.parse(fileInput.files[0], {
-        header: true,
-        dynamicTyping: true,
-        skipEmptyLines: true,
-        complete: async function(results) {
-          const rows = results.data;
-          let flaggedLines = 0;
-          let leakageUSD = 0;
-
-          // Process rows based on selected audit model
-          rows.forEach(r => {
-            const qtyReceived = r.Qty_Received || r.Received_Qty || 0;
-            const qtyOrdered = r.Qty_Ordered || r.PO_Qty || 0;
-            const unitCost = r.Unit_Cost || r.Cost || 0;
-            const sellingPrice = r.Selling_Price || r.Price || 0;
-            const minAllowedPrice = r.Min_Allowed_Price || r.Floor_Price || 0;
-            const writeoffQty = r.Writeoff_Qty || r.Damage_Qty || 0;
-
-            if (reportType === 'receiving') {
-              if (qtyReceived < qtyOrdered) {
-                flaggedLines++;
-                leakageUSD += (qtyOrdered - qtyReceived) * unitCost;
-              }
-            } else if (reportType === 'sales') {
-              if (sellingPrice < minAllowedPrice) {
-                flaggedLines++;
-                leakageUSD += (minAllowedPrice - sellingPrice) * (r.Qty_Sold || 1);
-              }
-            } else if (reportType === 'writeoff') {
-              if (writeoffQty > 0) {
-                flaggedLines++;
-                leakageUSD += writeoffQty * unitCost;
-              }
-            }
-          });
-
-          const totalLines = rows.length;
-          const riskScore = totalLines > 0 ? Math.round((flaggedLines / totalLines) * 100) : 0;
-          const auditDate = new Date().toISOString();
-
-          // Build audit payload with User ID tagging
-          const auditPayload = {
-            date: auditDate,
-            timestamp: auditDate,
-            type: reportType,
-            lines: totalLines,
-            totalLines: totalLines,
-            flaggedLines: flaggedLines,
-            riskScore: riskScore,
-            leakageUSD: leakageUSD,
-            totalLeakageUSD: leakageUSD,
-            userId: window.currentUser ? window.currentUser.uid : "anonymous",
-            userEmail: window.currentUser ? window.currentUser.email : "unknown"
-          };
-
-          // 1. Save locally under user-scoped LocalStorage key
-          if (window.currentUser) {
-            const storageKey = `opsreveal_history_${window.currentUser.uid}`;
-            const existingHistory = JSON.parse(localStorage.getItem(storageKey) || '[]');
-            existingHistory.unshift(auditPayload);
-            localStorage.setItem(storageKey, JSON.stringify(existingHistory));
-
-            // 2. Persist to Firestore database
-            await window.saveAuditToFirestore(auditPayload);
-          }
-
-          // 3. Post summary archive to Cloudflare R2 via Worker API
-          try {
-            await fetch(`${WORKER_URL}/api/summary/save`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ summaryData: auditPayload })
-            });
-          } catch (err) {
-            console.warn("R2 Archival fetch optional save failed:", err);
-          }
-
-          // UI updates
-          document.getElementById('res-lines').innerText = totalLines.toLocaleString();
-          document.getElementById('res-flagged').innerText = flaggedLines.toLocaleString();
-          document.getElementById('res-leakage').innerText = formatUSD(leakageUSD);
-          document.getElementById('result-box').classList.remove('hidden');
-
-          btn.disabled = false;
-          btn.innerText = "Execute Loss Audit";
-        }
-      });
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
-    window.processUpload = processUpload;
+    // Filter Buttons Handler
+    function setFilter(range) {
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-cyan-500', 'text-slate-950', 'active');
+        btn.classList.add('bg-slate-800', 'text-slate-300');
+      });
+
+      event.target.classList.add('bg-cyan-500', 'text-slate-950', 'active');
+      event.target.classList.remove('bg-slate-800', 'text-slate-300');
+
+      const statusMap = {
+        'today': 'Showing: Today',
+        'yesterday': 'Showing: Yesterday',
+        'last7': 'Showing: Last 7 Days',
+        'last30': 'Showing: Last 30 Days'
+      };
+      
+      document.getElementById('filterStatusLabel').textContent = statusMap[range] || 'Showing: Filtered';
+    }
+
+    function applyCustomFilter() {
+      const start = document.getElementById('startDate').value;
+      const end = document.getElementById('endDate').value;
+      if (start && end) {
+        document.getElementById('filterStatusLabel').textContent = `Showing: ${start} to ${end}`;
+      }
+    }
+
+    // File Parsing Prototype
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const lines = evt.target.result.split('\n');
+        alert(`Successfully parsed ${lines.length - 1} rows locally in browser RAM.`);
+      };
+      reader.readAsText(file);
+    }
   </script>
 </body>
 </html>
