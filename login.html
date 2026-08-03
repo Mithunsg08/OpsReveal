@@ -96,7 +96,12 @@
 
         <div>
           <label for="password" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Password</label>
-          <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:border-cyan-500 focus:outline-none transition">
+          <div class="relative">
+            <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-4 pr-10 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:border-cyan-500 focus:outline-none transition">
+            <button type="button" id="togglePasswordBtn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            </button>
+          </div>
         </div>
 
         <button id="submitBtn" type="submit" class="w-full flex justify-center py-3 px-4 rounded-xl shadow-lg shadow-cyan-500/20 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 focus:outline-none transition font-heading uppercase tracking-wider mt-2">
@@ -121,6 +126,7 @@
     import { 
       getAuth, 
       signInWithEmailAndPassword, 
+      signOut,
       GoogleAuthProvider, 
       signInWithPopup 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -146,12 +152,20 @@
     const db = getFirestore(app);
 
     const loginForm = document.getElementById('loginForm');
+    const passwordInput = document.getElementById('password');
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
     const googleAuthBtn = document.getElementById('googleAuthBtn');
     const errorBanner = document.getElementById('errorBanner');
     const errorMessage = document.getElementById('errorMessage');
     const submitBtn = document.getElementById('submitBtn');
     const btnText = document.getElementById('btnText');
     const btnSpinner = document.getElementById('btnSpinner');
+
+    // Toggle Password Visibility
+    togglePasswordBtn.addEventListener('click', () => {
+      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+      passwordInput.setAttribute('type', type);
+    });
 
     function showError(msg) {
       errorMessage.textContent = msg;
@@ -179,7 +193,6 @@
         await setDoc(userRef, {
           uid: user.uid,
           email: user.email,
-          displayName: user.displayName || user.email.split('@')[0],
           provider: user.providerData[0]?.providerId || 'password',
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
@@ -194,15 +207,32 @@
       setLoading(true);
 
       const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value;
+      const password = passwordInput.value;
 
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        await ensureUserDocExists(userCredential.user);
+        const user = userCredential.user;
+
+        // Force a token refresh to read latest emailVerified status
+        await user.reload();
+
+        if (!user.emailVerified) {
+          await signOut(auth);
+          setLoading(false);
+          showError("Please verify your email address before logging in. Check your inbox for the link.");
+          return;
+        }
+
+        await ensureUserDocExists(user);
         window.location.href = '/dashboard.html';
       } catch (err) {
         setLoading(false);
-        showError(err.message.replace('Firebase: ', ''));
+        // Format common Firebase Auth error codes cleanly
+        let cleanMsg = err.message.replace('Firebase: ', '');
+        if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
+          cleanMsg = "Invalid email or password. Please check your credentials.";
+        }
+        showError(cleanMsg);
       }
     });
 
