@@ -67,7 +67,7 @@
           <button onclick="document.getElementById('fileInput').click()" class="text-cyan-400 font-bold text-sm hover:underline">Select CSV File to Upload</button>
           <span class="text-xs text-slate-400"> or drag and drop</span>
         </div>
-        <p class="text-[11px] text-slate-500">Files are tied exclusively to your authenticated User ID.</p>
+        <p class="text-[11px] text-slate-500">Files are stored securely in Cloudflare R2 tied to your user ID.</p>
       </div>
       <!-- Upload Progress Bar -->
       <div id="uploadProgressContainer" class="hidden max-w-xs mx-auto mt-4">
@@ -78,7 +78,7 @@
       </div>
     </div>
 
-    <!-- User-Isolated History Filter Controls -->
+    <!-- Filter Controls -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-slate-900 border border-slate-800 p-4 rounded-xl">
       <div class="flex flex-wrap items-center gap-1.5">
         <span class="text-xs font-semibold text-slate-400 mr-2">Your Upload History:</span>
@@ -99,8 +99,8 @@
     <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
       <div class="p-5 border-b border-slate-800 flex items-center justify-between">
         <div>
-          <h3 class="text-base font-bold text-white font-heading">Your Personal Upload Records</h3>
-          <p class="text-xs text-slate-400">Strictly isolated to your account credentials.</p>
+          <h3 class="text-base font-bold text-white font-heading">Your Uploaded Files</h3>
+          <p class="text-xs text-slate-400">Isolated strictly to your user account on Cloudflare R2.</p>
         </div>
       </div>
 
@@ -112,7 +112,7 @@
               <th class="px-6 py-3.5">File Name</th>
               <th class="px-6 py-3.5">Size</th>
               <th class="px-6 py-3.5">Status</th>
-              <th class="px-6 py-3.5 text-right">R2 Storage Key</th>
+              <th class="px-6 py-3.5 text-right">Cloudflare R2 Path</th>
             </tr>
           </thead>
           <tbody id="historyTableBody" class="divide-y divide-slate-800/60 text-slate-300">
@@ -126,16 +126,15 @@
 
   </main>
 
-  <!-- Server Integration Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
 
-    // Firebase Config
+    // FIXME: Put your REAL Firebase Config here!
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
+      apiKey: "YOUR_ACTUAL_FIREBASE_API_KEY",
       authDomain: "YOUR_PROJECT.firebaseapp.com",
       projectId: "YOUR_PROJECT_ID",
       storageBucket: "YOUR_PROJECT.appspot.com",
@@ -145,7 +144,7 @@
     const auth = getAuth(app);
     let currentUser = null;
 
-    // Helper: Format Bytes to Human Readable
+    // Helper: Bytes formatter
     function formatBytes(bytes, decimals = 2) {
       if (!bytes || bytes === 0) return '0 Bytes';
       const k = 1024;
@@ -155,7 +154,7 @@
       return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
     }
 
-    // Check Authentication & Restrict Data Access
+    // Authentication Guard
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         currentUser = user;
@@ -165,11 +164,12 @@
         `;
         fetchUserUploads('last7');
       } else {
+        // Redirect to login if user session is absent
         window.location.href = "/login.html";
       }
     });
 
-    // Upload CSV File to User-Isolated Endpoint
+    // Upload Handler
     window.uploadFileToServer = async function(event) {
       const file = event.target.files[0];
       if (!file || !currentUser) return;
@@ -178,8 +178,8 @@
       const progressBar = document.getElementById('uploadProgressBar');
       const progressText = document.getElementById('uploadProgressText');
       progressContainer.classList.remove('hidden');
-      progressBar.style.width = '50%';
-      progressText.textContent = 'Uploading... 50%';
+      progressBar.style.width = '40%';
+      progressText.textContent = 'Uploading to Cloudflare R2...';
 
       const formData = new FormData();
       formData.append('file', file);
@@ -202,19 +202,21 @@
         progressText.textContent = 'Upload Complete!';
         setTimeout(() => progressContainer.classList.add('hidden'), 2000);
 
-        fetchUserUploads('last7'); // Refresh table
+        // Reset file input and refresh file list
+        event.target.value = '';
+        fetchUserUploads('last7');
       } catch (err) {
-        alert('Upload failed: ' + err.message);
+        alert('Upload error: ' + err.message);
         progressContainer.classList.add('hidden');
       }
     };
 
-    // Fetch Only Current User's Upload History
+    // Fetch History Handler
     window.fetchUserUploads = async function(range) {
       if (!currentUser) return;
 
       const tbody = document.getElementById('historyTableBody');
-      tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-500">Fetching records...</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-500">Fetching records from R2...</td></tr>`;
 
       try {
         const token = await currentUser.getIdToken();
@@ -241,13 +243,13 @@
             <td class="px-6 py-4">
               <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/50">Stored in R2</span>
             </td>
-            <td class="px-6 py-4 text-right font-mono text-[11px] text-cyan-400 truncate max-w-[200px]" title="${item.key}">
+            <td class="px-6 py-4 text-right font-mono text-[11px] text-cyan-400 truncate max-w-[220px]" title="${item.key}">
               ${item.key}
             </td>
           </tr>
         `).join('');
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-red-400">Error loading uploads: Access denied.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-red-400">Error loading files: Access denied.</td></tr>`;
       }
     };
 
