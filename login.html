@@ -87,8 +87,8 @@
         </div>
       </div>
 
-      <!-- Form prevented from submitting natively -->
-      <form id="loginForm" onsubmit="return false;" class="mt-6 space-y-4">
+      <!-- Action & Onsubmit completely disable browser form reload -->
+      <form id="loginForm" action="javascript:void(0);" onsubmit="return false;" class="mt-6 space-y-4">
         <div>
           <label for="email" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email address</label>
           <input id="email" name="email" type="email" autocomplete="email" required placeholder="name@company.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:border-cyan-500 focus:outline-none transition">
@@ -107,7 +107,6 @@
           </div>
         </div>
 
-        <!-- Button explicitly set to type="button" -->
         <button id="submitBtn" type="button" class="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg shadow-cyan-500/20 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 focus:outline-none transition font-heading uppercase tracking-wider mt-2">
           <span id="btnText">Log In</span>
           <div id="btnSpinner" class="hidden w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
@@ -117,13 +116,26 @@
       <div class="mt-6 text-center">
         <p class="text-xs text-slate-400">
           Don't have an account? 
-          <a href="/signup.html" class="font-bold text-cyan-400 hover:underline">Sign up</a>
+          <a href="./signup.html" class="font-bold text-cyan-400 hover:underline">Sign up</a>
         </p>
       </div>
 
     </div>
   </div>
 
+  <!-- Inline event blocker -->
+  <script>
+    document.getElementById('submitBtn').onclick = function(e) {
+      e.preventDefault();
+      if (window.executeEmailLogin) {
+        window.executeEmailLogin();
+      } else {
+        alert("Scripts are still loading. Please try again in 2 seconds.");
+      }
+    };
+  </script>
+
+  <!-- Firebase Authentication Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
@@ -207,7 +219,7 @@
       }
     }
 
-    async function executeLogin() {
+    window.executeEmailLogin = async function() {
       errorBanner.classList.add('hidden');
 
       const email = emailInput.value.trim();
@@ -238,7 +250,8 @@
         }
 
         await ensureUserDocExists(auth.currentUser);
-        window.location.href = '/dashboard.html';
+        // Relative redirect for GitHub Pages repository compatibility
+        window.location.href = './dashboard.html';
 
       } catch (err) {
         console.error("Login Exception:", err);
@@ -248,19 +261,12 @@
         if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
           cleanMsg = "Invalid email or password.";
         } else if (err.code === 'auth/too-many-requests') {
-          cleanMsg = "Account temporarily locked due to multiple failed attempts. Try again later.";
+          cleanMsg = "Account locked due to multiple failed attempts. Try again later.";
         }
         showError(cleanMsg);
       }
-    }
+    };
 
-    // Attach listener directly to button
-    submitBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      executeLogin();
-    });
-
-    // Google Login
     googleAuthBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       errorBanner.classList.add('hidden');
@@ -269,7 +275,7 @@
       try {
         const result = await signInWithPopup(auth, provider);
         await ensureUserDocExists(result.user);
-        window.location.href = '/dashboard.html';
+        window.location.href = './dashboard.html';
       } catch (err) {
         console.error("Google Auth Exception:", err);
         showError(err.message.replace('Firebase: ', ''));
