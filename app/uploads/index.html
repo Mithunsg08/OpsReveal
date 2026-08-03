@@ -45,7 +45,7 @@
 </head>
 <body class="min-h-screen bg-slate-950 text-slate-100 flex antialiased relative">
 
-  <!-- PROCESSING MODAL OVERLAY (Requirement #1) -->
+  <!-- PROCESSING MODAL OVERLAY -->
   <div id="processingModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex flex-col items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center flex flex-col items-center">
       <div class="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
@@ -103,7 +103,7 @@
       </div>
     </div>
 
-    <!-- Error/Validation Banner -->
+    <!-- Error Banner -->
     <div id="errorBanner" class="hidden my-6 bg-red-950/80 border border-red-800 rounded-2xl p-4 text-red-200 text-xs flex items-center justify-between shadow-lg">
       <div class="flex items-center space-x-3">
         <svg class="w-5 h-5 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -145,7 +145,7 @@
       </div>
     </div>
 
-    <!-- Drag and Drop Upload Area -->
+    <!-- Drag and Drop Area -->
     <div class="mt-6">
       <div id="dropZone" onclick="document.getElementById('fileInput').click()" class="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 bg-slate-900/40 hover:bg-slate-900/80 transition cursor-pointer rounded-2xl p-10 text-center flex flex-col items-center justify-center group">
         <div class="h-14 w-14 rounded-2xl bg-slate-800/80 group-hover:bg-cyan-500/10 flex items-center justify-center text-cyan-400 mb-4 transition border border-slate-700/50 group-hover:border-cyan-500/30">
@@ -186,7 +186,7 @@
       </div>
     </div>
 
-    <!-- Client-side Privacy Notice -->
+    <!-- Confidentiality Guard Notice -->
     <div class="mt-4 px-4 py-3 bg-slate-900/60 border border-slate-800/80 rounded-xl flex items-center justify-between text-xs text-slate-400">
       <div class="flex items-center space-x-2">
         <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -194,7 +194,7 @@
       </div>
     </div>
 
-    <!-- Upload History Table (Requirement #6 - Last 7 Days Only) -->
+    <!-- Upload History Table (Last 7 Days) -->
     <div class="mt-8 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
       <div class="p-6 border-b border-slate-800 flex items-center justify-between">
         <div>
@@ -293,12 +293,10 @@
       XLSX.writeFile(wb, `${type}_header_template.xlsx`);
     };
 
-    // FILE HANDLING & PROCESSING OVERLAY (Requirement #1)
     window.handleFileSelect = function(e) {
       const file = e.target.files[0];
       if (!file) return;
 
-      // Show processing overlay immediately
       document.getElementById('processingModal').classList.remove('hidden');
 
       setTimeout(() => {
@@ -345,7 +343,7 @@
           }
         };
         reader.readAsArrayBuffer(file);
-      }, 300); // Brief delay for render
+      }, 300);
     };
 
     function showError(msg) {
@@ -359,13 +357,11 @@
     }
 
     // -------------------------------------------------------------
-    // GRN REPORT ENGINE (Requirements #2, #3, #4)
+    // GRN REPORT PROCESSING ENGINE
     // -------------------------------------------------------------
     function processGRNReport(rows, fileName) {
       const targetShelfLifePct = parseFloat(document.getElementById('targetShelfLifeInput').value || 60) / 100;
-      const targetMarginPct = parseFloat(document.getElementById('targetMarginInput').value || 20) / 100;
 
-      // PRE-CALCULATE MIN VALUES FOR WHOLE DATA & SAME DAY/MONTH (Fixes Requirement #2: @MINIFS issue)
       const minMarginBySKU = {};
       const minCPBySKU = {};
       const minCPSameDaySKU = {};
@@ -379,17 +375,14 @@
 
         const margin = mrp > 0 ? (mrp - cp) / mrp : 0;
 
-        // Whole Data Min Margin
         if (minMarginBySKU[sku] === undefined || margin < minMarginBySKU[sku]) {
           minMarginBySKU[sku] = margin;
         }
 
-        // Whole Data Min CP
         if (minCPBySKU[sku] === undefined || cp < minCPBySKU[sku]) {
           minCPBySKU[sku] = cp;
         }
 
-        // Same Day/Month Min CP
         const sameDayKey = `${dateVal}_${sku}`;
         if (minCPSameDaySKU[sameDayKey] === undefined || cp < minCPSameDaySKU[sameDayKey]) {
           minCPSameDaySKU[sameDayKey] = cp;
@@ -400,7 +393,14 @@
       let totalLeakages = 0;
       let flaggedExceptionsCount = 0;
 
-      // SEPARATE EXCEPTION SUMMARY ARRAYS (Requirement #4)
+      // DETAILED LEAKAGE TRACKERS FOR CLOUDFLARE BACKEND
+      const leakageBreakdown = {
+        shelfLifeExceptions: { count: 0, leakageValue: 0 },
+        marginLeakages: { count: 0, leakageValue: 0 },
+        cpLeakageWhole: { count: 0, leakageValue: 0 },
+        cpLeakageSameDayMonth: { count: 0, leakageValue: 0 }
+      };
+
       const sheetShelfLife = [];
       const sheetMarginDecrease = [];
       const sheetCPWhole = [];
@@ -420,7 +420,6 @@
         const mfgDateStr = row[8] ? String(row[8]).substring(0, 10) : '';
         const expDateStr = row[9] ? String(row[9]).substring(0, 10) : '';
 
-        // HARD VALUES CALCULATION (Requirement #3)
         const totalGRNVal = cp * qty;
         
         let shelfLifePctVal = "Dates Not Provided";
@@ -461,40 +460,54 @@
         const cpLeakageSameDayVal = (cp - minCPSameDayVal) * qty;
         const cpExceptionSameDayVal = cpLeakageSameDayVal > 0 ? "You Got Charged More" : "Suppliers providing same price for the Sku's";
 
-        // Leakage Summaries Aggregation
         let isFlagged = false;
-        let rowLeakageTotal = 0;
 
+        // Shelf Life Exception
         if (shelfLifeExceptionVal === "Low Shelf life" || shelfLifeExceptionVal === "Expired before receiving") {
           isFlagged = true;
-          rowLeakageTotal += totalGRNVal;
+          totalLeakages += totalGRNVal;
+          leakageBreakdown.shelfLifeExceptions.count++;
+          leakageBreakdown.shelfLifeExceptions.leakageValue += totalGRNVal;
+
           sheetShelfLife.push({
             "Receiving Date": dateVal, "Supplier": supplier, "SKU": sku, "Product": name,
             "Total GRN Value (Leakage)": totalGRNVal, "Expiry Date": expDateStr, "Exception": shelfLifeExceptionVal
           });
         }
 
+        // Margin Decrease Exception
         if (marginExceptionVal === "There is a Margin decrease") {
           isFlagged = true;
-          rowLeakageTotal += marginLeakageVal;
+          totalLeakages += marginLeakageVal;
+          leakageBreakdown.marginLeakages.count++;
+          leakageBreakdown.marginLeakages.leakageValue += marginLeakageVal;
+
           sheetMarginDecrease.push({
             "Receiving Date": dateVal, "Supplier": supplier, "SKU": sku, "Product": name,
             "Margin Leakage Value": marginLeakageVal, "Margin %": (marginPctVal * 100).toFixed(1) + "%", "Exception": marginExceptionVal
           });
         }
 
+        // CP Leakage Whole Data
         if (cpExceptionWholeVal === "You Got Charged More") {
           isFlagged = true;
-          rowLeakageTotal += cpLeakageWholeVal;
+          totalLeakages += cpLeakageWholeVal;
+          leakageBreakdown.cpLeakageWhole.count++;
+          leakageBreakdown.cpLeakageWhole.leakageValue += cpLeakageWholeVal;
+
           sheetCPWhole.push({
             "Receiving Date": dateVal, "Supplier": supplier, "SKU": sku, "Product": name,
             "CP Leakage (Whole)": cpLeakageWholeVal, "Min CP": minCPWholeVal, "Current CP": cp
           });
         }
 
+        // CP Leakage Same Day/Month
         if (cpExceptionSameDayVal === "You Got Charged More") {
           isFlagged = true;
-          rowLeakageTotal += cpLeakageSameDayVal;
+          totalLeakages += cpLeakageSameDayVal;
+          leakageBreakdown.cpLeakageSameDayMonth.count++;
+          leakageBreakdown.cpLeakageSameDayMonth.leakageValue += cpLeakageSameDayVal;
+
           sheetCPSameDayMonth.push({
             "Receiving Date": dateVal, "Supplier": supplier, "SKU": sku, "Product": name,
             "CP Leakage (Same Day/Month)": cpLeakageSameDayVal, "Min CP": minCPSameDayVal, "Current CP": cp
@@ -502,9 +515,7 @@
         }
 
         if (isFlagged) flaggedExceptionsCount++;
-        totalLeakages += rowLeakageTotal;
 
-        // Output Main Row (Values Only)
         outputData.push({
           "receiving_grn_date/month": dateVal,
           "supplier_name": supplier,
@@ -535,7 +546,7 @@
 
       renderMetrics(rows.length, totalLeakages, flaggedExceptionsCount);
 
-      // EXPORT MULTI-SHEET EXCEL (Requirement #4)
+      // Export Multi-sheet Excel
       const wb = XLSX.utils.book_new();
       const wsMain = XLSX.utils.json_to_sheet(outputData);
       wsMain['!cols'] = Array(24).fill({ wch: 22 });
@@ -548,17 +559,29 @@
 
       XLSX.writeFile(wb, `Audited_GRN_Report_${Date.now()}.xlsx`);
 
-      // SAVE SUMMARY TO CLOUDFLARE (Requirement #5)
-      saveSummaryToCloudflare(fileName, rows.length, totalLeakages, flaggedExceptionsCount);
+      // SAVE DETAILED AUDIT DATA TO CLOUDFLARE BACKEND
+      saveDetailedSummaryToCloudflare({
+        reportType: "GRN",
+        fileName: fileName,
+        linesProcessed: rows.length,
+        totalLeakages: totalLeakages,
+        flaggedExceptionsCount: flaggedExceptionsCount,
+        leakageBreakdown: leakageBreakdown
+      });
     }
 
     // -------------------------------------------------------------
-    // SALES REPORT ENGINE
+    // SALES REPORT PROCESSING ENGINE
     // -------------------------------------------------------------
     function processSalesReport(rows, fileName) {
       const outputData = [];
       let totalLeakages = 0;
       let flaggedExceptionsCount = 0;
+
+      const leakageBreakdown = {
+        negativeMarginSales: { count: 0, leakageValue: 0 }
+      };
+
       const sheetNegativeSales = [];
 
       rows.forEach((row) => {
@@ -578,6 +601,10 @@
           const absLeakage = Math.abs(salesLeakageVal);
           totalLeakages += absLeakage;
           flaggedExceptionsCount++;
+
+          leakageBreakdown.negativeMarginSales.count++;
+          leakageBreakdown.negativeMarginSales.leakageValue += absLeakage;
+
           sheetNegativeSales.push({
             "Sales Date": salesDate,
             "SKU": sku,
@@ -609,12 +636,17 @@
 
       XLSX.writeFile(wb, `Audited_Sales_Report_${Date.now()}.xlsx`);
 
-      saveSummaryToCloudflare(fileName, rows.length, totalLeakages, flaggedExceptionsCount);
+      // SAVE DETAILED AUDIT DATA TO CLOUDFLARE BACKEND
+      saveDetailedSummaryToCloudflare({
+        reportType: "Sales",
+        fileName: fileName,
+        linesProcessed: rows.length,
+        totalLeakages: totalLeakages,
+        flaggedExceptionsCount: flaggedExceptionsCount,
+        leakageBreakdown: leakageBreakdown
+      });
     }
 
-    // -------------------------------------------------------------
-    // METRICS & CLOUDFLARE SYNC (Requirements #5 & #6)
-    // -------------------------------------------------------------
     function renderMetrics(lines, leakages, exceptions) {
       document.getElementById('metricLines').textContent = lines.toLocaleString('en-US');
       document.getElementById('metricLeakage').textContent = '$' + leakages.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -636,18 +668,26 @@
       }
     }
 
-    async function saveSummaryToCloudflare(fileName, lines, leakages, exceptions) {
+    // -------------------------------------------------------------
+    // CLOUDFLARE BACKEND STORAGE (FULL DETAILED PAYLOAD)
+    // -------------------------------------------------------------
+    async function saveDetailedSummaryToCloudflare(auditDetails) {
       if (!currentUser) return;
 
-      const risk = exceptions === 0 ? "None" : exceptions < 10 ? "Low" : exceptions < 50 ? "Medium" : "High";
+      const risk = auditDetails.flaggedExceptionsCount === 0 ? "None" : auditDetails.flaggedExceptionsCount < 10 ? "Low" : auditDetails.flaggedExceptionsCount < 50 ? "Medium" : "High";
 
+      // Rich Payload structure stored in R2
       const payload = {
         userId: currentUser.uid,
+        userEmail: currentUser.email,
         uploadedDate: new Date().toISOString(),
-        fileName: fileName,
-        linesProcessed: lines,
-        totalLeakages: leakages,
-        riskScore: risk
+        fileName: auditDetails.fileName,
+        reportType: auditDetails.reportType,
+        linesProcessed: auditDetails.linesProcessed,
+        flaggedExceptionsCount: auditDetails.flaggedExceptionsCount,
+        totalLeakages: auditDetails.totalLeakages,
+        riskScore: risk,
+        leakagesDetailed: auditDetails.leakageBreakdown
       };
 
       try {
@@ -662,7 +702,6 @@
       }
     }
 
-    // FILTER Upload History to LAST 7 DAYS ONLY (Requirement #6)
     async function fetchUploadHistory(userId) {
       const tbody = document.getElementById('uploadHistoryBody');
       try {
@@ -675,11 +714,9 @@
           return;
         }
 
-        // Calculate 7 days cutoff timestamp
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-        // Filter last 7 days
         const recentHistory = history.filter(item => new Date(item.uploadedDate) >= sevenDaysAgo);
 
         if (recentHistory.length === 0) {
