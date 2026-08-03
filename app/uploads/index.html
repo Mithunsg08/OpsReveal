@@ -245,7 +245,7 @@
     const auth = getAuth(app);
     let currentUser = null;
 
-    const CF_API_URL = "https://opsreveal-worker.preventloss.workers.dev/api/upload-history";
+    const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
 
     onAuthStateChanged(auth, (user) => {
       if (!user) {
