@@ -17,15 +17,37 @@
 </head>
 <body class="min-h-full text-slate-100 bg-slate-950 flex flex-col bg-grid">
 
-  <!-- Header -->
-  <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
+  <!-- Main Navigation Bar -->
+  <header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-xl sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <div class="flex items-center space-x-3">
-        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-lg text-slate-950 shadow-md shadow-cyan-500/20">
-          O
-        </div>
-        <span class="text-xl font-bold text-white font-heading">OpsReveal Engine</span>
+      
+      <!-- Brand Logo & Main Navigation -->
+      <div class="flex items-center space-x-8">
+        <a href="/app/dashboard" class="flex items-center space-x-3">
+          <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-lg text-slate-950 shadow-md shadow-cyan-500/20">
+            O
+          </div>
+          <span class="text-xl font-bold text-white font-heading">OpsReveal</span>
+        </a>
+
+        <!-- Global Navigation Menu -->
+        <nav class="hidden md:flex items-center space-x-1">
+          <a href="/app/dashboard" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span>Dashboard</span>
+          </a>
+          <a href="/app/uploads" class="px-3 py-2 rounded-lg text-xs font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>Upload Reports</span>
+          </a>
+          <a href="/app/settings" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span>Settings</span>
+          </a>
+        </nav>
       </div>
+
+      <!-- User Badge -->
       <div id="userBadge" class="text-xs text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full flex items-center">
         <span class="w-2 h-2 rounded-full bg-amber-400 mr-2"></span> Initializing...
       </div>
@@ -34,42 +56,42 @@
 
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
     
-    <!-- Title & Navigation Bar -->
+    <!-- Title Section -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
       <div>
         <h1 class="text-2xl font-extrabold text-white font-heading">Upload Reports</h1>
-        <p class="text-xs text-slate-400 mt-1">Select a report type, download template headers, and audit file leakages.</p>
+        <p class="text-xs text-slate-400 mt-1">Select your upload category, download header templates, and audit leakages.</p>
       </div>
       <div class="text-xs text-slate-500 font-mono bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
         Route: /app/uploads
       </div>
     </div>
 
-    <!-- Upload Selection Controls -->
+    <!-- Controls Panel -->
     <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        <!-- Report Type Selection Dropdown -->
+        <!-- Type Selection Dropdown -->
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-2">Type of Upload</label>
-          <select id="reportTypeSelect" onchange="handleReportTypeChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-semibold text-cyan-400 focus:border-cyan-500 outline-none">
-            <option value="grn">Receiving / GRN Report</option>
+          <select id="reportTypeSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-semibold text-cyan-400 focus:border-cyan-500 outline-none">
+            <option value="grn" selected>Receiving / GRN Report</option>
             <option value="sales">Sales Report</option>
             <option value="writeoff">WriteOff Report</option>
           </select>
         </div>
 
-        <!-- Download Template Action -->
+        <!-- Download Template Button -->
         <div class="flex flex-col justify-end">
-          <label class="block text-xs font-semibold text-slate-300 mb-2">Template Standard</label>
-          <button id="downloadTemplateBtn" onclick="downloadTemplate()" class="w-full bg-slate-800 hover:bg-slate-700 text-cyan-400 font-semibold px-4 py-3 rounded-xl border border-slate-700/60 text-sm flex items-center justify-center space-x-2 transition">
+          <label class="block text-xs font-semibold text-slate-300 mb-2">Template Download Standard</label>
+          <button id="downloadTemplateBtn" type="button" class="w-full bg-slate-800 hover:bg-slate-700 text-cyan-400 font-semibold px-4 py-3 rounded-xl border border-slate-700/60 text-sm flex items-center justify-center space-x-2 transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             <span id="templateBtnText">Download Receiving/GRN Header Template</span>
           </button>
         </div>
       </div>
 
-      <!-- Threshold Controls (Visible for GRN) -->
+      <!-- Threshold Controls (GRN specific) -->
       <div id="grnThresholds" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800/60">
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-1">Min Target Shelf Life % (Default: 60%)</label>
@@ -82,9 +104,9 @@
       </div>
     </div>
 
-    <!-- Drag & Drop Upload Zone -->
+    <!-- Active File Drop Container -->
     <div id="uploadContainer" class="rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/40 p-8 text-center hover:border-cyan-500/50 transition">
-      <input type="file" id="fileInput" accept=".csv, .xlsx" class="hidden" onchange="processFile(event)">
+      <input type="file" id="fileInput" accept=".csv, .xlsx" class="hidden">
       
       <!-- WriteOff Coming Soon Placeholder -->
       <div id="writeoffPlaceholder" class="hidden space-y-3 py-6">
@@ -93,16 +115,16 @@
         <p class="text-xs text-slate-400 max-w-md mx-auto">WriteOff calculations and leakage tracking algorithms are currently under active development.</p>
       </div>
 
-      <!-- Active File Drop Container -->
+      <!-- Active Drop Zone Content -->
       <div id="dropZoneContent" class="max-w-md mx-auto space-y-3">
         <div class="h-12 w-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mx-auto flex items-center justify-center">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
         </div>
         <div>
-          <button onclick="document.getElementById('fileInput').click()" class="text-cyan-400 font-bold text-sm hover:underline">Select CSV or Excel File</button>
+          <button id="selectFileBtn" type="button" class="text-cyan-400 font-bold text-sm hover:underline">Select CSV or Excel File</button>
           <span class="text-xs text-slate-400"> or drag and drop</span>
         </div>
-        <p id="schemaNotice" class="text-[11px] text-slate-500">Must strictly match the designated header schema.</p>
+        <p class="text-[11px] text-slate-500">Must strictly match the designated header schema.</p>
       </div>
 
       <!-- Processing Loader -->
@@ -110,7 +132,7 @@
         <div class="w-full bg-slate-950 rounded-full h-2 border border-slate-800 overflow-hidden">
           <div class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full w-full animate-pulse"></div>
         </div>
-        <span class="text-[11px] text-cyan-400 font-semibold block">Validating Schema, Executing Formulas & Generating Multi-Tab Excel...</span>
+        <span class="text-[11px] text-cyan-400 font-semibold block">Validating Schema & Executing Audit Engine...</span>
       </div>
     </div>
 
@@ -118,12 +140,12 @@
     <div id="errorBanner" class="hidden bg-red-950/60 border border-red-800/80 rounded-2xl p-4 text-red-200 text-xs flex items-start space-x-3">
       <svg class="w-5 h-5 text-red-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       <div>
-        <h4 class="font-bold text-red-400 mb-0.5">Invalid File Format / Schema Mismatch</h4>
-        <p id="errorMessage">The uploaded file does not match the required schema headers.</p>
+        <h4 class="font-bold text-red-400 mb-0.5">Schema Validation Error</h4>
+        <p id="errorMessage">The uploaded file does not match the required column headers.</p>
       </div>
     </div>
 
-    <!-- Metrics Cards Deck -->
+    <!-- Dashboard Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
         <div class="text-xs font-semibold text-slate-400">Lines Uploaded</div>
@@ -155,7 +177,7 @@
       <div class="p-5 border-b border-slate-800 flex items-center justify-between">
         <div>
           <h3 class="text-base font-bold text-white font-heading">Upload History</h3>
-          <p class="text-xs text-slate-400">Archived summaries and downloads stored in Cloudflare R2.</p>
+          <p class="text-xs text-slate-400">Archived summaries and report downloads stored in Cloudflare R2.</p>
         </div>
       </div>
 
@@ -201,16 +223,7 @@
     const auth = getAuth(app);
     let currentUser = null;
 
-    // Formatting Utilities (US Standards)
-    const fmtCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
-    const fmtPercent = (val) => `${(parseFloat(val || 0) * 100).toFixed(1)}%`;
-    const formatDate = (val) => {
-      if (!val) return "";
-      const d = new Date(val);
-      return isNaN(d.getTime()) ? String(val) : d.toISOString().slice(0, 10);
-    };
-
-    // Expected Schemas
+    // Standardized Schemas for Downloader and Validation Engine
     const SCHEMAS = {
       grn: [
         "receiving_grn_date/month", "supplier_name", "product_sku", "product_name",
@@ -225,6 +238,28 @@
       ]
     };
 
+    const fmtCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
+    const formatDate = (val) => {
+      if (!val) return "";
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? String(val) : d.toISOString().slice(0, 10);
+    };
+
+    // Attach Event Listeners
+    document.addEventListener("DOMContentLoaded", () => {
+      const selectEl = document.getElementById('reportTypeSelect');
+      const downloadBtn = document.getElementById('downloadTemplateBtn');
+      const selectFileBtn = document.getElementById('selectFileBtn');
+      const fileInput = document.getElementById('fileInput');
+
+      selectEl.addEventListener('change', handleReportTypeChange);
+      downloadBtn.addEventListener('click', downloadTemplate);
+      selectFileBtn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', processFile);
+
+      handleReportTypeChange();
+    });
+
     onAuthStateChanged(auth, (user) => {
       if (user) {
         currentUser = user;
@@ -238,7 +273,7 @@
       }
     });
 
-    window.handleReportTypeChange = function() {
+    function handleReportTypeChange() {
       const type = document.getElementById('reportTypeSelect').value;
       const btnText = document.getElementById('templateBtnText');
       const grnThresholds = document.getElementById('grnThresholds');
@@ -264,23 +299,27 @@
         dropZoneContent.classList.add('hidden');
         writeoffPlaceholder.classList.remove('hidden');
       }
-    };
+    }
 
-    window.downloadTemplate = function() {
+    function downloadTemplate() {
       const type = document.getElementById('reportTypeSelect').value;
       const headers = SCHEMAS[type];
       
+      if (!headers) {
+        alert("Select a valid report type.");
+        return;
+      }
+
       const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet([headers]); // Header row only without example rows
+      const ws = XLSX.utils.aoa_to_sheet([headers]); // Strictly headers only (no example rows)
       
-      // Dynamic column width calculation
-      ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length + 5, 15) }));
+      ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length + 5, 18) }));
 
       XLSX.utils.book_append_sheet(wb, ws, "Template");
       XLSX.writeFile(wb, `${type}_header_template.xlsx`);
-    };
+    }
 
-    window.processFile = async function(event) {
+    async function processFile(event) {
       const file = event.target.files[0];
       const type = document.getElementById('reportTypeSelect').value;
       const errorBanner = document.getElementById('errorBanner');
@@ -303,19 +342,15 @@
           const workbook = XLSX.read(data, { type: 'array', cellDates: true });
           const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { raw: false });
 
-          if (rawData.length === 0) throw new Error("The uploaded file contains no data rows.");
+          if (rawData.length === 0) throw new Error("The uploaded file contains no rows.");
 
-          // Header Schema Validation
           const fileHeaders = Object.keys(rawData[0]).map(h => h.trim().toLowerCase());
           const requiredHeaders = SCHEMAS[type];
           
           const missingHeaders = requiredHeaders.filter(req => !fileHeaders.includes(req.toLowerCase()));
           if (missingHeaders.length > 0) {
-            throw new Error(`Uploaded file is not in the correct format for ${type.toUpperCase()}. Missing required columns: [${missingHeaders.join(", ")}].`);
+            throw new Error(`Uploaded file is not in the correct format for ${type.toUpperCase()}. Missing headers: [${missingHeaders.join(", ")}].`);
           }
-
-          // Upload raw file copy to Cloudflare R2
-          await uploadRawFileToR2(file);
 
           if (type === 'grn') {
             const shelfThreshold = (parseFloat(document.getElementById('shelfLifeThreshold').value) || 60) / 100;
@@ -328,49 +363,21 @@
         } catch (err) {
           errorMessage.textContent = err.message;
           errorBanner.classList.remove('hidden');
-        } font-semibold {
+        } finally {
           document.getElementById('processingLoader').classList.add('hidden');
           event.target.value = '';
         }
       };
       reader.readAsArrayBuffer(file);
-    };
-
-    async function uploadRawFileToR2(file) {
-      try {
-        const token = await currentUser.getIdToken();
-        const formData = new FormData();
-        formData.append("file", file);
-
-        await fetch(`${WORKER_URL}/api/upload/file`, {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "X-User-Id": currentUser.uid
-          },
-          body: formData
-        });
-      } catch (err) {
-        console.error("R2 raw backup upload failed:", err);
-      }
     }
 
-    // ----------------------------------------------------
-    // GRN PROCESSING ENGINE
-    // ----------------------------------------------------
     async function processGRNFile(data, originalFileName, shelfThreshold, marginThreshold) {
       const outWorkbook = XLSX.utils.book_new();
-      
       const processedRows = [];
-      const sheet1Data = []; // Shelf Life Exceptions
-      const sheet2Data = []; // Margin Exceptions
-      const sheet3Data = []; // CP Leakage Whole Data
-      const sheet4Data = []; // CP Leakage Same Day/Month
+      const sheet1Data = [], sheet2Data = [], sheet3Data = [], sheet4Data = [];
 
-      let totalLeakage = 0;
-      let totalExceptions = 0;
+      let totalLeakage = 0, totalExceptions = 0;
 
-      // Min CP Lookups for JS Calculations
       const minCPMap = {};
       data.forEach(row => {
         const sku = row.product_sku;
@@ -386,7 +393,7 @@
       });
 
       data.forEach((row, i) => {
-        const idx = i + 2; 
+        const idx = i + 2;
         const dateStr = formatDate(row['receiving_grn_date/month']);
         const cp = parseFloat(row.receiving_cp) || 0;
         const mrp = parseFloat(row.receiving_mrp) || 0;
@@ -395,21 +402,6 @@
         const expStr = formatDate(row.expiry_date);
 
         const totalGRNValue = cp * qty;
-
-        // Formulated Fields as defined in prompt specifications
-        const shelfLifePercentFormula = `=IF(J${idx}="","Dates Not Provided",IF(J${idx}<A${idx},"Expired before receving",IF(I${idx}="","Dates Not Provided",IF(J${idx}<I${idx},"Data is wrong",IFERROR((J${idx}-A${idx})/(J${idx}-I${idx}),"")))))`;
-        const shelfLifeExFormula = `=IF(L${idx}="Dates Not Provided","Dates Not Provided",IF(L${idx}="Data is wrong","Data is wrong",IF(L${idx}="Expired before receving","Expired before receving",IF(L${idx}<=0,"Expired before receving",IF(L${idx}<${shelfThreshold},"Low Shelf life","Ok")))))`;
-        const marginPercentFormula = `=(G${idx}-F${idx})/G${idx}`;
-        const minMarginFormula = `=MINIFS(N:N,C:C,C${idx})`;
-        const diffMarginFormula = `=N${idx}-O${idx}`;
-        const marginExFormula = `=IF(P${idx}>=0,"No Exception","There is a Margin decrease")`;
-        const marginLeakageFormula = `=IF(P${idx}=0,0,(F${idx}*P${idx})*H${idx})`;
-        const minCPWholeFormula = `=MINIFS(F:F,C:C,C${idx})`;
-        const cpLeakageWholeFormula = `=(F${idx}-R${idx})*H${idx}`;
-        const cpExWholeFormula = `=IF(S${idx}>0,"You Got Charged More","Suppliers providing same price for the Sku's")`;
-        const minCPSameDayFormula = `=MINIFS(F:F,A:A,A${idx},C:C,C${idx})`;
-        const cpLeakageSameDayFormula = `=IF(U${idx}=0,0,(F${idx}-U${idx})*H${idx})`;
-        const cpExSameDayFormula = `=IF(V${idx}>0,"You Got Charged More","Suppliers providing same price for the Sku's")`;
 
         processedRows.push({
           "receiving_grn_date/month": dateStr,
@@ -423,32 +415,26 @@
           "manufacturing_date": mfgStr,
           "expiry_date": expStr,
           "Total GRN Value": totalGRNValue,
-          "Shelf Life %": shelfLifePercentFormula,
-          "Shelf Life Exception": shelfLifeExFormula,
-          "Margin %": marginPercentFormula,
-          "Min margin": minMarginFormula,
-          "Diff margin": diffMarginFormula,
-          "Margin Exception": marginExFormula,
-          "Margin Leakage Value": marginLeakageFormula,
-          "Min CP(whole data)": minCPWholeFormula,
-          "CP Leakage (whole data)": cpLeakageWholeFormula,
-          "CP Exception (whole data)": cpExWholeFormula,
-          "Min CP(Same day/Same month)": minCPSameDayFormula,
-          "CP Leakage (Same day/Same month)": cpLeakageSameDayFormula,
-          "CP Exception (Same day/Same month)": cpExSameDayFormula
+          "Shelf Life %": `=IF(J${idx}="","Dates Not Provided",IF(J${idx}<A${idx},"Expired before receving",IF(I${idx}="","Dates Not Provided",IF(J${idx}<I${idx},"Data is wrong",IFERROR((J${idx}-A${idx})/(J${idx}-I${idx}),"")))))`,
+          "Shelf Life Exception": `=IF(L${idx}="Dates Not Provided","Dates Not Provided",IF(L${idx}="Data is wrong","Data is wrong",IF(L${idx}="Expired before receving","Expired before receving",IF(L${idx}<=0,"Expired before receving",IF(L${idx}<${shelfThreshold},"Low Shelf life","Ok")))))`,
+          "Margin %": `=(G${idx}-F${idx})/G${idx}`,
+          "Min margin": `=MINIFS(N:N,C:C,C${idx})`,
+          "Diff margin": `=N${idx}-O${idx}`,
+          "Margin Exception": `=IF(P${idx}>=0,"No Exception","There is a Margin decrease")`,
+          "Margin Leakage Value": `=IF(P${idx}=0,0,(F${idx}*P${idx})*H${idx})`,
+          "Min CP(whole data)": `=MINIFS(F:F,C:C,C${idx})`,
+          "CP Leakage (whole data)": `=(F${idx}-R${idx})*H${idx}`,
+          "CP Exception (whole data)": `=IF(S${idx}>0,"You Got Charged More","Suppliers providing same price for the Sku's")`,
+          "Min CP(Same day/Same month)": `=MINIFS(F:F,A:A,A${idx},C:C,C${idx})`,
+          "CP Leakage (Same day/Same month)": `=IF(U${idx}=0,0,(F${idx}-U${idx})*H${idx})`,
+          "CP Exception (Same day/Same month)": `=IF(V${idx}>0,"You Got Charged More","Suppliers providing same price for the Sku's")`
         });
 
-        // Rule Evaluation
         let shelfLifeEx = "Ok";
         if (expStr && mfgStr && dateStr) {
           const recD = new Date(dateStr), mfgD = new Date(mfgStr), expD = new Date(expStr);
           if (expD < recD) shelfLifeEx = "Expired before receving";
-          else if (expD > mfgD) {
-            const pct = (expD - recD) / (expD - mfgD);
-            if (pct < shelfThreshold) shelfLifeEx = "Low Shelf life";
-          }
-        } else {
-          shelfLifeEx = "Dates Not Provided";
+          else if (expD > mfgD && ((expD - recD) / (expD - mfgD)) < shelfThreshold) shelfLifeEx = "Low Shelf life";
         }
 
         const marginPct = mrp > 0 ? (mrp - cp) / mrp : 0;
@@ -457,88 +443,42 @@
         const minCPSameDay = minCPSameDayMap[`${dateStr}_${row.product_sku}`] || cp;
         const cpLeakageSameDay = (cp - minCPSameDay) * qty;
 
-        // Sheet 1: Shelf Life Exceptions
         if (shelfLifeEx === "Low Shelf life" || shelfLifeEx === "Expired before receving") {
-          sheet1Data.push({
-            "SKU": row.product_sku,
-            "Product Name": row.product_name,
-            "Receiving Date": dateStr,
-            "Expiry Date": expStr,
-            "Shelf Life Exception": shelfLifeEx,
-            "Total GRN Value (Leakage)": totalGRNValue
-          });
+          sheet1Data.push({ "SKU": row.product_sku, "Product Name": row.product_name, "Receiving Date": dateStr, "Expiry Date": expStr, "Shelf Life Exception": shelfLifeEx, "Total GRN Value (Leakage)": totalGRNValue });
           totalLeakage += totalGRNValue;
           totalExceptions++;
         }
 
-        // Sheet 2: Margin Exceptions
         if (marginPct < marginThreshold) {
           const marginLeakage = (cp * (marginThreshold - marginPct)) * qty;
-          sheet2Data.push({
-            "SKU": row.product_sku,
-            "Product Name": row.product_name,
-            "Supplier": row.supplier_name,
-            "Margin %": fmtPercent(marginPct),
-            "Margin Exception": "There is a Margin decrease",
-            "Margin Leakage Value": marginLeakage
-          });
+          sheet2Data.push({ "SKU": row.product_sku, "Product Name": row.product_name, "Supplier": row.supplier_name, "Margin %": `${(marginPct*100).toFixed(1)}%`, "Margin Exception": "There is a Margin decrease", "Margin Leakage Value": marginLeakage });
           totalLeakage += Math.max(0, marginLeakage);
           totalExceptions++;
         }
 
-        // Sheet 3: CP Exception Whole Data
         if (cpLeakageWhole > 0) {
-          sheet3Data.push({
-            "SKU": row.product_sku,
-            "Product Name": row.product_name,
-            "Supplier": row.supplier_name,
-            "Receiving CP": cp,
-            "Min CP (Whole Data)": minCPWhole,
-            "CP Exception": "You Got Charged More",
-            "CP Leakage (whole data)": cpLeakageWhole
-          });
+          sheet3Data.push({ "SKU": row.product_sku, "Product Name": row.product_name, "Supplier": row.supplier_name, "Receiving CP": cp, "Min CP (Whole Data)": minCPWhole, "CP Exception": "You Got Charged More", "CP Leakage (whole data)": cpLeakageWhole });
           totalLeakage += cpLeakageWhole;
           totalExceptions++;
         }
 
-        // Sheet 4: CP Exception Same Day / Same Month Data
         if (cpLeakageSameDay > 0) {
-          sheet4Data.push({
-            "SKU": row.product_sku,
-            "Product Name": row.product_name,
-            "Date": dateStr,
-            "Receiving CP": cp,
-            "Min CP (Same Day)": minCPSameDay,
-            "CP Exception": "You Got Charged More",
-            "CP Leakage (Same day/same month data)": cpLeakageSameDay
-          });
+          sheet4Data.push({ "SKU": row.product_sku, "Product Name": row.product_name, "Date": dateStr, "Receiving CP": cp, "Min CP (Same Day)": minCPSameDay, "CP Exception": "You Got Charged More", "CP Leakage (Same day/same month data)": cpLeakageSameDay });
           totalExceptions++;
         }
       });
 
-      // Sheet Construction with Width Adjustments
       const createStyledSheet = (jsonData) => {
         const ws = XLSX.utils.json_to_sheet(jsonData);
-        if (jsonData.length > 0) {
-          const keys = Object.keys(jsonData[0]);
-          ws['!cols'] = keys.map(k => ({ wch: Math.max(k.length + 4, 18) }));
-        }
+        if (jsonData.length > 0) ws['!cols'] = Object.keys(jsonData[0]).map(k => ({ wch: Math.max(k.length + 4, 18) }));
         return ws;
       };
 
-      outWorkbook.SheetNames.push("Full GRN Audit");
+      outWorkbook.SheetNames.push("Full GRN Audit", "Shelf Life Summary", "Margin Decrease Summary", "CP Overcharge (Whole Data)", "CP Overcharge (Same Day)");
       outWorkbook.Sheets["Full GRN Audit"] = createStyledSheet(processedRows);
-
-      outWorkbook.SheetNames.push("Shelf Life Summary");
       outWorkbook.Sheets["Shelf Life Summary"] = createStyledSheet(sheet1Data.length ? sheet1Data : [{ "Status": "No Shelf Life Exceptions Found" }]);
-
-      outWorkbook.SheetNames.push("Margin Decrease Summary");
       outWorkbook.Sheets["Margin Decrease Summary"] = createStyledSheet(sheet2Data.length ? sheet2Data : [{ "Status": "No Margin Decreases Found" }]);
-
-      outWorkbook.SheetNames.push("CP Overcharge (Whole Data)");
       outWorkbook.Sheets["CP Overcharge (Whole Data)"] = createStyledSheet(sheet3Data.length ? sheet3Data : [{ "Status": "No CP Overcharge Found (Whole Data)" }]);
-
-      outWorkbook.SheetNames.push("CP Overcharge (Same Day)");
       outWorkbook.Sheets["CP Overcharge (Same Day)"] = createStyledSheet(sheet4Data.length ? sheet4Data : [{ "Status": "No CP Overcharge Found (Same Day)" }]);
 
       const outFileName = `Audited_GRN_${new Date().toISOString().slice(0,10)}.xlsx`;
@@ -547,16 +487,12 @@
       await syncAuditToCloudflare(outFileName, data.length, totalLeakage, totalExceptions);
     }
 
-    // ----------------------------------------------------
-    // SALES PROCESSING ENGINE
-    // ----------------------------------------------------
     async function processSalesFile(data, originalFileName) {
       const outWorkbook = XLSX.utils.book_new();
       const processedRows = [];
       const summaryRows = [];
 
-      let totalLeakage = 0;
-      let totalExceptions = 0;
+      let totalLeakage = 0, totalExceptions = 0;
 
       data.forEach((row, i) => {
         const idx = i + 2;
@@ -565,11 +501,6 @@
         const cp = parseFloat(row.cp) || 0;
         const salesPrice = parseFloat(row.sales_price) || 0;
 
-        const salesLeakagesFormula = `=(F${idx}-E${idx})*D${idx}`;
-        const salesExceptionFormula = `=IF(G${idx}>0,"No Exception","Sold in Negative margin")`;
-
-        const leakageVal = (salesPrice - cp) * soldQty;
-
         processedRows.push({
           "sales_date": dateStr,
           "product_sku": row.product_sku || "",
@@ -577,12 +508,12 @@
           "sold_qty": soldQty,
           "cp": cp,
           "sales_price": salesPrice,
-          "Sales Leakages": salesLeakagesFormula,
-          "Sales Exception": salesExceptionFormula
+          "Sales Leakages": `=(F${idx}-E${idx})*D${idx}`,
+          "Sales Exception": `=IF(G${idx}>0,"No Exception","Sold in Negative margin")`
         });
 
         if (salesPrice < cp) {
-          const absLeakage = Math.abs(leakageVal);
+          const absLeakage = Math.abs((salesPrice - cp) * soldQty);
           summaryRows.push({
             "sales_date": dateStr,
             "product_sku": row.product_sku,
@@ -600,17 +531,12 @@
 
       const createStyledSheet = (jsonData) => {
         const ws = XLSX.utils.json_to_sheet(jsonData);
-        if (jsonData.length > 0) {
-          const keys = Object.keys(jsonData[0]);
-          ws['!cols'] = keys.map(k => ({ wch: Math.max(k.length + 4, 18) }));
-        }
+        if (jsonData.length > 0) ws['!cols'] = Object.keys(jsonData[0]).map(k => ({ wch: Math.max(k.length + 4, 18) }));
         return ws;
       };
 
-      outWorkbook.SheetNames.push("Sales Audit Report");
+      outWorkbook.SheetNames.push("Sales Audit Report", "Negative Margin Summary");
       outWorkbook.Sheets["Sales Audit Report"] = createStyledSheet(processedRows);
-
-      outWorkbook.SheetNames.push("Negative Margin Summary");
       outWorkbook.Sheets["Negative Margin Summary"] = createStyledSheet(summaryRows.length ? summaryRows : [{ "Status": "No Negative Margin Sales Detected" }]);
 
       const outFileName = `Audited_Sales_${new Date().toISOString().slice(0,10)}.xlsx`;
@@ -641,46 +567,14 @@
             'Authorization': `Bearer ${token}`,
             'X-User-Id': currentUser.uid
           },
-          body: JSON.stringify({
-            fileName,
-            totalRows,
-            totalLeakage,
-            totalExceptions,
-            riskScore
-          })
+          body: JSON.stringify({ fileName, totalRows, totalLeakage, totalExceptions, riskScore })
         });
 
         loadHistory();
       } catch (err) {
-        console.error("Cloudflare R2 Sync Failed:", err);
+        console.error("Cloudflare Sync Error:", err);
       }
     }
-
-    window.downloadFile = async function(fileKey, fileName) {
-      try {
-        const token = await currentUser.getIdToken();
-        const response = await fetch(`${WORKER_URL}/api/file/download?key=${encodeURIComponent(fileKey)}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-User-Id': currentUser.uid
-          }
-        });
-
-        if (!response.ok) throw new Error("Download failed");
-
-        const blob = await response.blob();
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = downloadUrl;
-        a.download = fileName || "downloaded_file";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(downloadUrl);
-      } catch (err) {
-        alert("Error downloading file: " + err.message);
-      }
-    };
 
     async function loadHistory() {
       if (!currentUser) return;
@@ -689,15 +583,12 @@
       try {
         const token = await currentUser.getIdToken();
         const res = await fetch(`${WORKER_URL}/api/upload/history`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'X-User-Id': currentUser.uid
-          }
+          headers: { 'Authorization': `Bearer ${token}`, 'X-User-Id': currentUser.uid }
         });
         const data = await res.json();
 
         if (!data.success || !data.history || data.history.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-6 text-center text-slate-500">No upload history records found in Cloudflare R2.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-6 text-center text-slate-500">No upload history records found.</td></tr>`;
           return;
         }
 
@@ -715,7 +606,7 @@
               }">${item.riskScore || 'Low Risk'}</span>
             </td>
             <td class="px-6 py-4 text-right">
-              <button onclick="downloadFile('${item.key}', '${item.fileName}')" class="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold transition">
+              <button onclick="window.downloadFile('${item.key}', '${item.fileName}')" class="inline-flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 text-xs font-semibold transition">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 <span>Download</span>
               </button>
