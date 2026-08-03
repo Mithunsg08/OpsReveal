@@ -17,7 +17,7 @@
       <p class="text-xs text-slate-400">Login to OpsReveal</p>
     </div>
 
-    <!-- Error/Status Box -->
+    <!-- Error Box -->
     <div id="error-box" class="hidden p-4 rounded-xl text-xs font-semibold bg-rose-950/80 border border-rose-800 text-rose-300"></div>
 
     <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4 text-xs">
@@ -62,35 +62,16 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { auth, db, ensureUserProfile } from '/app/auth-guard.js';
     import { 
-      getAuth, 
       signInWithEmailAndPassword, 
       sendEmailVerification, 
       GoogleAuthProvider, 
       signInWithPopup 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { 
-      getFirestore, 
-      doc, 
-      getDoc 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
-      authDomain: "opsreveal.firebaseapp.com",
-      projectId: "opsreveal",
-      storageBucket: "opsreveal.firebasestorage.app",
-      messagingSenderId: "890870101711",
-      appId: "1:890870101711:web:4266246996091ea56c69ba",
-      measurementId: "G-LCWJSW9SKY"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    // Password Eye Toggle
+    // Toggle Password Visibility
     window.togglePasswordVisibility = () => {
       const pwdInput = document.getElementById('password');
       const eyeIcon = document.getElementById('eye-icon');
@@ -103,7 +84,7 @@
       }
     };
 
-    // Email/Password Login
+    // Handle Email/Password Login
     window.handleLogin = async (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value;
@@ -118,24 +99,20 @@
         const result = await signInWithEmailAndPassword(auth, email, password);
         await result.user.reload();
 
-        // 1. Email Verification Check
+        // Check Email Verification
         if (!result.user.emailVerified) {
           await sendEmailVerification(result.user, {
             url: `${window.location.origin}/login.html`
           });
-          showError("Your email is not verified. We sent another verification link to your email.");
+          showError("Your email is not verified. A new verification link has been sent to your inbox.");
           return;
         }
 
-        // 2. Firestore Profile Check
-        const userDoc = await getDoc(doc(db, "users", result.user.uid));
-        if (!userDoc.exists()) {
-          showError("User profile not found. Please sign up first.");
-          return;
-        }
+        // Provision User Profile if absent
+        await ensureUserProfile(result.user);
 
-        // 3. Navigation
-        window.location.href = '/app/dashboard.html';
+        // Redirect to Dashboard Area
+        window.location.replace('/app/dashboard');
       } catch (err) {
         showError(err.message);
       } finally {
@@ -144,22 +121,21 @@
       }
     };
 
-    // Google Login
+    // Handle Google SSO Login
     window.handleGoogleLogin = async () => {
       try {
         hideError();
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(auth, provider);
 
-        const userRef = doc(db, "users", result.user.uid);
-        const existingUser = await getDoc(userRef);
+        // Provision Profile on first Google Authentication
+        await ensureUserProfile(result.user, {
+          fullName: result.user.displayName,
+          companyName: `${result.user.displayName || 'Google User'}'s Enterprise`
+        });
 
-        if (!existingUser.exists()) {
-          window.location.href = '/signup.html';
-          return;
-        }
-
-        window.location.href = '/app/dashboard.html';
+        // Redirect to Dashboard Area
+        window.location.replace('/app/dashboard');
       } catch (err) {
         showError(err.message);
       }
