@@ -238,6 +238,7 @@
       ]
     };
 
+    const sanitizeHeader = (str) => String(str || '').trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
     const fmtCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
     const formatDate = (val) => {
       if (!val) return "";
@@ -311,7 +312,7 @@
       }
 
       const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.aoa_to_sheet([headers]); // Strictly headers only (no example rows)
+      const ws = XLSX.utils.aoa_to_sheet([headers]);
       
       ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length + 5, 18) }));
 
@@ -339,17 +340,32 @@
       reader.onload = async function(e) {
         try {
           const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-          const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { raw: false });
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true, dense: true });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
 
-          if (rawData.length === 0) throw new Error("The uploaded file contains no rows.");
-
-          const fileHeaders = Object.keys(rawData[0]).map(h => h.trim().toLowerCase());
-          const requiredHeaders = SCHEMAS[type];
+          // FAST HEADER VALIDATION (<100ms)
+          const headerRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, range: 0 });
           
-          const missingHeaders = requiredHeaders.filter(req => !fileHeaders.includes(req.toLowerCase()));
+          if (!headerRows || headerRows.length === 0 || !headerRows[0]) {
+            throw new Error("The uploaded file is empty or missing header rows.");
+          }
+
+          const rawFileHeaders = headerRows[0].map(sanitizeHeader);
+          const requiredHeaders = SCHEMAS[type].map(sanitizeHeader);
+
+          const missingHeaders = SCHEMAS[type].filter((req, idx) => {
+            const sanitizedReq = requiredHeaders[idx];
+            return !rawFileHeaders.includes(sanitizedReq);
+          });
+
           if (missingHeaders.length > 0) {
-            throw new Error(`Uploaded file is not in the correct format for ${type.toUpperCase()}. Missing headers: [${missingHeaders.join(", ")}].`);
+            throw new Error(`Uploaded file format invalid for ${type.toUpperCase()}. Missing required column headers: [${missingHeaders.join(", ")}].`);
+          }
+
+          // PARSE FULL DATA AFTER FAST VALIDATION PASSES
+          const rawData = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
+          if (rawData.length === 0) {
+            throw new Error("The uploaded file contains headers but zero data rows.");
           }
 
           if (type === 'grn') {
