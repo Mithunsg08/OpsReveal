@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Audit Data Upload | OpsReveal</title>
+  <title>OpsReveal Audit & Processing Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
@@ -16,91 +17,107 @@
 </head>
 <body class="min-h-full text-slate-100 bg-slate-950 flex flex-col bg-grid">
 
-  <!-- Navigation Header -->
+  <!-- Header Navigation -->
   <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <a href="/dashboard" class="flex items-center space-x-3">
+      <div class="flex items-center space-x-3">
         <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-lg text-slate-950 shadow-md shadow-cyan-500/20">
           O
         </div>
-        <span class="text-xl font-bold text-white font-heading">OpsReveal</span>
-      </a>
-      <div class="flex items-center space-x-4">
-        <span id="userBadge" class="text-xs text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full flex items-center">
-          <span class="w-2 h-2 rounded-full bg-amber-400 mr-2"></span>
-          Authenticating...
-        </span>
+        <span class="text-xl font-bold text-white font-heading">OpsReveal Engine</span>
+      </div>
+      <div id="userBadge" class="text-xs text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full flex items-center">
+        <span class="w-2 h-2 rounded-full bg-amber-400 mr-2"></span> Initializing...
       </div>
     </div>
   </header>
 
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
     
-    <!-- Title & Download Templates -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-6">
-      <div>
-        <h1 class="text-2xl font-extrabold text-white font-heading">Secure Data Ingestion</h1>
-        <p class="text-xs text-slate-400 mt-1">Upload inventory CSV files for client-side audit and secure server backup.</p>
-      </div>
+    <!-- Threshold Control Settings -->
+    <div class="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-sm">
+      <h2 class="text-base font-bold text-white font-heading mb-1">Audit Rule Controls</h2>
+      <p class="text-xs text-slate-400 mb-4">Set required thresholds for flagging low shelf-life or margin exceptions.</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">
+            Min Target Shelf Life % (Default: 60%, Max: 100%)
+          </label>
+          <div class="relative">
+            <input type="number" id="shelfLifeThreshold" value="60" min="1" max="100" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-cyan-400 focus:border-cyan-500 outline-none">
+            <span class="absolute right-4 top-2.5 text-xs text-slate-500 font-bold">%</span>
+          </div>
+        </div>
 
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="text-xs text-slate-400 font-medium mr-1">Download Standard Schemas:</span>
-        <button onclick="downloadTemplate('grn')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs text-cyan-400 font-semibold transition flex items-center">
-          <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          GRN Receiving
-        </button>
-        <button onclick="downloadTemplate('sales')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs text-blue-400 font-semibold transition flex items-center">
-          <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          Sales Log
-        </button>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">
+            Target Profit Margin % (Default: 20%, Max: 99%)
+          </label>
+          <div class="relative">
+            <input type="number" id="marginThreshold" value="20" min="1" max="99" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-emerald-400 focus:border-emerald-500 outline-none">
+            <span class="absolute right-4 top-2.5 text-xs text-slate-500 font-bold">%</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Active Upload Box -->
-    <div class="rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/50 p-8 text-center hover:border-cyan-500/50 transition" id="dropZone">
-      <input type="file" id="fileInput" accept=".csv" class="hidden" onchange="uploadFileToServer(event)">
+    <!-- Drag & Drop Upload Zone -->
+    <div class="rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/40 p-8 text-center hover:border-cyan-500/50 transition" id="dropZone">
+      <input type="file" id="fileInput" accept=".csv, .xlsx" class="hidden" onchange="processFile(event)">
       <div class="max-w-md mx-auto space-y-3">
         <div class="h-12 w-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mx-auto flex items-center justify-center">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
         </div>
         <div>
-          <button onclick="document.getElementById('fileInput').click()" class="text-cyan-400 font-bold text-sm hover:underline">Select CSV File to Upload</button>
+          <button onclick="document.getElementById('fileInput').click()" class="text-cyan-400 font-bold text-sm hover:underline">Select GRN or Sales File</button>
           <span class="text-xs text-slate-400"> or drag and drop</span>
         </div>
-        <p class="text-[11px] text-slate-500">Files are stored securely in Cloudflare R2 tied to your user ID.</p>
+        <p class="text-[11px] text-slate-500">Processes formulas, compiles multi-tab Excel files, and calculates total leakages.</p>
       </div>
-      <!-- Upload Progress Bar -->
-      <div id="uploadProgressContainer" class="hidden max-w-xs mx-auto mt-4">
+
+      <!-- Processing Indicator -->
+      <div id="processingLoader" class="hidden max-w-xs mx-auto mt-4 space-y-2">
         <div class="w-full bg-slate-950 rounded-full h-2 border border-slate-800 overflow-hidden">
-          <div id="uploadProgressBar" class="bg-cyan-500 h-2 rounded-full w-0 transition-all duration-300"></div>
+          <div class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full w-full animate-pulse"></div>
         </div>
-        <span id="uploadProgressText" class="text-[10px] text-slate-400 mt-1 block">Uploading... 0%</span>
+        <span class="text-[11px] text-cyan-400 font-semibold block">Auditing Formulas & Compiling Excel Report...</span>
       </div>
     </div>
 
-    <!-- Filter Controls -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-slate-900 border border-slate-800 p-4 rounded-xl">
-      <div class="flex flex-wrap items-center gap-1.5">
-        <span class="text-xs font-semibold text-slate-400 mr-2">Your Upload History:</span>
-        <button onclick="fetchUserUploads('today')" class="filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Today</button>
-        <button onclick="fetchUserUploads('yesterday')" class="filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Yesterday</button>
-        <button onclick="fetchUserUploads('last7')" class="filter-btn active px-3 py-1 rounded-lg text-xs font-semibold bg-cyan-500 text-slate-950 transition">Last 7 Days</button>
-        <button onclick="fetchUserUploads('last30')" class="filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Last 30 Days</button>
+    <!-- Metrics Card Deck -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="text-xs font-semibold text-slate-400">Total Rows Processed</div>
+        <div id="metricRows" class="text-3xl font-extrabold text-white font-heading mt-2">0</div>
+        <p class="text-[11px] text-slate-500 mt-1">Parsed from CSV source</p>
       </div>
-      <div class="flex items-center space-x-2 text-xs">
-        <input type="date" id="startDate" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300 outline-none">
-        <span class="text-slate-500">to</span>
-        <input type="date" id="endDate" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300 outline-none">
-        <button onclick="fetchUserUploads('custom')" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-3 py-1 rounded-lg transition">Filter</button>
+
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="text-xs font-semibold text-slate-400">Total Identified Leakage</div>
+        <div id="metricLeakage" class="text-3xl font-extrabold text-red-400 font-heading mt-2">$0.00</div>
+        <p class="text-[11px] text-slate-500 mt-1">Combined GRN & Sales risk</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="text-xs font-semibold text-slate-400">Detected Exceptions</div>
+        <div id="metricExceptions" class="text-3xl font-extrabold text-amber-400 font-heading mt-2">0</div>
+        <p class="text-[11px] text-slate-500 mt-1">Flagged for review</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="text-xs font-semibold text-slate-400">Overall Risk Level</div>
+        <div id="metricRisk" class="text-3xl font-extrabold text-emerald-400 font-heading mt-2">None</div>
+        <p class="text-[11px] text-slate-500 mt-1">Based on leakage value</p>
       </div>
     </div>
 
-    <!-- User-Isolated Table -->
+    <!-- History Table -->
     <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
       <div class="p-5 border-b border-slate-800 flex items-center justify-between">
         <div>
-          <h3 class="text-base font-bold text-white font-heading">Your Uploaded Files</h3>
-          <p class="text-xs text-slate-400">Isolated strictly to your user account on Cloudflare R2.</p>
+          <h3 class="text-base font-bold text-white font-heading">Upload & Audit History</h3>
+          <p class="text-xs text-slate-400">Archived audit files synced with Cloudflare R2.</p>
         </div>
       </div>
 
@@ -110,14 +127,15 @@
             <tr>
               <th class="px-6 py-3.5">Uploaded Date</th>
               <th class="px-6 py-3.5">File Name</th>
-              <th class="px-6 py-3.5">Size</th>
-              <th class="px-6 py-3.5">Status</th>
-              <th class="px-6 py-3.5 text-right">Cloudflare R2 Path</th>
+              <th class="px-6 py-3.5">Rows</th>
+              <th class="px-6 py-3.5">Total Leakage</th>
+              <th class="px-6 py-3.5">Risk Level</th>
+              <th class="px-6 py-3.5 text-right">Status</th>
             </tr>
           </thead>
           <tbody id="historyTableBody" class="divide-y divide-slate-800/60 text-slate-300">
             <tr>
-              <td colspan="5" class="px-6 py-8 text-center text-slate-500">Loading your private uploads...</td>
+              <td colspan="6" class="px-6 py-8 text-center text-slate-500">Loading audit history...</td>
             </tr>
           </tbody>
         </table>
@@ -129,148 +147,386 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
     const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
 
-    // Your actual Firebase Configuration
     const firebaseConfig = {
       apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
       authDomain: "opsreveal.firebaseapp.com",
       projectId: "opsreveal",
       storageBucket: "opsreveal.firebasestorage.app",
       messagingSenderId: "890870101711",
-      appId: "1:890870101711:web:4266246996091ea56c69ba",
-      measurementId: "G-LCWJSW9SKY"
+      appId: "1:890870101711:web:4266246996091ea56c69ba"
     };
 
-    // Initialize Firebase Services
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const auth = getAuth(app);
     let currentUser = null;
 
-    // Helper: Bytes formatter
-    function formatBytes(bytes, decimals = 2) {
-      if (!bytes || bytes === 0) return '0 Bytes';
-      const k = 1024;
-      const dm = decimals < 0 ? 0 : decimals;
-      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-    }
+    const fmtCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
 
-    // Authentication Guard
-    onAuthStateChanged(auth, async (user) => {
+    onAuthStateChanged(auth, (user) => {
       if (user) {
         currentUser = user;
         document.getElementById('userBadge').innerHTML = `
           <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2"></span>
           ${user.email}
         `;
-        fetchUserUploads('last7');
+        loadHistory();
       } else {
-        // Redirect to login page if no active Firebase session exists
         window.location.href = "/login.html";
       }
     });
 
-    // Upload Handler
-    window.uploadFileToServer = async function(event) {
+    window.processFile = async function(event) {
       const file = event.target.files[0];
       if (!file || !currentUser) return;
 
-      const progressContainer = document.getElementById('uploadProgressContainer');
-      const progressBar = document.getElementById('uploadProgressBar');
-      const progressText = document.getElementById('uploadProgressText');
-      progressContainer.classList.remove('hidden');
-      progressBar.style.width = '40%';
-      progressText.textContent = 'Uploading to Cloudflare R2...';
+      document.getElementById('processingLoader').classList.remove('hidden');
 
-      const formData = new FormData();
-      formData.append('file', file);
+      const shelfThreshold = Math.min(100, Math.max(1, parseFloat(document.getElementById('shelfLifeThreshold').value) || 60)) / 100;
+      const marginThreshold = Math.min(99, Math.max(1, parseFloat(document.getElementById('marginThreshold').value) || 20)) / 100;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+          const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { raw: false });
+
+          if (rawData.length === 0) throw new Error("Uploaded file is empty");
+
+          const isSales = 'sold_qty' in rawData[0] || 'sales_price' in rawData[0];
+          
+          if (isSales) {
+            await processSalesFile(rawData, file.name);
+          } else {
+            await processGRNFile(rawData, file.name, shelfThreshold, marginThreshold);
+          }
+
+        } catch (err) {
+          alert("File Processing Error: " + err.message);
+        } finally {
+          document.getElementById('processingLoader').classList.add('hidden');
+          event.target.value = '';
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    };
+
+    // ----------------------------------------------------
+    // GRN REPORT PROCESSING ENGINE
+    // ----------------------------------------------------
+    async function processGRNFile(data, originalFileName, shelfThreshold, marginThreshold) {
+      const outWorkbook = XLSX.utils.book_new();
+      
+      const processedRows = [];
+      const sheet1Data = []; // Shelf Life Exceptions
+      const sheet2Data = []; // Margin Decrease Exceptions
+      const sheet3Data = []; // CP Leakage Whole Data
+      const sheet4Data = []; // CP Leakage Same Day/Month
+
+      let totalLeakage = 0;
+      let totalExceptions = 0;
+
+      // Calculate whole data minimum cost price per SKU
+      const minCPMap = {};
+      data.forEach(row => {
+        const sku = row.product_sku;
+        const cp = parseFloat(row.receiving_cp) || 0;
+        if (!(sku in minCPMap) || cp < minCPMap[sku]) minCPMap[sku] = cp;
+      });
+
+      // Calculate same day minimum cost price per SKU
+      const minCPSameDayMap = {};
+      data.forEach(row => {
+        const key = `${row['receiving_grn_date/month']}_${row.product_sku}`;
+        const cp = parseFloat(row.receiving_cp) || 0;
+        if (!(key in minCPSameDayMap) || cp < minCPSameDayMap[key]) minCPSameDayMap[key] = cp;
+      });
+
+      data.forEach((row, i) => {
+        const idx = i + 2; // Excel row reference index
+        const dateStr = row['receiving_grn_date/month'] || "";
+        const cp = parseFloat(row.receiving_cp) || 0;
+        const mrp = parseFloat(row.receiving_mrp) || 0;
+        const qty = parseFloat(row.received_qty) || 0;
+        const mfgStr = row.manufacturing_date || "";
+        const expStr = row.expiry_date || "";
+
+        const totalGRNValue = cp * qty;
+
+        // Formula representations as defined by spec
+        const shelfLifePercentFormula = `=IF(J${idx}="","Dates Not Provided",IF(J${idx}<A${idx},"Expired before receving",IF(I${idx}="","Dates Not Provided",IF(J${idx}<I${idx},"Data is wrong",IFERROR((J${idx}-A${idx})/(J${idx}-I${idx}),"")))))`;
+        const shelfLifeExFormula = `=IF(L${idx}="Dates Not Provided","Dates Not Provided",IF(L${idx}="Data is wrong","Data is wrong",IF(L${idx}="Expired before receving","Expired before receving",IF(L${idx}<=0,"Expired before receving",IF(L${idx}<${shelfThreshold},"Low Shelf life","Ok")))))`;
+        const marginPercentFormula = `=(G${idx}-F${idx})/G${idx}`;
+        const minMarginFormula = `=MINIFS(N:N,C:C,C${idx})`;
+        const diffMarginFormula = `=N${idx}-O${idx}`;
+        const marginExFormula = `=IF(P${idx}>=0,"No Exception","There is a Margin decrease")`;
+        const marginLeakageFormula = `=IF(P${idx}=0,0,(F${idx}*P${idx})*H${idx})`;
+        const minCPWholeFormula = `=MINIFS(F:F,C:C,C${idx})`;
+        const cpLeakageWholeFormula = `=(F${idx}-R${idx})*H${idx}`;
+        const cpExWholeFormula = `=IF(S${idx}>0,"You Got Charged More","Suppliers providing same price for the Sku's")`;
+        const minCPSameDayFormula = `=MINIFS(F:F,A:A,A${idx},C:C,C${idx})`;
+        const cpLeakageSameDayFormula = `=IF(U${idx}=0,0,(F${idx}-U${idx})*H${idx})`;
+        const cpExSameDayFormula = `=IF(V${idx}>0,"You Got Charged More","Suppliers providing same price for the Sku's")`;
+        const marginExceptionYFormula = `=IF(N${idx}<=${marginThreshold},"Less margin","Ok")`;
+
+        // Value evaluations for summary categorizations
+        const marginVal = mrp > 0 ? (mrp - cp) / mrp : 0;
+        const minCPWhole = minCPMap[row.product_sku] || cp;
+        const cpLeakageWhole = (cp - minCPWhole) * qty;
+        const minCPSameDay = minCPSameDayMap[`${dateStr}_${row.product_sku}`] || cp;
+        const cpLeakageSameDay = (cp - minCPSameDay) * qty;
+
+        let shelfLifeEx = "Ok";
+        let shelfLifePct = 1.0;
+        if (expStr && mfgStr && dateStr) {
+          const recD = new Date(dateStr), mfgD = new Date(mfgStr), expD = new Date(expStr);
+          if (expD < recD) shelfLifeEx = "Expired before receving";
+          else if (expD > mfgD) {
+            shelfLifePct = (expD - recD) / (expD - mfgD);
+            if (shelfLifePct < shelfThreshold) shelfLifeEx = "Low Shelf life";
+          }
+        } else {
+          shelfLifeEx = "Dates Not Provided";
+        }
+
+        const formattedRow = {
+          "receiving_grn_date/month": dateStr,
+          "supplier_name": row.supplier_name || "",
+          "product_sku": row.product_sku || "",
+          "product_name": row.product_name || "",
+          "category": row.category || "",
+          "receiving_cp": cp,
+          "receiving_mrp": mrp,
+          "received_qty": qty,
+          "manufacturing_date": mfgStr,
+          "expiry_date": expStr,
+          "Total GRN Value": totalGRNValue,
+          "Shelf Life %": shelfLifePercentFormula,
+          "Shelf Life Exception": shelfLifeExFormula,
+          "Margin %": marginPercentFormula,
+          "Min margin": minMarginFormula,
+          "Diff margin": diffMarginFormula,
+          "Margin Exception": marginExFormula,
+          "Margin Leakage Value": marginLeakageFormula,
+          "Min CP(whole data)": minCPWholeFormula,
+          "CP Leakage (whole data)": cpLeakageWholeFormula,
+          "CP Exception (whole data)": cpExWholeFormula,
+          "Min CP(Same day/Same month)": minCPSameDayFormula,
+          "CP Leakage (Same day/Same month)": cpLeakageSameDayFormula,
+          "CP Exception (Same day/Same month)": cpExSameDayFormula,
+          "Margin Exception (Threshold)": marginExceptionYFormula
+        };
+
+        processedRows.push(formattedRow);
+
+        // Populate Summaries
+        if (shelfLifeEx === "Low Shelf life" || shelfLifeEx === "Expired before receving") {
+          sheet1Data.push({
+            "SKU": row.product_sku,
+            "Product Name": row.product_name,
+            "Receiving Date": dateStr,
+            "Expiry Date": expStr,
+            "Shelf Life Status": shelfLifeEx,
+            "Total GRN Value (Leakage)": totalGRNValue
+          });
+          totalLeakage += totalGRNValue;
+          totalExceptions++;
+        }
+
+        if (cpLeakageWhole > 0) {
+          sheet3Data.push({
+            "SKU": row.product_sku,
+            "Product Name": row.product_name,
+            "Supplier": row.supplier_name,
+            "Receiving CP": cp,
+            "Min CP (Whole Data)": minCPWhole,
+            "CP Leakage (Whole Data)": cpLeakageWhole
+          });
+          totalLeakage += cpLeakageWhole;
+          totalExceptions++;
+        }
+
+        if (cpLeakageSameDay > 0) {
+          sheet4Data.push({
+            "SKU": row.product_sku,
+            "Product Name": row.product_name,
+            "Date": dateStr,
+            "Receiving CP": cp,
+            "Min CP (Same Day)": minCPSameDay,
+            "CP Leakage (Same Day)": cpLeakageSameDay
+          });
+        }
+      });
+
+      // Sheet Construction
+      const wsMain = XLSX.utils.json_to_sheet(processedRows);
+      XLSX.utils.book_append_sheet(outWorkbook, wsMain, "Full GRN Audit");
+
+      const wsSheet1 = XLSX.utils.json_to_sheet(sheet1Data.length ? sheet1Data : [{ "Status": "No Shelf Life Exceptions Found" }]);
+      XLSX.utils.book_append_sheet(outWorkbook, wsSheet1, "Shelf Life Summary");
+
+      const wsSheet2 = XLSX.utils.json_to_sheet(sheet2Data.length ? sheet2Data : [{ "Status": "No Margin Decreases Found" }]);
+      XLSX.utils.book_append_sheet(outWorkbook, wsSheet2, "Margin Decrease Summary");
+
+      const wsSheet3 = XLSX.utils.json_to_sheet(sheet3Data.length ? sheet3Data : [{ "Status": "No CP Overcharge Found (Whole Data)" }]);
+      XLSX.utils.book_append_sheet(outWorkbook, wsSheet3, "CP Overcharge (Whole Data)");
+
+      const wsSheet4 = XLSX.utils.json_to_sheet(sheet4Data.length ? sheet4Data : [{ "Status": "No CP Overcharge Found (Same Day)" }]);
+      XLSX.utils.book_append_sheet(outWorkbook, wsSheet4, "CP Overcharge (Same Day)");
+
+      // Trigger Browser File Download
+      const outFileName = `Audited_GRN_${new Date().toISOString().slice(0,10)}.xlsx`;
+      XLSX.writeFile(outWorkbook, outFileName);
+
+      // Save summary state to Cloudflare R2
+      await syncAuditToCloudflare(outFileName, data.length, totalLeakage, totalExceptions);
+    }
+
+    // ----------------------------------------------------
+    // SALES REPORT PROCESSING ENGINE
+    // ----------------------------------------------------
+    async function processSalesFile(data, originalFileName) {
+      const outWorkbook = XLSX.utils.book_new();
+      const processedRows = [];
+      const summaryRows = [];
+
+      let totalLeakage = 0;
+      let totalExceptions = 0;
+
+      data.forEach((row, i) => {
+        const idx = i + 2;
+        const soldQty = parseFloat(row.sold_qty) || 0;
+        const cp = parseFloat(row.cp) || 0;
+        const salesPrice = parseFloat(row.sales_price) || 0;
+
+        const salesLeakagesFormula = `=(F${idx}-E${idx})*D${idx}`;
+        const salesExceptionFormula = `=IF(G${idx}>0,"No Exception","Sold in Negative margin")`;
+
+        const leakageVal = (salesPrice - cp) * soldQty;
+
+        processedRows.push({
+          "sales_date": row.sales_date || "",
+          "product_sku": row.product_sku || "",
+          "product_name": row.product_name || "",
+          "sold_qty": soldQty,
+          "cp": cp,
+          "sales_price": salesPrice,
+          "Sales Leakages": salesLeakagesFormula,
+          "Sales Exception": salesExceptionFormula
+        });
+
+        if (salesPrice < cp) {
+          const absLeakage = Math.abs(leakageVal);
+          summaryRows.push({
+            "sales_date": row.sales_date,
+            "product_sku": row.product_sku,
+            "product_name": row.product_name,
+            "sold_qty": soldQty,
+            "cp": cp,
+            "sales_price": salesPrice,
+            "Sales Leakages": absLeakage,
+            "Sales Exception": "Sold in Negative margin"
+          });
+          totalLeakage += absLeakage;
+          totalExceptions++;
+        }
+      });
+
+      const wsMain = XLSX.utils.json_to_sheet(processedRows);
+      XLSX.utils.book_append_sheet(outWorkbook, wsMain, "Sales Audit Report");
+
+      const wsSummary = XLSX.utils.json_to_sheet(summaryRows.length ? summaryRows : [{ "Status": "No Negative Margin Sales Detected" }]);
+      XLSX.utils.book_append_sheet(outWorkbook, wsSummary, "Negative Margin Summary");
+
+      const outFileName = `Audited_Sales_${new Date().toISOString().slice(0,10)}.xlsx`;
+      XLSX.writeFile(outWorkbook, outFileName);
+
+      await syncAuditToCloudflare(outFileName, data.length, totalLeakage, totalExceptions);
+    }
+
+    // ----------------------------------------------------
+    // CLOUDFLARE R2 & DASHBOARD SYNC
+    // ----------------------------------------------------
+    async function syncAuditToCloudflare(fileName, totalRows, totalLeakage, totalExceptions) {
+      const riskScore = totalLeakage > 5000 ? "High Risk" : totalLeakage > 1000 ? "Medium Risk" : "Low Risk";
+
+      // Update Dashboard Metrics UI
+      document.getElementById('metricRows').textContent = totalRows.toLocaleString();
+      document.getElementById('metricLeakage').textContent = fmtCurrency(totalLeakage);
+      document.getElementById('metricExceptions').textContent = totalExceptions.toString();
+      
+      const riskEl = document.getElementById('metricRisk');
+      riskEl.textContent = riskScore;
+      riskEl.className = `text-3xl font-extrabold font-heading mt-2 ${
+        riskScore === "High Risk" ? "text-red-400" : riskScore === "Medium Risk" ? "text-amber-400" : "text-emerald-400"
+      }`;
 
       try {
         const token = await currentUser.getIdToken();
-        const response = await fetch(`${WORKER_URL}/api/upload/file`, {
+        await fetch(`${WORKER_URL}/api/summary/save`, {
           method: 'POST',
           headers: {
+            'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
             'X-User-Id': currentUser.uid
           },
-          body: formData
+          body: JSON.stringify({
+            fileName,
+            totalRows,
+            totalLeakage,
+            totalExceptions,
+            riskScore
+          })
         });
 
-        const data = await response.json();
-        if (!response.ok || !data.success) throw new Error(data.error || 'Upload failed');
-
-        progressBar.style.width = '100%';
-        progressText.textContent = 'Upload Complete!';
-        setTimeout(() => progressContainer.classList.add('hidden'), 2000);
-
-        // Reset file input and refresh file list
-        event.target.value = '';
-        fetchUserUploads('last7');
+        loadHistory();
       } catch (err) {
-        alert('Upload error: ' + err.message);
-        progressContainer.classList.add('hidden');
+        console.error("Cloudflare R2 Sync Failed:", err);
       }
-    };
+    }
 
-    // Fetch History Handler
-    window.fetchUserUploads = async function(range) {
+    async function loadHistory() {
       if (!currentUser) return;
-
       const tbody = document.getElementById('historyTableBody');
-      tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-500">Fetching records from R2...</td></tr>`;
 
       try {
         const token = await currentUser.getIdToken();
-        const response = await fetch(`${WORKER_URL}/api/upload/history`, {
-          method: 'GET',
-          headers: { 
+        const res = await fetch(`${WORKER_URL}/api/upload/history`, {
+          headers: {
             'Authorization': `Bearer ${token}`,
             'X-User-Id': currentUser.uid
           }
         });
+        const data = await res.json();
 
-        const data = await response.json();
-
-        if (!data.success || !data.files || data.files.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-500">No uploads found for this account.</td></tr>`;
+        if (!data.success || !data.history || data.history.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-6 text-center text-slate-500">No previous audit reports found in Cloudflare R2.</td></tr>`;
           return;
         }
 
-        tbody.innerHTML = data.files.map(item => `
+        tbody.innerHTML = data.history.map(item => `
           <tr class="hover:bg-slate-800/40 transition">
             <td class="px-6 py-4 font-mono text-slate-400">${new Date(item.uploadedAt).toLocaleString()}</td>
             <td class="px-6 py-4 font-bold text-white">${item.fileName}</td>
-            <td class="px-6 py-4 text-slate-400">${formatBytes(item.fileSize)}</td>
+            <td class="px-6 py-4 text-slate-300 font-semibold">${item.totalRows.toLocaleString()}</td>
+            <td class="px-6 py-4 font-bold text-red-400">${fmtCurrency(item.totalLeakage)}</td>
             <td class="px-6 py-4">
-              <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/50">Stored in R2</span>
+              <span class="px-2 py-0.5 rounded text-[11px] font-bold ${
+                item.riskScore === 'High Risk' ? 'bg-red-950 text-red-400 border border-red-800/50' : 
+                item.riskScore === 'Medium Risk' ? 'bg-amber-950 text-amber-400 border border-amber-800/50' : 
+                'bg-emerald-950 text-emerald-400 border border-emerald-800/50'
+              }">${item.riskScore}</span>
             </td>
-            <td class="px-6 py-4 text-right font-mono text-[11px] text-cyan-400 truncate max-w-[220px]" title="${item.key}">
-              ${item.key}
-            </td>
+            <td class="px-6 py-4 text-right font-semibold text-emerald-400">Archived in R2</td>
           </tr>
         `).join('');
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-red-400">Error loading files: Access denied.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="px-6 py-6 text-center text-red-400">Unable to load history.</td></tr>`;
       }
-    };
-
-    window.downloadTemplate = function(type) {
-      const filename = type === 'grn' ? 'GRN_Schema_Template.csv' : 'Sales_Schema_Template.csv';
-      const csv = type === 'grn' 
-        ? "SKU,Product_Name,Received_Qty,Unit_Cost_Price,Contract_Cost_Price,Mfg_Date,Expiry_Date\n"
-        : "Transaction_ID,SKU,Qty_Sold,Selling_Price,Cost_Price,Store_Location\n";
-
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      a.click();
-    };
+    }
   </script>
 </body>
 </html>
