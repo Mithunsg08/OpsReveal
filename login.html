@@ -43,7 +43,6 @@
 <body class="min-h-screen text-slate-100 bg-slate-950 flex flex-col justify-center bg-grid font-sans antialiased py-12 px-4 sm:px-6 lg:px-8">
 
   <div class="sm:mx-auto sm:w-full sm:max-w-md">
-    <!-- Brand Logo -->
     <div class="flex justify-center">
       <div class="h-12 w-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-2xl text-slate-950 shadow-lg shadow-cyan-500/20">
         O
@@ -87,8 +86,8 @@
         </div>
       </div>
 
-      <!-- Action & Onsubmit completely disable browser form reload -->
-      <form id="loginForm" action="javascript:void(0);" onsubmit="return false;" class="mt-6 space-y-4">
+      <!-- ON SUBMIT INTERCEPTOR HERE TO STOP ALL PAGE REFRESHES -->
+      <form id="loginForm" onsubmit="event.preventDefault(); window.executeEmailLogin && window.executeEmailLogin(); return false;" class="mt-6 space-y-4">
         <div>
           <label for="email" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email address</label>
           <input id="email" name="email" type="email" autocomplete="email" required placeholder="name@company.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:border-cyan-500 focus:outline-none transition">
@@ -107,7 +106,7 @@
           </div>
         </div>
 
-        <button id="submitBtn" type="button" class="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg shadow-cyan-500/20 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 focus:outline-none transition font-heading uppercase tracking-wider mt-2">
+        <button id="submitBtn" type="submit" class="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg shadow-cyan-500/20 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 focus:outline-none transition font-heading uppercase tracking-wider mt-2">
           <span id="btnText">Log In</span>
           <div id="btnSpinner" class="hidden w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
         </button>
@@ -122,18 +121,6 @@
 
     </div>
   </div>
-
-  <!-- Inline event blocker -->
-  <script>
-    document.getElementById('submitBtn').onclick = function(e) {
-      e.preventDefault();
-      if (window.executeEmailLogin) {
-        window.executeEmailLogin();
-      } else {
-        alert("Scripts are still loading. Please try again in 2 seconds.");
-      }
-    };
-  </script>
 
   <!-- Firebase Authentication Script -->
   <script type="module">
@@ -250,7 +237,6 @@
         }
 
         await ensureUserDocExists(auth.currentUser);
-        // Relative redirect for GitHub Pages repository compatibility
         window.location.href = './dashboard.html';
 
       } catch (err) {
@@ -267,20 +253,22 @@
       }
     };
 
-    googleAuthBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      errorBanner.classList.add('hidden');
-      const provider = new GoogleAuthProvider();
+    if (googleAuthBtn) {
+      googleAuthBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        errorBanner.classList.add('hidden');
+        const provider = new GoogleAuthProvider();
 
-      try {
-        const result = await signInWithPopup(auth, provider);
-        await ensureUserDocExists(result.user);
-        window.location.href = './dashboard.html';
-      } catch (err) {
-        console.error("Google Auth Exception:", err);
-        showError(err.message.replace('Firebase: ', ''));
-      }
-    });
+        try {
+          const result = await signInWithPopup(auth, provider);
+          await ensureUserDocExists(result.user);
+          window.location.href = './dashboard.html';
+        } catch (err) {
+          console.error("Google Auth Exception:", err);
+          showError(err.message.replace('Firebase: ', ''));
+        }
+      });
+    }
   </script>
 </body>
 </html>
