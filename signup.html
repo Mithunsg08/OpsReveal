@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OpsReveal - Create Account</title>
+  <title>OpsReveal - Sign Up</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -50,22 +50,22 @@
       </div>
     </div>
     <h2 class="mt-4 text-center text-3xl font-extrabold text-white font-heading tracking-tight">Create your account</h2>
-    <p class="mt-2 text-center text-xs text-slate-400">Start auditing operational leakages in real-time</p>
+    <p class="mt-2 text-center text-xs text-slate-400">Get started with OpsReveal leakage detection engine</p>
   </div>
 
   <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
     <div class="bg-slate-900 border border-slate-800 py-8 px-4 shadow-2xl rounded-2xl sm:px-10">
 
-      <!-- Error Alert -->
+      <!-- Error Banner -->
       <div id="errorBanner" class="hidden mb-6 bg-red-950/60 border border-red-800/80 rounded-xl p-4 text-red-200 text-xs flex items-start space-x-3">
         <svg class="w-5 h-5 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         <div>
-          <h4 class="font-bold text-red-400 mb-0.5">Registration Error</h4>
-          <p id="errorMessage">Unable to register user.</p>
+          <h4 class="font-bold text-red-400 mb-0.5">Registration Failed</h4>
+          <p id="errorMessage">Unable to create account. Please try again.</p>
         </div>
       </div>
 
-      <!-- Google Sign-Up Button -->
+      <!-- Google Sign-In Button -->
       <div>
         <button id="googleAuthBtn" type="button" class="w-full flex justify-center items-center py-2.5 px-4 border border-slate-700/80 rounded-xl shadow-sm bg-slate-950 text-xs font-semibold text-slate-200 hover:bg-slate-800 focus:outline-none transition space-x-3">
           <svg class="w-4 h-4" viewBox="0 0 24 24">
@@ -74,7 +74,7 @@
             <path fill="#FBBC05" d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15s.7 5.3 1.9 7.7l3.7-2.9z"/>
             <path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.2-6.4-5.2L1.9 16C3.7 19.7 7.5 23 12 23z"/>
           </svg>
-          <span>Continue with Google</span>
+          <span>Sign up with Google</span>
         </button>
       </div>
 
@@ -83,11 +83,11 @@
           <div class="w-full border-t border-slate-800"></div>
         </div>
         <div class="relative flex justify-center text-xs uppercase">
-          <span class="bg-slate-900 px-3 text-slate-500 font-semibold">Or sign up with email</span>
+          <span class="bg-slate-900 px-3 text-slate-500 font-semibold">Or register with email</span>
         </div>
       </div>
 
-      <!-- Registration Form -->
+      <!-- Sign Up Form -->
       <form id="signupForm" class="mt-6 space-y-4">
         <div>
           <label for="fullName" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Full Name</label>
@@ -100,13 +100,13 @@
         </div>
 
         <div>
-          <label for="email" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email address</label>
+          <label for="email" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Work Email</label>
           <input id="email" name="email" type="email" autocomplete="email" required placeholder="name@company.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:border-cyan-500 focus:outline-none transition">
         </div>
 
         <div>
           <label for="password" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Password</label>
-          <input id="password" name="password" type="password" autocomplete="new-password" required minlength="6" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:border-cyan-500 focus:outline-none transition">
+          <input id="password" name="password" type="password" autocomplete="new-password" required minlength="6" placeholder="Minimum 6 characters" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:border-cyan-500 focus:outline-none transition">
         </div>
 
         <button id="submitBtn" type="submit" class="w-full flex justify-center py-3 px-4 rounded-xl shadow-lg shadow-cyan-500/20 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 focus:outline-none transition font-heading uppercase tracking-wider mt-2">
@@ -125,12 +125,13 @@
     </div>
   </div>
 
-  <!-- Firebase Auth & Registration Logic -->
+  <!-- Firebase Auth & Firestore Client Module -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
       getAuth, 
       createUserWithEmailAndPassword, 
+      sendEmailVerification,
       GoogleAuthProvider, 
       signInWithPopup, 
       updateProfile 
@@ -182,9 +183,8 @@
       }
     }
 
-    // Provision User Profile and Default Company Record in Firestore
+    // Provisions Company & User Docs inside Firestore Database
     async function provisionNewUser(user, fullName, companyName) {
-      // Create Company Document
       const companyRef = await addDoc(collection(db, "companies"), {
         name: companyName || `${fullName}'s Organization`,
         ownerId: user.uid,
@@ -192,7 +192,6 @@
         createdAt: serverTimestamp()
       });
 
-      // Write User Document matching the Security Rules: allow write if request.auth.uid == userId
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: user.email,
@@ -219,14 +218,17 @@
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Update Auth Profile
+        // Set Display Name in Firebase Auth
         await updateProfile(user, { displayName: fullName });
 
-        // Sync User to Firestore
+        // Provision Company & User Document in Firestore
         await provisionNewUser(user, fullName, companyName);
 
-        // Redirect to Dashboard
-        window.location.href = '/dashboard.html';
+        // Send Email Verification Link
+        await sendEmailVerification(user);
+
+        // Redirect to Email Verification Gate
+        window.location.href = '/verify-email.html';
       } catch (err) {
         setLoading(false);
         showError(err.message.replace('Firebase: ', ''));
@@ -240,11 +242,8 @@
 
       try {
         const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-
-        // Provision profile if registering for the first time
-        await provisionNewUser(user, user.displayName || 'Google User', 'Default Company');
-
+        await provisionNewUser(result.user, result.user.displayName || 'Google User', 'Default Organization');
+        // Google accounts are auto-verified by default
         window.location.href = '/dashboard.html';
       } catch (err) {
         showError(err.message.replace('Firebase: ', ''));
