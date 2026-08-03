@@ -56,7 +56,7 @@
   <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
     <div class="bg-slate-900 border border-slate-800 py-8 px-4 shadow-2xl rounded-2xl sm:px-10">
 
-      <!-- Error Banner -->
+      <!-- Error / Warning Banner -->
       <div id="errorBanner" class="hidden mb-6 bg-red-950/60 border border-red-800/80 rounded-xl p-4 text-red-200 text-xs flex items-start space-x-3">
         <svg class="w-5 h-5 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         <div>
@@ -88,7 +88,7 @@
       </div>
 
       <!-- Login Form -->
-      <form id="loginForm" class="mt-6 space-y-4">
+      <form id="loginForm" onsubmit="return false;" class="mt-6 space-y-4">
         <div>
           <label for="email" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email address</label>
           <input id="email" name="email" type="email" autocomplete="email" required placeholder="name@company.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:border-cyan-500 focus:outline-none transition">
@@ -107,7 +107,8 @@
           </div>
         </div>
 
-        <button id="submitBtn" type="submit" class="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg shadow-cyan-500/20 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 focus:outline-none transition font-heading uppercase tracking-wider mt-2">
+        <!-- Button set to type="button" to prevent native form reload -->
+        <button id="submitBtn" type="button" class="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg shadow-cyan-500/20 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 focus:outline-none transition font-heading uppercase tracking-wider mt-2">
           <span id="btnText">Log In</span>
           <div id="btnSpinner" class="hidden w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
         </button>
@@ -123,7 +124,7 @@
     </div>
   </div>
 
-  <!-- Firebase Authentication Logic -->
+  <!-- Firebase Authentication Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
@@ -150,11 +151,14 @@
       appId: "1:890870101711:web:4266246996091ea56c69ba"
     };
 
+    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // Element References
     const loginForm = document.getElementById('loginForm');
+    const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const togglePasswordBtn = document.getElementById('togglePasswordBtn');
     const googleAuthBtn = document.getElementById('googleAuthBtn');
@@ -164,7 +168,7 @@
     const btnText = document.getElementById('btnText');
     const btnSpinner = document.getElementById('btnSpinner');
 
-    // Password Visibility Toggle
+    // Toggle Password Visibility
     if (togglePasswordBtn) {
       togglePasswordBtn.addEventListener('click', () => {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -189,7 +193,7 @@
       }
     }
 
-    // Ensure User Profile Exists in Firestore
+    // Safe Non-Blocking Firestore User Check
     async function ensureUserDocExists(user) {
       try {
         const userRef = doc(db, "users", user.uid);
@@ -205,62 +209,85 @@
           });
         }
       } catch (fsErr) {
-        console.warn("Firestore sync warning:", fsErr);
+        console.warn("Firestore record sync non-fatal error:", fsErr);
       }
     }
 
-    // Email/Password Login Handler
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
+    // Main Email/Password Login Function
+    async function executeEmailLogin() {
       errorBanner.classList.add('hidden');
-      setLoading(true);
 
-      const email = document.getElementById('email').value.trim();
+      const email = emailInput.value.trim();
       const password = passwordInput.value;
 
+      if (!email || !password) {
+        showError("Please enter both email address and password.");
+        return;
+      }
+
+      setLoading(true);
+
       try {
-        console.log("Starting email authentication...");
+        console.log("Attempting sign-in for:", email);
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Force refresh user data to check email verification status
-        await user.reload();
+        // Force refresh user to get real-time email verification status
+        try {
+          await user.reload();
+        } catch (reloadErr) {
+          console.warn("Token reload warning:", reloadErr);
+        }
 
         if (!auth.currentUser.emailVerified) {
           await signOut(auth);
           setLoading(false);
-          showError("Please verify your email address before logging in. Check your inbox for the link.");
+          showError("Your email is not verified yet. Please check your inbox and click the verification link.");
           return;
         }
 
+        // Sync Firestore record
         await ensureUserDocExists(auth.currentUser);
-        console.log("Email login successful. Redirecting...");
+
+        console.log("Login successful! Navigating to dashboard...");
         window.location.href = '/dashboard.html';
 
       } catch (err) {
-        console.error("Login Error:", err);
+        console.error("Authentication Error:", err);
         setLoading(false);
 
         let cleanMsg = err.message.replace('Firebase: ', '');
         if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
-          cleanMsg = "Invalid email or password.";
+          cleanMsg = "Invalid email or password. Please verify your credentials.";
         } else if (err.code === 'auth/too-many-requests') {
-          cleanMsg = "Too many failed attempts. Account temporarily locked. Please try again later.";
+          cleanMsg = "Access temporarily locked due to multiple failed login attempts. Try again later.";
         }
         showError(cleanMsg);
       }
+    }
+
+    // Handler for Button Click
+    submitBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      executeEmailLogin();
+    });
+
+    // Handler for Pressing Enter inside Password Input
+    loginForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      executeEmailLogin();
     });
 
     // Google Sign-In Handler
-    googleAuthBtn.addEventListener('click', async () => {
+    googleAuthBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
       errorBanner.classList.add('hidden');
       const provider = new GoogleAuthProvider();
 
       try {
-        console.log("Starting Google auth popup...");
+        console.log("Opening Google Auth Popup...");
         const result = await signInWithPopup(auth, provider);
         await ensureUserDocExists(result.user);
-        console.log("Google login successful. Redirecting...");
         window.location.href = '/dashboard.html';
       } catch (err) {
         console.error("Google Auth Error:", err);
