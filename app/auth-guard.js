@@ -26,6 +26,12 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+export const SUPER_ADMIN_EMAIL = "mithun@preventloss.org";
+
+export function isSuperAdmin(user) {
+  return user && user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+}
+
 // Global Guard for protected pages in /app/
 export function initAuthGuard() {
   onAuthStateChanged(auth, async (user) => {
@@ -37,7 +43,6 @@ export function initAuthGuard() {
         return;
       }
 
-      // Google Provider users bypass mandatory email verification checks
       const isGoogleUser = user.providerData?.some(p => p.providerId === 'google.com');
       const isVerified = user.emailVerified || isGoogleUser;
 
@@ -47,7 +52,6 @@ export function initAuthGuard() {
         return;
       }
 
-      // Automatically guarantee profile exists before rendering dashboard
       await ensureUserProfile(user);
     }
   });
@@ -60,22 +64,22 @@ export async function ensureUserProfile(user, extraData = {}) {
   const userRef = doc(db, "users", user.uid);
   const snap = await getDoc(userRef);
 
+  const isAdmin = isSuperAdmin(user);
+
   if (!snap.exists()) {
-    // Create Default Company Reference
     const companyRef = doc(db, "companies", user.uid);
     await setDoc(companyRef, {
-      companyName: extraData.companyName || `${user.displayName || 'Default'}'s Workspace`,
+      companyName: extraData.companyName || (isAdmin ? "OpsReveal Admin Workspace" : `${user.displayName || 'User'}'s Workspace`),
       domain: extraData.domain || "",
       ownerUid: user.uid,
       createdAt: serverTimestamp()
     }, { merge: true });
 
-    // Create User Document
     await setDoc(userRef, {
       uid: user.uid,
       email: user.email,
       fullName: extraData.fullName || user.displayName || "OpsReveal User",
-      role: extraData.role || "Owner",
+      role: isAdmin ? "SuperAdmin" : (extraData.role || "Owner"),
       companyId: user.uid,
       onboardingCompleted: true,
       createdAt: serverTimestamp()
@@ -89,5 +93,4 @@ window.logoutUser = async () => {
   window.location.replace('/login.html');
 };
 
-// Auto-run route guard on load
 initAuthGuard();
