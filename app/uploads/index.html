@@ -65,7 +65,7 @@
 
     <!-- Error Banner -->
     <div id="errorBanner" class="hidden p-4 rounded-xl bg-red-950/60 border border-red-800/80 text-red-200 text-sm flex items-start space-x-3">
-      <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d=" "></path></svg>
+      <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
       <div id="errorMessage"></div>
     </div>
 
@@ -242,8 +242,19 @@
       handleReportTypeChange();
     });
 
-    onAuthStateChanged(auth, (user) => {
+    // strict EMAIL VERIFICATION GUARD
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
+        // Refresh token state to catch immediate verification updates
+        await user.reload();
+
+        if (!user.emailVerified) {
+          // BLOCK ACCESS: User logged in but email is not verified yet
+          window.location.href = "/verify-email.html";
+          return;
+        }
+
+        // ALLOW ACCESS: User logged in and verified
         currentUser = user;
         document.getElementById('userBadge').innerHTML = `
           <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2"></span>
@@ -251,6 +262,7 @@
         `;
         loadHistory();
       } else {
+        // Redirect to login if unauthenticated
         window.location.href = "/login.html";
       }
     });
@@ -352,7 +364,7 @@
         } catch (err) {
           errorMessage.textContent = err.message;
           errorBanner.classList.remove('hidden');
-        } finally {
+        } fontally {
           document.getElementById('processingLoader').classList.add('hidden');
           event.target.value = '';
         }
