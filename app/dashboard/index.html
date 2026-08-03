@@ -12,16 +12,24 @@
 
   <!-- Firebase Auth Guard & Core Loader -->
   <script type="module">
-    import { auth, db, ensureUserProfile } from '/app/auth-guard.js';
+    import { auth, db, ensureUserProfile, isSuperAdmin } from '/app/auth-guard.js';
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { collection, query, where, getDocs, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user || !user.emailVerified) {
+      if (!user || (!user.emailVerified && !user.providerData?.some(p => p.providerId === 'google.com'))) {
         window.location.replace('/login.html');
       } else {
         await ensureUserProfile(user);
         document.body.style.display = 'flex';
+        
+        if (isSuperAdmin(user)) {
+          const badge = document.getElementById('admin-badge');
+          if (badge) badge.classList.remove('hidden');
+          const planLabel = document.getElementById('plan-label');
+          if (planLabel) planLabel.innerText = "Global Admin Tier";
+        }
+
         window.loadAndRenderDashboard(user);
       }
     });
@@ -30,13 +38,18 @@
       signOut(auth).then(() => window.location.replace('/login.html'));
     };
 
-    // Global Function to Fetch Firestore Audits
-    window.fetchFirestoreAudits = async (userId) => {
+    // Global Function to Fetch User-scoped or Admin-global Firestore Audits
+    window.fetchFirestoreAudits = async (user) => {
       try {
-        const q = query(
-          collection(db, "audits"),
-          where("userId", "==", userId)
-        );
+        let q;
+        if (isSuperAdmin(user)) {
+          // Global fetch for SuperAdmin
+          q = query(collection(db, "audits"));
+        } else {
+          // User-scoped fetch for standard accounts
+          q = query(collection(db, "audits"), where("userId", "==", user.uid));
+        }
+        
         const querySnapshot = await getDocs(q);
         const firestoreAudits = [];
         querySnapshot.forEach((doc) => {
@@ -51,7 +64,6 @@
   </script>
 </head>
 
-<!-- Hidden by default to prevent screen flash before auth verification -->
 <body style="display: none;" class="bg-slate-950 text-slate-100 min-h-screen flex antialiased">
 
   <!-- Sidebar Nav -->
@@ -75,6 +87,7 @@
       <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs">
         <span class="text-[10px] text-slate-500 block font-semibold">ACTIVE PLAN</span>
         <span id="plan-label" class="font-bold text-cyan-400">Starter Tier</span>
+        <span id="admin-badge" class="hidden mt-1 inline-block px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase">Global Admin</span>
       </div>
       <button onclick="logoutUser()" class="w-full bg-slate-900 hover:bg-slate-800 text-xs text-slate-400 py-2.5 rounded-xl border border-slate-800 font-semibold transition">
         Sign Out
@@ -143,7 +156,7 @@
           </thead>
           <tbody id="history-rows" class="divide-y divide-slate-800 text-slate-300">
             <tr>
-              <td colspan="6" class="py-6 text-center text-slate-500">Syncing Firestore & R2 records...</td>
+              <td colspan="6" class="py-6 text-center text-slate-500">Syncing audit records...</td>
             </tr>
           </tbody>
         </table>
@@ -160,27 +173,35 @@
     async function loadAndRenderDashboard(user) {
       let combinedRecords = [];
 
-      // 1. Fetch from Firestore
+      // 1. Fetch from Firestore (Scoped to user, or global if SuperAdmin)
       if (user && user.uid) {
-        const firestoreRecords = await window.fetchFirestoreAudits(user.uid);
+        const firestoreRecords = await window.fetchFirestoreAudits(user);
         combinedRecords = [...combinedRecords, ...firestoreRecords];
       }
 
       // 2. Fetch from Cloudflare R2 Worker API
       try {
-        const res = await fetch(`${WORKER_URL}/api/summary/list`);
+        const isAdmin = user && user.email && user.email.toLowerCase() === "mithun@preventloss.org";
+        const workerEndpoint = isAdmin ? `${WORKER_URL}/api/summary/list` : `${WORKER_URL}/api/summary/list?userId=${user.uid}`;
+        
+        const res = await fetch(workerEndpoint);
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.summaries)) {
-            combinedRecords = [...combinedRecords, ...data.summaries];
+            // Further client-side guard: filter out summaries of other users unless SuperAdmin
+            const userSummaries = isAdmin 
+              ? data.summaries 
+              : data.summaries.filter(s => s.userId === user.uid);
+            combinedRecords = [...combinedRecords, ...userSummaries];
           }
         }
       } catch (err) {
         console.warn("Cloudflare worker sync bypassed:", err);
       }
 
-      // 3. Fallback / Merge with LocalStorage
-      const localRecords = JSON.parse(localStorage.getItem('opsreveal_history') || '[]');
+      // 3. Fallback / Merge with User-Scoped LocalStorage
+      const storageKey = `opsreveal_history_${user.uid}`;
+      const localRecords = JSON.parse(localStorage.getItem(storageKey) || '[]');
       combinedRecords = [...combinedRecords, ...localRecords];
 
       // 4. Deduplicate records based on timestamp & type
@@ -195,8 +216,8 @@
         return true;
       });
 
-      // Update LocalStorage cache with the merged set
-      localStorage.setItem('opsreveal_history', JSON.stringify(globalHistory));
+      // Update LocalStorage cache for the current user
+      localStorage.setItem(storageKey, JSON.stringify(globalHistory));
       renderDashboard();
     }
 
@@ -273,7 +294,6 @@
       }).join('');
     }
 
-    // Expose loader to module scope
     window.renderDashboard = renderDashboard;
     window.loadAndRenderDashboard = loadAndRenderDashboard;
   </script>
