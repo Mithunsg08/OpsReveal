@@ -129,18 +129,24 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
     const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
 
-    // FIXME: Put your REAL Firebase Config here!
+    // Your actual Firebase Configuration
     const firebaseConfig = {
-      apiKey: "YOUR_ACTUAL_FIREBASE_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT.appspot.com",
+      apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
+      authDomain: "opsreveal.firebaseapp.com",
+      projectId: "opsreveal",
+      storageBucket: "opsreveal.firebasestorage.app",
+      messagingSenderId: "890870101711",
+      appId: "1:890870101711:web:4266246996091ea56c69ba",
+      measurementId: "G-LCWJSW9SKY"
     };
 
+    // Initialize Firebase Services
     const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
     const auth = getAuth(app);
     let currentUser = null;
 
@@ -164,7 +170,7 @@
         `;
         fetchUserUploads('last7');
       } else {
-        // Redirect to login if user session is absent
+        // Redirect to login page if no active Firebase session exists
         window.location.href = "/login.html";
       }
     });
