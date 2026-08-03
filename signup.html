@@ -9,7 +9,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-    /* Background subtle dot pattern matching design */
     body {
       background-color: #030712;
       background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
@@ -38,7 +37,7 @@
       </div>
     </div>
 
-    <!-- Firebase Error Banner -->
+    <!-- Error Banner -->
     <div id="errorBanner" class="hidden p-3 rounded-xl bg-red-950/60 border border-red-800/80 text-red-200 text-xs flex items-start space-x-2">
       <svg class="w-4 h-4 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -48,97 +47,35 @@
 
     <!-- Sign Up Form -->
     <form id="signupForm" class="space-y-4">
-      
-      <!-- Work Email -->
       <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1.5">Work Email <span class="text-cyan-400">*</span></label>
         <input type="email" id="email" required placeholder="mithun@preventloss.com" class="w-full bg-[#050b18] border border-slate-800 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition placeholder:text-slate-600">
       </div>
 
-      <!-- Password -->
       <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1.5">Password <span class="text-cyan-400">*</span></label>
         <input type="password" id="password" required placeholder="••••••••••••" class="w-full bg-[#050b18] border border-slate-800 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition placeholder:text-slate-600">
-        
-        <!-- Live Password Checklist -->
-        <div class="mt-2.5 space-y-1 text-[11px]">
-          <div id="checkLen" class="flex items-center text-emerald-400 space-x-1.5">
-            <span>✓</span> <span>At least 8 characters</span>
-          </div>
-          <div id="checkCase" class="flex items-center text-emerald-400 space-x-1.5">
-            <span>✓</span> <span>Contains uppercase & lowercase letters</span>
-          </div>
-          <div id="checkChar" class="flex items-center text-emerald-400 space-x-1.5">
-            <span>✓</span> <span>Contains a number & special character (!@#$%^&*)</span>
-          </div>
-        </div>
       </div>
 
-      <!-- Confirm Password -->
       <div>
         <label class="block text-xs font-semibold text-slate-300 mb-1.5">Confirm Password <span class="text-cyan-400">*</span></label>
         <input type="password" id="confirmPassword" required placeholder="••••••••••••" class="w-full bg-[#050b18] border border-slate-800 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition placeholder:text-slate-600">
       </div>
 
-      <!-- Divider -->
-      <div class="relative flex py-2 items-center">
-        <div class="flex-grow border-t border-slate-800"></div>
-        <span class="flex-shrink mx-4 text-[10px] font-bold tracking-widest text-slate-500 uppercase">OPTIONAL DETAILS</span>
-        <div class="flex-grow border-t border-slate-800"></div>
-      </div>
-
-      <!-- Full Name -->
-      <div>
-        <div class="flex justify-between items-center mb-1.5">
-          <label class="block text-xs font-semibold text-slate-300">Full Name</label>
-          <span class="text-[10px] uppercase text-slate-500 font-bold">OPTIONAL</span>
-        </div>
-        <input type="text" id="fullName" placeholder="e.g. John Doe" class="w-full bg-[#050b18] border border-slate-800 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition placeholder:text-slate-600">
-      </div>
-
-      <!-- Company & Role Grid -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <div class="flex justify-between items-center mb-1.5">
-            <label class="block text-xs font-semibold text-slate-300">Company</label>
-            <span class="text-[10px] uppercase text-slate-500 font-bold">Optional</span>
-          </div>
-          <input type="text" id="company" placeholder="Acme Inc." class="w-full bg-[#050b18] border border-slate-800 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition placeholder:text-slate-600">
-        </div>
-
-        <div>
-          <div class="flex justify-between items-center mb-1.5">
-            <label class="block text-xs font-semibold text-slate-300">Role</label>
-            <span class="text-[10px] uppercase text-slate-500 font-bold">Optional</span>
-          </div>
-          <select id="role" class="w-full bg-[#050b18] border border-slate-800 text-slate-300 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition">
-            <option value="">Select Role</option>
-            <option value="Auditor">Auditor</option>
-            <option value="Operations Manager">Operations Manager</option>
-            <option value="Supply Chain Lead">Supply Chain Lead</option>
-            <option value="Executive">Executive</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Submit Button -->
       <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-sm rounded-xl py-3.5 flex items-center justify-center space-x-2 transition shadow-lg shadow-sky-500/20 mt-4 disabled:opacity-50">
         <span id="btnText">Create Account</span>
         <div id="btnSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
       </button>
 
-      <!-- Already Have Account Link -->
       <div class="text-center text-xs text-slate-400 pt-2">
         Already have an account? <a href="/login.html" class="text-sky-400 hover:underline font-semibold">Sign In</a>
       </div>
-
     </form>
   </div>
 
-  <!-- Firebase Sign-Up Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
@@ -152,37 +89,12 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    // Dynamic Password Checklist Updates
-    const passwordInput = document.getElementById('password');
-    passwordInput.addEventListener('input', () => {
-      const val = passwordInput.value;
-      
-      const lenValid = val.length >= 8;
-      const caseValid = /[a-z]/.test(val) && /[A-Z]/.test(val);
-      const charValid = /\d/.test(val) && /[!@#$%^&*(),.?":{}|<>]/.test(val);
-
-      updateCheckUI('checkLen', lenValid);
-      updateCheckUI('checkCase', caseValid);
-      updateCheckUI('checkChar', charValid);
-    });
-
-    function updateCheckUI(elementId, isValid) {
-      const el = document.getElementById(elementId);
-      if (isValid) {
-        el.className = "flex items-center text-emerald-400 space-x-1.5";
-      } else {
-        el.className = "flex items-center text-slate-500 space-x-1.5";
-      }
-    }
-
-    // Form Submission
     document.getElementById('signupForm').addEventListener('submit', async (e) => {
       e.preventDefault();
 
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
-      const fullName = document.getElementById('fullName').value.trim();
 
       const errorBanner = document.getElementById('errorBanner');
       const errorMessage = document.getElementById('errorMessage');
@@ -198,31 +110,24 @@
         return;
       }
 
-      if (password.length < 8) {
-        errorMessage.textContent = "Password must be at least 8 characters long.";
-        errorBanner.classList.remove('hidden');
-        return;
-      }
-
       submitBtn.disabled = true;
-      btnText.textContent = "Creating Account...";
+      btnText.textContent = "Sending Verification Link...";
       btnSpinner.classList.remove('hidden');
 
       try {
+        // 1. Create User
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         
-        if (fullName) {
-          await updateProfile(userCredential.user, { displayName: fullName });
-        }
+        // 2. Send Verification Email
+        await sendEmailVerification(userCredential.user);
 
-        window.location.href = "/upload.html";
+        // 3. Redirect to Pending Verification Page
+        window.location.href = "/verify-email.html";
 
       } catch (error) {
         let msg = "Failed to create account.";
         if (error.code === 'auth/email-already-in-use') {
           msg = "This email is already registered. Please sign in.";
-        } else if (error.code === 'auth/weak-password') {
-          msg = "Password is too weak. Make sure it satisfies all requirements.";
         } else {
           msg = error.message;
         }
@@ -236,6 +141,5 @@
       }
     });
   </script>
-
 </body>
 </html>
