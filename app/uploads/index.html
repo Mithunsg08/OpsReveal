@@ -112,7 +112,7 @@
               <th class="px-6 py-3.5">File Name</th>
               <th class="px-6 py-3.5">Size</th>
               <th class="px-6 py-3.5">Status</th>
-              <th class="px-6 py-3.5 text-right">Download / Action</th>
+              <th class="px-6 py-3.5 text-right">R2 Storage Key</th>
             </tr>
           </thead>
           <tbody id="historyTableBody" class="divide-y divide-slate-800/60 text-slate-300">
@@ -131,6 +131,8 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+    const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
+
     // Firebase Config
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
@@ -142,6 +144,16 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     let currentUser = null;
+
+    // Helper: Format Bytes to Human Readable
+    function formatBytes(bytes, decimals = 2) {
+      if (!bytes || bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const dm = decimals < 0 ? 0 : decimals;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    }
 
     // Check Authentication & Restrict Data Access
     onAuthStateChanged(auth, async (user) => {
@@ -166,28 +178,31 @@
       const progressBar = document.getElementById('uploadProgressBar');
       const progressText = document.getElementById('uploadProgressText');
       progressContainer.classList.remove('hidden');
+      progressBar.style.width = '50%';
+      progressText.textContent = 'Uploading... 50%';
 
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('userId', currentUser.uid);
 
       try {
         const token = await currentUser.getIdToken();
-        const response = await fetch('/api/uploads/user-file', {
+        const response = await fetch(`${WORKER_URL}/api/upload/file`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'X-User-Id': currentUser.uid
           },
           body: formData
         });
 
-        if (!response.ok) throw new Error('Upload permission denied');
+        const data = await response.json();
+        if (!response.ok || !data.success) throw new Error(data.error || 'Upload failed');
 
         progressBar.style.width = '100%';
         progressText.textContent = 'Upload Complete!';
         setTimeout(() => progressContainer.classList.add('hidden'), 2000);
 
-        fetchUserUploads('last7'); // Refresh user table
+        fetchUserUploads('last7'); // Refresh table
       } catch (err) {
         alert('Upload failed: ' + err.message);
         progressContainer.classList.add('hidden');
@@ -203,27 +218,31 @@
 
       try {
         const token = await currentUser.getIdToken();
-        const response = await fetch(`/api/uploads/my-history?range=${range}&userId=${currentUser.uid}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+        const response = await fetch(`${WORKER_URL}/api/upload/history`, {
+          method: 'GET',
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'X-User-Id': currentUser.uid
+          }
         });
 
         const data = await response.json();
 
-        if (!data || data.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-500">No uploads found for this period.</td></tr>`;
+        if (!data.success || !data.files || data.files.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-500">No uploads found for this account.</td></tr>`;
           return;
         }
 
-        tbody.innerHTML = data.map(item => `
+        tbody.innerHTML = data.files.map(item => `
           <tr class="hover:bg-slate-800/40 transition">
-            <td class="px-6 py-4 font-mono text-slate-400">${item.uploadedAt}</td>
+            <td class="px-6 py-4 font-mono text-slate-400">${new Date(item.uploadedAt).toLocaleString()}</td>
             <td class="px-6 py-4 font-bold text-white">${item.fileName}</td>
-            <td class="px-6 py-4 text-slate-400">${item.fileSize}</td>
+            <td class="px-6 py-4 text-slate-400">${formatBytes(item.fileSize)}</td>
             <td class="px-6 py-4">
-              <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/50">Processed</span>
+              <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/50">Stored in R2</span>
             </td>
-            <td class="px-6 py-4 text-right">
-              <a href="${item.downloadUrl}" target="_blank" class="text-cyan-400 hover:underline font-semibold">Download CSV</a>
+            <td class="px-6 py-4 text-right font-mono text-[11px] text-cyan-400 truncate max-w-[200px]" title="${item.key}">
+              ${item.key}
             </td>
           </tr>
         `).join('');
