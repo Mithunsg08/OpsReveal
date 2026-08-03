@@ -68,10 +68,6 @@
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             <span>Upload Reports</span>
           </a>
-          <a href="/settings.html" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center space-x-2">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            <span>Settings</span>
-          </a>
         </nav>
       </div>
 
@@ -185,7 +181,7 @@
       </div>
 
       <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lines Processed / Flagged</div>
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Flagged Exceptions</div>
         <div id="metricExceptions" class="text-3xl font-extrabold text-amber-400 font-heading mt-2">0</div>
         <p class="text-[11px] text-slate-500 mt-1">Audit exceptions</p>
       </div>
@@ -226,7 +222,7 @@
 
   </main>
 
-  <!-- Application Logic -->
+  <!-- Application Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -276,7 +272,7 @@
       return isNaN(d.getTime()) ? null : d.toISOString().split('T')[0];
     }
 
-    // UI Dropdown Change Listener
+    // Report Type Switcher
     document.getElementById('reportTypeSelect').addEventListener('change', (e) => {
       const val = e.target.value;
       const grnThresholds = document.getElementById('grnThresholds');
@@ -315,7 +311,7 @@
       XLSX.writeFile(wb, `${type}_header_template.xlsx`);
     });
 
-    // File Input Triggers
+    // Input Trigger Bindings
     const fileInput = document.getElementById('fileInput');
     document.getElementById('selectFileBtn').addEventListener('click', () => fileInput.click());
 
@@ -323,7 +319,7 @@
       if (e.target.files.length > 0) processFile(e.target.files[0]);
     });
 
-    // Drag and Drop Handling
+    // Drag-and-Drop Handler
     const uploadContainer = document.getElementById('uploadContainer');
     uploadContainer.addEventListener('dragover', (e) => { e.preventDefault(); uploadContainer.classList.add('border-cyan-500'); });
     uploadContainer.addEventListener('dragleave', () => uploadContainer.classList.remove('border-cyan-500'));
@@ -333,7 +329,7 @@
       if (e.dataTransfer.files.length > 0) processFile(e.dataTransfer.files[0]);
     });
 
-    // Process Uploaded File
+    // Core Processing Handler
     async function processFile(file) {
       const reportType = document.getElementById('reportTypeSelect').value;
       const errorBanner = document.getElementById('errorBanner');
@@ -355,7 +351,7 @@
 
           if (json.length === 0) throw new Error("The uploaded file is empty.");
 
-          // Validate Headers
+          // Validate Header Schema
           const fileHeaders = Object.keys(json[0]).map(h => h.trim().toLowerCase());
           const required = SCHEMAS[reportType];
           const missing = required.filter(h => !fileHeaders.includes(h));
@@ -380,7 +376,7 @@
       reader.readAsArrayBuffer(file);
     }
 
-    // GRN File Audit Engine
+    // Process GRN Data
     async function processGRNFile(data, originalFileName) {
       const shelfThreshold = (parseFloat(document.getElementById('shelfLifeThreshold').value) || 60) / 100;
       const marginThreshold = (parseFloat(document.getElementById('marginThreshold').value) || 20) / 100;
@@ -389,20 +385,12 @@
       let totalExceptions = 0;
 
       const minCPMap = {};
-      const minCPSameDayMap = {};
 
-      // Pre-computations
+      // Map Lowest Cost Prices
       data.forEach(row => {
         const sku = String(row.product_sku || '').trim();
         const cp = Math.round((parseFloat(row.receiving_cp) || 0) * 100) / 100;
-        const dateStr = formatDate(row['receiving_grn_date/month']);
-
         if (!(sku in minCPMap) || cp < minCPMap[sku]) minCPMap[sku] = cp;
-
-        const sameDayKey = `${dateStr}_${sku}`;
-        if (!(sameDayKey in minCPSameDayMap) || cp < minCPSameDayMap[sameDayKey]) {
-          minCPSameDayMap[sameDayKey] = cp;
-        }
       });
 
       const auditedRows = data.map((row) => {
@@ -418,7 +406,7 @@
         let rowLeakage = 0;
         let isFlagged = false;
 
-        // Shelf Life Checks
+        // Shelf Life Audit
         let shelfLifeStatus = "OK";
         if (expStr && dateStr) {
           const recD = new Date(dateStr);
@@ -443,7 +431,7 @@
           }
         }
 
-        // Margin Checks
+        // Margin Audit
         const marginPct = mrp > 0 ? (mrp - cp) / mrp : 0;
         let marginStatus = "OK";
         if (marginPct < marginThreshold) {
@@ -453,7 +441,7 @@
           isFlagged = true;
         }
 
-        // Price Variance
+        // Price Variance Audit
         const minCP = minCPMap[sku] || cp;
         const cpVariance = (cp - minCP) * qty;
         if (cpVariance > 0) {
@@ -476,18 +464,18 @@
 
       totalLeakage = Math.round(totalLeakage * 100) / 100;
 
-      // Trigger Download
+      // Export Audited Spreadsheet
       const outFileName = `Audited_${originalFileName.replace(/\.[^/.]+$/, "")}.xlsx`;
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(auditedRows);
       XLSX.utils.book_append_sheet(wb, ws, "Audited Data");
       XLSX.writeFile(wb, outFileName);
 
-      // Sync to Cloudflare R2
+      // Save Summary to Worker
       await syncAuditToCloudflare(outFileName, data.length, totalLeakage, totalExceptions);
     }
 
-    // Sales File Audit Engine
+    // Process Sales Data
     async function processSalesFile(data, originalFileName) {
       let totalLeakage = 0;
       let totalExceptions = 0;
@@ -516,22 +504,22 @@
 
       totalLeakage = Math.round(totalLeakage * 100) / 100;
 
-      // Trigger Download
+      // Export Audited Spreadsheet
       const outFileName = `Audited_${originalFileName.replace(/\.[^/.]+$/, "")}.xlsx`;
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(auditedRows);
       XLSX.utils.book_append_sheet(wb, ws, "Audited Sales");
       XLSX.writeFile(wb, outFileName);
 
-      // Sync to Cloudflare R2
+      // Save Summary to Worker
       await syncAuditToCloudflare(outFileName, data.length, totalLeakage, totalExceptions);
     }
 
-    // Cloudflare R2 Sync
+    // Cloudflare Storage Handler
     async function syncAuditToCloudflare(outFileName, totalRows, totalLeakage, totalExceptions) {
       const riskScore = totalLeakage > 5000 ? "High Risk" : totalLeakage > 1000 ? "Medium Risk" : "Low Risk";
 
-      // Update KPI UI
+      // Render Dashboard Metrics
       document.getElementById('metricRows').textContent = totalRows.toLocaleString('en-US');
       document.getElementById('metricLeakage').textContent = fmtCurrency(totalLeakage);
       document.getElementById('metricExceptions').textContent = totalExceptions.toLocaleString('en-US');
@@ -553,7 +541,7 @@
           body: JSON.stringify({
             fileName: outFileName,
             totalRows,
-            linesProcessed: totalExceptions,
+            linesProcessed: totalRows,
             totalLeakage,
             totalExceptions,
             riskScore,
@@ -563,11 +551,11 @@
 
         await fetchHistory();
       } catch (e) {
-        console.error("Cloudflare Sync Error:", e);
+        console.error("Cloudflare Worker Save Error:", e);
       }
     }
 
-    // Fetch Upload History
+    // Fetch Upload History Logs
     async function fetchHistory() {
       const historyTableBody = document.getElementById('historyTableBody');
       try {
@@ -576,7 +564,7 @@
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
-        if (!res.ok) throw new Error("Failed to fetch history");
+        if (!res.ok) throw new Error("Failed to load upload history.");
 
         const history = await res.json();
 
@@ -601,10 +589,9 @@
           </tr>
         `).join('');
       } catch (err) {
-        historyTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-red-400 font-medium">Unable to load history metrics.</td></tr>`;
+        historyTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-red-400 font-medium">Unable to load upload history.</td></tr>`;
       }
     }
   </script>
 </body>
 </html>
-
