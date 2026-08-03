@@ -87,7 +87,7 @@
         </div>
       </div>
 
-      <!-- Login Form -->
+      <!-- Form prevented from submitting natively -->
       <form id="loginForm" onsubmit="return false;" class="mt-6 space-y-4">
         <div>
           <label for="email" class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email address</label>
@@ -107,7 +107,7 @@
           </div>
         </div>
 
-        <!-- Button set to type="button" to prevent native form reload -->
+        <!-- Button explicitly set to type="button" -->
         <button id="submitBtn" type="button" class="w-full flex justify-center items-center py-3 px-4 rounded-xl shadow-lg shadow-cyan-500/20 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 focus:outline-none transition font-heading uppercase tracking-wider mt-2">
           <span id="btnText">Log In</span>
           <div id="btnSpinner" class="hidden w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin"></div>
@@ -124,7 +124,6 @@
     </div>
   </div>
 
-  <!-- Firebase Authentication Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
@@ -151,13 +150,10 @@
       appId: "1:890870101711:web:4266246996091ea56c69ba"
     };
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Element References
-    const loginForm = document.getElementById('loginForm');
     const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     const togglePasswordBtn = document.getElementById('togglePasswordBtn');
@@ -168,7 +164,6 @@
     const btnText = document.getElementById('btnText');
     const btnSpinner = document.getElementById('btnSpinner');
 
-    // Toggle Password Visibility
     if (togglePasswordBtn) {
       togglePasswordBtn.addEventListener('click', () => {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -193,7 +188,6 @@
       }
     }
 
-    // Safe Non-Blocking Firestore User Check
     async function ensureUserDocExists(user) {
       try {
         const userRef = doc(db, "users", user.uid);
@@ -209,12 +203,11 @@
           });
         }
       } catch (fsErr) {
-        console.warn("Firestore record sync non-fatal error:", fsErr);
+        console.warn("Firestore sync non-fatal error:", fsErr);
       }
     }
 
-    // Main Email/Password Login Function
-    async function executeEmailLogin() {
+    async function executeLogin() {
       errorBanner.classList.add('hidden');
 
       const email = emailInput.value.trim();
@@ -228,69 +221,57 @@
       setLoading(true);
 
       try {
-        console.log("Attempting sign-in for:", email);
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Force refresh user to get real-time email verification status
         try {
           await user.reload();
-        } catch (reloadErr) {
-          console.warn("Token reload warning:", reloadErr);
+        } catch (rErr) {
+          console.warn("Reload issue:", rErr);
         }
 
         if (!auth.currentUser.emailVerified) {
           await signOut(auth);
           setLoading(false);
-          showError("Your email is not verified yet. Please check your inbox and click the verification link.");
+          showError("Your email is not verified yet. Check your inbox and click the verification link.");
           return;
         }
 
-        // Sync Firestore record
         await ensureUserDocExists(auth.currentUser);
-
-        console.log("Login successful! Navigating to dashboard...");
         window.location.href = '/dashboard.html';
 
       } catch (err) {
-        console.error("Authentication Error:", err);
+        console.error("Login Exception:", err);
         setLoading(false);
 
         let cleanMsg = err.message.replace('Firebase: ', '');
         if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.code === 'auth/user-not-found') {
-          cleanMsg = "Invalid email or password. Please verify your credentials.";
+          cleanMsg = "Invalid email or password.";
         } else if (err.code === 'auth/too-many-requests') {
-          cleanMsg = "Access temporarily locked due to multiple failed login attempts. Try again later.";
+          cleanMsg = "Account temporarily locked due to multiple failed attempts. Try again later.";
         }
         showError(cleanMsg);
       }
     }
 
-    // Handler for Button Click
+    // Attach listener directly to button
     submitBtn.addEventListener('click', (e) => {
       e.preventDefault();
-      executeEmailLogin();
+      executeLogin();
     });
 
-    // Handler for Pressing Enter inside Password Input
-    loginForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      executeEmailLogin();
-    });
-
-    // Google Sign-In Handler
+    // Google Login
     googleAuthBtn.addEventListener('click', async (e) => {
       e.preventDefault();
       errorBanner.classList.add('hidden');
       const provider = new GoogleAuthProvider();
 
       try {
-        console.log("Opening Google Auth Popup...");
         const result = await signInWithPopup(auth, provider);
         await ensureUserDocExists(result.user);
         window.location.href = '/dashboard.html';
       } catch (err) {
-        console.error("Google Auth Error:", err);
+        console.error("Google Auth Exception:", err);
         showError(err.message.replace('Firebase: ', ''));
       }
     });
