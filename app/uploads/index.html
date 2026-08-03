@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Upload & Audit Engine | OpsReveal</title>
+  <title>Audit Data Upload | OpsReveal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,19 +16,19 @@
 </head>
 <body class="min-h-full text-slate-100 bg-slate-950 flex flex-col bg-grid">
 
-  <!-- Header Navigation -->
+  <!-- Navigation Header -->
   <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <a href="https://opsreveal.preventloss.org" class="flex items-center space-x-3">
+      <a href="/dashboard" class="flex items-center space-x-3">
         <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-lg text-slate-950 shadow-md shadow-cyan-500/20">
           O
         </div>
         <span class="text-xl font-bold text-white font-heading">OpsReveal</span>
       </a>
       <div class="flex items-center space-x-4">
-        <span class="text-xs text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full flex items-center">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2 animate-pulse"></span>
-          In-Browser Processing Engine
+        <span id="userBadge" class="text-xs text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-full flex items-center">
+          <span class="w-2 h-2 rounded-full bg-amber-400 mr-2"></span>
+          Authenticating...
         </span>
       </div>
     </div>
@@ -36,157 +36,88 @@
 
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
     
-    <!-- Title & Sample Download Controls -->
+    <!-- Title & Download Templates -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-6">
       <div>
-        <h1 class="text-2xl font-extrabold text-white font-heading">Inventory & Audit Data Upload</h1>
-        <p class="text-xs text-slate-400 mt-1">Upload CSV files to run zero-trust client-side margin, shelf-life, and vendor audits.</p>
+        <h1 class="text-2xl font-extrabold text-white font-heading">Secure Data Ingestion</h1>
+        <p class="text-xs text-slate-400 mt-1">Upload inventory CSV files for client-side audit and secure server backup.</p>
       </div>
 
-      <!-- Sample Templates Download Buttons -->
       <div class="flex flex-wrap items-center gap-2">
-        <span class="text-xs text-slate-400 font-medium mr-1">Download Sample Templates:</span>
-        <button onclick="downloadSampleCSV('grn')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs text-cyan-400 font-semibold transition flex items-center">
+        <span class="text-xs text-slate-400 font-medium mr-1">Download Standard Schemas:</span>
+        <button onclick="downloadTemplate('grn')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs text-cyan-400 font-semibold transition flex items-center">
           <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          GRN / Receiving
+          GRN Receiving
         </button>
-        <button onclick="downloadSampleCSV('sales')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs text-blue-400 font-semibold transition flex items-center">
+        <button onclick="downloadTemplate('sales')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs text-blue-400 font-semibold transition flex items-center">
           <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
           Sales Log
-        </button>
-        <button onclick="downloadSampleCSV('writeoff')" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-xs text-indigo-400 font-semibold transition flex items-center">
-          <svg class="w-3.5 h-3.5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-          Write-Off Log
         </button>
       </div>
     </div>
 
-    <!-- Drag & Drop Upload Zone -->
+    <!-- Active Upload Box -->
     <div class="rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/50 p-8 text-center hover:border-cyan-500/50 transition" id="dropZone">
-      <input type="file" id="fileInput" accept=".csv" class="hidden" onchange="handleFileSelect(event)">
+      <input type="file" id="fileInput" accept=".csv" class="hidden" onchange="uploadFileToServer(event)">
       <div class="max-w-md mx-auto space-y-3">
         <div class="h-12 w-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mx-auto flex items-center justify-center">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
         </div>
         <div>
-          <button onclick="document.getElementById('fileInput').click()" class="text-cyan-400 font-bold text-sm hover:underline">Select a CSV File</button>
-          <span class="text-xs text-slate-400"> or drag and drop here</span>
+          <button onclick="document.getElementById('fileInput').click()" class="text-cyan-400 font-bold text-sm hover:underline">Select CSV File to Upload</button>
+          <span class="text-xs text-slate-400"> or drag and drop</span>
         </div>
-        <p class="text-[11px] text-slate-500">Supports standard procurement, receipt, and sales exports. Maximum client memory processing: 100MB.</p>
+        <p class="text-[11px] text-slate-500">Files are tied exclusively to your authenticated User ID.</p>
+      </div>
+      <!-- Upload Progress Bar -->
+      <div id="uploadProgressContainer" class="hidden max-w-xs mx-auto mt-4">
+        <div class="w-full bg-slate-950 rounded-full h-2 border border-slate-800 overflow-hidden">
+          <div id="uploadProgressBar" class="bg-cyan-500 h-2 rounded-full w-0 transition-all duration-300"></div>
+        </div>
+        <span id="uploadProgressText" class="text-[10px] text-slate-400 mt-1 block">Uploading... 0%</span>
       </div>
     </div>
 
-    <!-- Filter & History Controls Bar -->
+    <!-- User-Isolated History Filter Controls -->
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 bg-slate-900 border border-slate-800 p-4 rounded-xl">
-      
-      <!-- Date Range Quick Filters -->
       <div class="flex flex-wrap items-center gap-1.5">
-        <span class="text-xs font-semibold text-slate-400 mr-2">History Filter:</span>
-        <button onclick="setFilter('today')" class="filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Today</button>
-        <button onclick="setFilter('yesterday')" class="filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Yesterday</button>
-        <button onclick="setFilter('last7')" class="filter-btn active px-3 py-1 rounded-lg text-xs font-semibold bg-cyan-500 text-slate-950 transition">Last 7 Days</button>
-        <button onclick="setFilter('last30')" class="filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Last 30 Days</button>
+        <span class="text-xs font-semibold text-slate-400 mr-2">Your Upload History:</span>
+        <button onclick="fetchUserUploads('today')" class="filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Today</button>
+        <button onclick="fetchUserUploads('yesterday')" class="filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Yesterday</button>
+        <button onclick="fetchUserUploads('last7')" class="filter-btn active px-3 py-1 rounded-lg text-xs font-semibold bg-cyan-500 text-slate-950 transition">Last 7 Days</button>
+        <button onclick="fetchUserUploads('last30')" class="filter-btn px-3 py-1 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition">Last 30 Days</button>
       </div>
-
-      <!-- Custom Date Pickers -->
       <div class="flex items-center space-x-2 text-xs">
-        <input type="date" id="startDate" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300 focus:border-cyan-500 outline-none">
+        <input type="date" id="startDate" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300 outline-none">
         <span class="text-slate-500">to</span>
-        <input type="date" id="endDate" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300 focus:border-cyan-500 outline-none">
-        <button onclick="applyCustomFilter()" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-3 py-1 rounded-lg transition">Apply</button>
+        <input type="date" id="endDate" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300 outline-none">
+        <button onclick="fetchUserUploads('custom')" class="bg-slate-800 hover:bg-slate-700 text-white font-semibold px-3 py-1 rounded-lg transition">Filter</button>
       </div>
     </div>
 
-    <!-- Analytics Dashboard Cards (Shelf Life & Margin Metrics) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      
-      <!-- Average Margin Card -->
-      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-        <div class="text-xs font-semibold text-slate-400 font-heading">Average Gross Margin</div>
-        <div class="mt-2 flex items-baseline justify-between">
-          <span id="avgMargin" class="text-3xl font-extrabold text-white font-heading">32.4%</span>
-          <span class="text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded">+1.8%</span>
-        </div>
-        <p class="text-[11px] text-slate-500 mt-2">Calculated across loaded sales vs cost baselines.</p>
-      </div>
-
-      <!-- Shelf Life Remaining Card -->
-      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-        <div class="text-xs font-semibold text-slate-400 font-heading">Avg Remaining Shelf Life</div>
-        <div class="mt-2 flex items-baseline justify-between">
-          <span id="avgShelfLife" class="text-3xl font-extrabold text-cyan-400 font-heading">78.2%</span>
-          <span class="text-xs font-semibold text-cyan-300 bg-cyan-950/60 border border-cyan-500/30 px-2 py-0.5 rounded">Optimal</span>
-        </div>
-        <p class="text-[11px] text-slate-500 mt-2">Weighted percentage based on batch expiry dates.</p>
-      </div>
-
-      <!-- Leakage Identified -->
-      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-        <div class="text-xs font-semibold text-slate-400 font-heading">Detected Price Overcharges</div>
-        <div class="mt-2 flex items-baseline justify-between">
-          <span id="leakageTotal" class="text-3xl font-extrabold text-red-400 font-heading">$1,240.50</span>
-          <span class="text-xs font-semibold text-red-400 bg-red-950/60 border border-red-500/30 px-2 py-0.5 rounded">12 Line Items</span>
-        </div>
-        <p class="text-[11px] text-slate-500 mt-2">Vendor cost increases over contracted baseline.</p>
-      </div>
-
-      <!-- Audited Rows -->
-      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
-        <div class="text-xs font-semibold text-slate-400 font-heading">Total Rows Audited</div>
-        <div class="mt-2 flex items-baseline justify-between">
-          <span id="totalRows" class="text-3xl font-extrabold text-white font-heading">1,420</span>
-          <span class="text-xs font-semibold text-slate-400">Processed</span>
-        </div>
-        <p class="text-[11px] text-slate-500 mt-2">Parsed in local browser memory.</p>
-      </div>
-    </div>
-
-    <!-- Upload & Audit History Table -->
+    <!-- User-Isolated Table -->
     <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden">
       <div class="p-5 border-b border-slate-800 flex items-center justify-between">
         <div>
-          <h3 class="text-base font-bold text-white font-heading">Audit History & File Log</h3>
-          <p class="text-xs text-slate-400">View recent file parses, margin health, and shelf-life metrics.</p>
+          <h3 class="text-base font-bold text-white font-heading">Your Personal Upload Records</h3>
+          <p class="text-xs text-slate-400">Strictly isolated to your account credentials.</p>
         </div>
-        <span class="text-xs text-slate-500" id="filterStatusLabel">Showing: Last 7 Days</span>
       </div>
 
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead class="bg-slate-950/80 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
             <tr>
-              <th class="px-6 py-3.5">Date / Time</th>
+              <th class="px-6 py-3.5">Uploaded Date</th>
               <th class="px-6 py-3.5">File Name</th>
-              <th class="px-6 py-3.5">Category</th>
-              <th class="px-6 py-3.5">Avg Margin</th>
-              <th class="px-6 py-3.5">Shelf Life %</th>
-              <th class="px-6 py-3.5">Discrepancy / Overcharge</th>
-              <th class="px-6 py-3.5 text-right">Action</th>
+              <th class="px-6 py-3.5">Size</th>
+              <th class="px-6 py-3.5">Status</th>
+              <th class="px-6 py-3.5 text-right">Download / Action</th>
             </tr>
           </thead>
           <tbody id="historyTableBody" class="divide-y divide-slate-800/60 text-slate-300">
-            <!-- Sample Historical Rows -->
-            <tr class="hover:bg-slate-800/40 transition">
-              <td class="px-6 py-4 font-mono text-slate-400">2026-08-03 14:22</td>
-              <td class="px-6 py-4 font-bold text-white">GRN_Batch_8821.csv</td>
-              <td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800/50">Receiving (GRN)</span></td>
-              <td class="px-6 py-4 font-semibold text-slate-200">34.1%</td>
-              <td class="px-6 py-4 font-semibold text-cyan-400">82.5%</td>
-              <td class="px-6 py-4 font-bold text-red-400">$420.00</td>
-              <td class="px-6 py-4 text-right">
-                <button class="text-cyan-400 hover:underline font-semibold">View Detail</button>
-              </td>
-            </tr>
-            <tr class="hover:bg-slate-800/40 transition">
-              <td class="px-6 py-4 font-mono text-slate-400">2026-08-02 09:15</td>
-              <td class="px-6 py-4 font-bold text-white">Sales_Store01_Aug.csv</td>
-              <td class="px-6 py-4"><span class="px-2 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800/50">Sales Log</span></td>
-              <td class="px-6 py-4 font-semibold text-slate-200">30.8%</td>
-              <td class="px-6 py-4 text-slate-500">N/A</td>
-              <td class="px-6 py-4 font-bold text-slate-400">$0.00</td>
-              <td class="px-6 py-4 text-right">
-                <button class="text-cyan-400 hover:underline font-semibold">View Detail</button>
-              </td>
+            <tr>
+              <td colspan="5" class="px-6 py-8 text-center text-slate-500">Loading your private uploads...</td>
             </tr>
           </tbody>
         </table>
@@ -195,81 +126,124 @@
 
   </main>
 
-  <script>
-    // CSV Sample Generator
-    function downloadSampleCSV(type) {
-      let csvContent = "";
-      let filename = "";
+  <!-- Server Integration Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-      if (type === 'grn') {
-        filename = "Sample_GRN_Receiving.csv";
-        csvContent = "SKU,Product_Name,Received_Qty,Unit_Cost_Price,Contract_Cost_Price,Mfg_Date,Expiry_Date\n" +
-                     "SKU-101,Organic Milk 1L,100,2.10,1.90,2026-08-01,2026-08-20\n" +
-                     "SKU-102,Greek Yogurt 500g,50,3.50,3.50,2026-07-25,2026-09-15\n" +
-                     "SKU-103,Cheddar Cheese 250g,40,4.20,3.80,2026-06-01,2026-12-01";
-      } else if (type === 'sales') {
-        filename = "Sample_Sales_Log.csv";
-        csvContent = "Transaction_ID,SKU,Qty_Sold,Selling_Price,Cost_Price,Store_Location\n" +
-                     "TX-9001,SKU-101,2,3.50,1.90,Store_North\n" +
-                     "TX-9002,SKU-102,1,5.50,3.50,Store_North\n" +
-                     "TX-9003,SKU-103,3,6.00,3.80,Store_South";
-      } else if (type === 'writeoff') {
-        filename = "Sample_WriteOff_Log.csv";
-        csvContent = "SKU,Product_Name,Quantity_Written_Off,Unit_Cost,Reason,Date\n" +
-                     "SKU-101,Organic Milk 1L,5,1.90,Expired,2026-08-02\n" +
-                     "SKU-103,Cheddar Cheese 250g,2,3.80,Damaged_Packaging,2026-08-03";
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    let currentUser = null;
+
+    // Check Authentication & Restrict Data Access
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        document.getElementById('userBadge').innerHTML = `
+          <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2"></span>
+          ${user.email}
+        `;
+        fetchUserUploads('last7');
+      } else {
+        window.location.href = "/login.html";
       }
+    });
 
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+    // Upload CSV File to User-Isolated Endpoint
+    window.uploadFileToServer = async function(event) {
+      const file = event.target.files[0];
+      if (!file || !currentUser) return;
 
-    // Filter Buttons Handler
-    function setFilter(range) {
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('bg-cyan-500', 'text-slate-950', 'active');
-        btn.classList.add('bg-slate-800', 'text-slate-300');
-      });
+      const progressContainer = document.getElementById('uploadProgressContainer');
+      const progressBar = document.getElementById('uploadProgressBar');
+      const progressText = document.getElementById('uploadProgressText');
+      progressContainer.classList.remove('hidden');
 
-      event.target.classList.add('bg-cyan-500', 'text-slate-950', 'active');
-      event.target.classList.remove('bg-slate-800', 'text-slate-300');
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('userId', currentUser.uid);
 
-      const statusMap = {
-        'today': 'Showing: Today',
-        'yesterday': 'Showing: Yesterday',
-        'last7': 'Showing: Last 7 Days',
-        'last30': 'Showing: Last 30 Days'
-      };
-      
-      document.getElementById('filterStatusLabel').textContent = statusMap[range] || 'Showing: Filtered';
-    }
+      try {
+        const token = await currentUser.getIdToken();
+        const response = await fetch('/api/uploads/user-file', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
 
-    function applyCustomFilter() {
-      const start = document.getElementById('startDate').value;
-      const end = document.getElementById('endDate').value;
-      if (start && end) {
-        document.getElementById('filterStatusLabel').textContent = `Showing: ${start} to ${end}`;
+        if (!response.ok) throw new Error('Upload permission denied');
+
+        progressBar.style.width = '100%';
+        progressText.textContent = 'Upload Complete!';
+        setTimeout(() => progressContainer.classList.add('hidden'), 2000);
+
+        fetchUserUploads('last7'); // Refresh user table
+      } catch (err) {
+        alert('Upload failed: ' + err.message);
+        progressContainer.classList.add('hidden');
       }
-    }
+    };
 
-    // File Parsing Prototype
-    function handleFileSelect(e) {
-      const file = e.target.files[0];
-      if (!file) return;
+    // Fetch Only Current User's Upload History
+    window.fetchUserUploads = async function(range) {
+      if (!currentUser) return;
 
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const lines = evt.target.result.split('\n');
-        alert(`Successfully parsed ${lines.length - 1} rows locally in browser RAM.`);
-      };
-      reader.readAsText(file);
-    }
+      const tbody = document.getElementById('historyTableBody');
+      tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-500">Fetching records...</td></tr>`;
+
+      try {
+        const token = await currentUser.getIdToken();
+        const response = await fetch(`/api/uploads/my-history?range=${range}&userId=${currentUser.uid}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        const data = await response.json();
+
+        if (!data || data.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-500">No uploads found for this period.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = data.map(item => `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="px-6 py-4 font-mono text-slate-400">${item.uploadedAt}</td>
+            <td class="px-6 py-4 font-bold text-white">${item.fileName}</td>
+            <td class="px-6 py-4 text-slate-400">${item.fileSize}</td>
+            <td class="px-6 py-4">
+              <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/50">Processed</span>
+            </td>
+            <td class="px-6 py-4 text-right">
+              <a href="${item.downloadUrl}" target="_blank" class="text-cyan-400 hover:underline font-semibold">Download CSV</a>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-red-400">Error loading uploads: Access denied.</td></tr>`;
+      }
+    };
+
+    window.downloadTemplate = function(type) {
+      const filename = type === 'grn' ? 'GRN_Schema_Template.csv' : 'Sales_Schema_Template.csv';
+      const csv = type === 'grn' 
+        ? "SKU,Product_Name,Received_Qty,Unit_Cost_Price,Contract_Cost_Price,Mfg_Date,Expiry_Date\n"
+        : "Transaction_ID,SKU,Qty_Sold,Selling_Price,Cost_Price,Store_Location\n";
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+    };
   </script>
 </body>
 </html>
