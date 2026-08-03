@@ -10,13 +10,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style> body { font-family: 'Inter', sans-serif; } </style>
 
+  <!-- PayPal JavaScript SDK (Replace YOUR_PAYPAL_CLIENT_ID with your actual PayPal Client ID) -->
+  <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD"></script>
+
   <!-- Firebase Auth Guard -->
   <script type="module">
-    import { auth, ensureUserProfile } from '/app/auth-guard.js';
+    import { auth, ensureUserProfile, isSuperAdmin } from '/app/auth-guard.js';
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user || !user.emailVerified) {
+      if (!user || (!user.emailVerified && !user.providerData?.some(p => p.providerId === 'google.com'))) {
         window.location.replace('/login.html');
       } else {
         await ensureUserProfile(user);
@@ -27,7 +30,6 @@
   </script>
 </head>
 
-<!-- Hidden by default to prevent screen flash before auth verification -->
 <body style="display: none;" class="bg-slate-950 text-slate-100 min-h-screen flex antialiased">
 
   <!-- Sidebar Nav -->
@@ -63,13 +65,48 @@
     <div class="flex items-center justify-between border-b border-slate-800 pb-5">
       <div>
         <h2 class="text-2xl font-bold text-white">Account Settings</h2>
-        <p class="text-xs text-slate-400">Manage your profile details, security settings, and team access.</p>
+        <p class="text-xs text-slate-400">Manage your profile details, resource limits, subscription, and team access.</p>
       </div>
+      <span id="role-badge" class="px-2.5 py-1 rounded text-xs font-bold bg-cyan-950 text-cyan-400 border border-cyan-800 uppercase">
+        Standard User
+      </span>
     </div>
 
     <div id="status-msg" class="hidden p-4 rounded-xl text-xs font-semibold"></div>
 
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-8">
+
+      <!-- Usage & Report Limits Summary -->
+      <div class="space-y-4">
+        <h3 class="font-bold text-white border-b border-slate-800 pb-3 text-base">Monthly Resource Usage</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          
+          <!-- Upload Count Metric -->
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-400 font-medium">Report Uploads (Monthly)</span>
+              <span id="uploads-count-text" class="font-bold text-cyan-400">0 / 4</span>
+            </div>
+            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+              <div id="uploads-bar" class="bg-cyan-500 h-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p id="uploads-subtext" class="text-[10px] text-slate-500">Starter limit: Maximum 4 uploads per month.</p>
+          </div>
+
+          <!-- Lines Processed Metric -->
+          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+            <div class="flex justify-between items-center text-xs">
+              <span class="text-slate-400 font-medium">Lines Processed (Monthly)</span>
+              <span id="lines-count-text" class="font-bold text-cyan-400">0 / 20,000</span>
+            </div>
+            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+              <div id="lines-bar" class="bg-cyan-500 h-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p id="lines-subtext" class="text-[10px] text-slate-500">Starter limit: Maximum 20,000 report lines per month.</p>
+          </div>
+
+        </div>
+      </div>
       
       <!-- Profile Settings -->
       <div class="space-y-4">
@@ -113,21 +150,36 @@
         </div>
       </div>
 
-      <!-- Plan Management -->
+      <!-- Subscription Plan & PayPal Integration -->
       <div class="space-y-4">
         <h3 class="font-bold text-white border-b border-slate-800 pb-3 text-base">Subscription Plan</h3>
-        <div class="flex items-center justify-between bg-slate-950 p-4 rounded-xl border border-slate-800">
-          <div>
-            <span class="block text-sm font-bold text-white" id="plan-card-title">Starter Tier ($0/mo)</span>
-            <span class="text-xs text-slate-400" id="plan-card-desc">Basic single-user access with standard report capacity.</span>
+        <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="block text-sm font-bold text-white" id="plan-card-title">Starter Tier ($0/mo)</span>
+              <span class="text-xs text-slate-400" id="plan-card-desc">Basic single-user access: limit 20K lines/month and 4 uploads/month.</span>
+            </div>
+            <div id="plan-badge-container">
+              <span id="plan-status-pill" class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full font-semibold">Active Plan</span>
+            </div>
           </div>
-          <button id="plan-btn" onclick="togglePlanUpgrade()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">
-            Upgrade to Professional ($99/mo)
-          </button>
+
+          <!-- PayPal Checkout Button Container -->
+          <div id="paypal-button-wrapper" class="pt-2 max-w-sm">
+            <label class="block text-xs font-semibold text-cyan-400 mb-2">Upgrade to Professional ($99/mo) with PayPal:</label>
+            <div id="paypal-button-container"></div>
+          </div>
+
+          <!-- Downgrade Option (Visible only for Professional) -->
+          <div id="downgrade-wrapper" class="hidden pt-2">
+            <button onclick="downgradePlan()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2 rounded-xl text-xs transition">
+              Downgrade to Starter Tier
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Team Access Management (Professional Only) -->
+      <!-- Team Access Management -->
       <div class="space-y-4">
         <div class="flex items-center justify-between border-b border-slate-800 pb-3">
           <div>
@@ -190,7 +242,7 @@
   </div>
 
   <script type="module">
-    import { auth, db } from '/app/auth-guard.js';
+    import { auth, db, isSuperAdmin } from '/app/auth-guard.js';
     import { 
       updateEmail, 
       sendPasswordResetEmail as fbSendReset 
@@ -209,47 +261,171 @@
       activeUser = user;
       document.getElementById('prof-email').value = user.email || "";
 
+      // Super Admin detection
+      if (isSuperAdmin(user)) {
+        const badge = document.getElementById('role-badge');
+        badge.innerText = "Super Admin";
+        badge.className = "px-2.5 py-1 rounded text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase";
+      }
+
       // Load User Profile from Firestore
-      const snap = await getDoc(doc(db, "users", user.uid));
-      if (snap.exists()) {
-        userProfileData = snap.data();
-        document.getElementById('prof-name').value = userProfileData.fullName || user.displayName || "";
-        document.getElementById('prof-country').value = userProfileData.country || "";
-        document.getElementById('prof-company').value = userProfileData.company || "";
-        
-        renderPlanUI(userProfileData.plan || "starter");
-        renderCollabsUI(userProfileData.invitedColleagues || []);
+      try {
+        const snap = await getDoc(doc(db, "users", user.uid));
+        if (snap.exists()) {
+          userProfileData = snap.data();
+          document.getElementById('prof-name').value = userProfileData.fullName || user.displayName || "";
+          document.getElementById('prof-country').value = userProfileData.country || "";
+          document.getElementById('prof-company').value = userProfileData.company || "";
+          
+          renderUsageMetrics(userProfileData);
+          renderPlanUI(userProfileData.plan || "starter");
+          renderCollabsUI(userProfileData.invitedColleagues || []);
+          initPayPalButtons();
+        }
+      } catch (err) {
+        console.warn("Error fetching user profile data:", err);
       }
     };
+
+    function renderUsageMetrics(data) {
+      const plan = data.plan || 'starter';
+      const uploadsUsed = data.monthlyUploads || 0;
+      const linesUsed = data.monthlyLines || 0;
+
+      const uploadsText = document.getElementById('uploads-count-text');
+      const uploadsBar = document.getElementById('uploads-bar');
+      const uploadsSubtext = document.getElementById('uploads-subtext');
+
+      const linesText = document.getElementById('lines-count-text');
+      const linesBar = document.getElementById('lines-bar');
+      const linesSubtext = document.getElementById('lines-subtext');
+
+      if (plan === 'Professional') {
+        uploadsText.innerText = `${uploadsUsed} / Unlimited`;
+        uploadsBar.style.width = '100%';
+        uploadsSubtext.innerText = "Professional Plan: Unlimited monthly uploads unlocked.";
+
+        linesText.innerText = `${linesUsed.toLocaleString()} / Unlimited`;
+        linesBar.style.width = '100%';
+        linesSubtext.innerText = "Professional Plan: Unlimited report line processing unlocked.";
+      } else {
+        // Starter Plan Limits (4 uploads, 20,000 lines)
+        const uploadPct = Math.min((uploadsUsed / 4) * 100, 100);
+        uploadsText.innerText = `${uploadsUsed} / 4`;
+        uploadsBar.style.width = `${uploadPct}%`;
+        if (uploadsUsed >= 4) {
+          uploadsBar.classList.replace('bg-cyan-500', 'bg-rose-500');
+          uploadsSubtext.innerText = "Monthly upload limit reached. Upgrade to Professional ($99) for unlimited access.";
+          uploadsSubtext.classList.add('text-rose-400');
+        }
+
+        const linesPct = Math.min((linesUsed / 20000) * 100, 100);
+        linesText.innerText = `${linesUsed.toLocaleString()} / 20,000`;
+        linesBar.style.width = `${linesPct}%`;
+        if (linesUsed >= 20000) {
+          linesBar.classList.replace('bg-cyan-500', 'bg-rose-500');
+          linesSubtext.innerText = "Monthly lines limit reached. Upgrade to Professional ($99) for unlimited access.";
+          linesSubtext.classList.add('text-rose-400');
+        }
+      }
+    }
 
     function renderPlanUI(plan) {
       const planLabel = document.getElementById('plan-label');
       const planTitle = document.getElementById('plan-card-title');
       const planDesc = document.getElementById('plan-card-desc');
-      const planBtn = document.getElementById('plan-btn');
+      const paypalWrapper = document.getElementById('paypal-button-wrapper');
+      const downgradeWrapper = document.getElementById('downgrade-wrapper');
       const collabOverlay = document.getElementById('collab-locked-overlay');
       const collabPanel = document.getElementById('collab-active-panel');
 
       if (plan === 'Professional') {
         planLabel.innerText = "Professional Tier";
         planTitle.innerText = "Professional Plan ($99/mo)";
-        planDesc.innerText = "Unlimited uploads, full leakage analysis, and up to 5 team seats.";
-        planBtn.innerText = "Downgrade to Starter";
-        planBtn.className = "bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2 rounded-xl text-xs transition";
+        planDesc.innerText = "Unlimited uploads, unlimited lines, and up to 5 team seats unlocked.";
         
+        paypalWrapper.classList.add('hidden');
+        downgradeWrapper.classList.remove('hidden');
         collabOverlay.classList.add('hidden');
         collabPanel.classList.remove('hidden');
       } else {
         planLabel.innerText = "Starter Tier";
         planTitle.innerText = "Starter Plan ($0/mo)";
-        planDesc.innerText = "Basic single-user access with standard report capacity.";
-        planBtn.innerText = "Upgrade to Professional ($99/mo)";
-        planBtn.className = "bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition";
+        planDesc.innerText = "Basic single-user access: limit 20,000 lines/month and 4 uploads/month.";
 
+        paypalWrapper.classList.remove('hidden');
+        downgradeWrapper.classList.add('hidden');
         collabOverlay.classList.remove('hidden');
         collabPanel.classList.add('hidden');
       }
     }
+
+    function initPayPalButtons() {
+      const container = document.getElementById('paypal-button-container');
+      if (!container || container.children.length > 0) return;
+
+      if (typeof paypal !== 'undefined') {
+        paypal.Buttons({
+          style: {
+            layout: 'vertical',
+            color:  'gold',
+            shape:  'rect',
+            label:  'pay'
+          },
+          createOrder: function(data, actions) {
+            return actions.order.create({
+              purchase_units: [{
+                description: 'OpsReveal Professional Tier Subscription',
+                amount: {
+                  value: '99.00'
+                }
+              }]
+            });
+          },
+          onApprove: async function(data, actions) {
+            const details = await actions.order.capture();
+            await completeUpgradeToPro(details);
+          },
+          onError: function(err) {
+            showStatus("PayPal Payment Error: " + err.message, "error");
+          }
+        }).render('#paypal-button-container');
+      }
+    }
+
+    async function completeUpgradeToPro(paymentDetails) {
+      try {
+        const userRef = doc(db, "users", activeUser.uid);
+        await updateDoc(userRef, { 
+          plan: "Professional",
+          updatedAt: new Date().toISOString()
+        });
+
+        userProfileData.plan = "Professional";
+        localStorage.setItem('opsreveal_plan', "Professional");
+        
+        renderPlanUI("Professional");
+        renderUsageMetrics(userProfileData);
+        showStatus("Payment successful! Your account has been upgraded to Professional Tier.", "success");
+      } catch (err) {
+        showStatus("Failed to update account tier: " + err.message, "error");
+      }
+    }
+
+    window.downgradePlan = async () => {
+      try {
+        const userRef = doc(db, "users", activeUser.uid);
+        await updateDoc(userRef, { plan: "starter" });
+
+        userProfileData.plan = "starter";
+        localStorage.setItem('opsreveal_plan', "starter");
+        renderPlanUI("starter");
+        renderUsageMetrics(userProfileData);
+        showStatus("Plan updated to Starter Tier.", "success");
+      } catch (err) {
+        showStatus(err.message, "error");
+      }
+    };
 
     function renderCollabsUI(list) {
       const countBadge = document.getElementById('collab-count-badge');
@@ -313,19 +489,6 @@
       }
     };
 
-    window.togglePlanUpgrade = async () => {
-      const currentPlan = userProfileData.plan || "starter";
-      const newPlan = currentPlan === "Professional" ? "starter" : "Professional";
-
-      const userRef = doc(db, "users", activeUser.uid);
-      await updateDoc(userRef, { plan: newPlan });
-
-      userProfileData.plan = newPlan;
-      localStorage.setItem('opsreveal_plan', newPlan);
-      renderPlanUI(newPlan);
-      showStatus(`Plan successfully updated to ${newPlan}!`, "success");
-    };
-
     window.promptInviteColleague = () => {
       const emailInput = document.getElementById('invite-email');
       const email = emailInput.value.trim();
@@ -365,7 +528,7 @@
       renderCollabsUI(currentCollabs);
       document.getElementById('invite-email').value = "";
 
-      showStatus(`Invite registered for ${pendingInviteEmail}. Once they register with this email, they can access your shared data!`, "success");
+      showStatus(`Invite registered for ${pendingInviteEmail}.`, "success");
     };
 
     window.removeColleague = async (index) => {
