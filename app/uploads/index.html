@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="h-full bg-slate-950 dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +10,20 @@
   
   <!-- SheetJS Library for Processing & Exporting Excel Files -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, h4, .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .bg-grid { 
+      background-image: radial-gradient(rgba(56, 189, 248, 0.08) 1px, transparent 1px); 
+      background-size: 32px 32px; 
+    }
+  </style>
 
   <script>
     tailwind.config = {
@@ -29,155 +43,181 @@
     }
   </script>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+<body class="min-h-screen text-slate-100 bg-slate-950 flex flex-col bg-grid font-sans antialiased">
 
   <!-- Top Navigation -->
-  <nav class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
+  <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo & Navigation -->
       <div class="flex items-center space-x-8">
-        <div class="flex items-center space-x-3">
-          <div class="w-8 h-8 rounded-lg bg-sky-500 flex items-center justify-center font-bold text-slate-950 text-xl">O</div>
-          <span class="text-xl font-bold tracking-tight text-white">OpsReveal</span>
-        </div>
-        <div class="flex space-x-4">
-          <a href="/dashboard.html" class="px-3 py-2 text-sm font-medium text-slate-400 hover:text-white transition">Dashboard</a>
-          <a href="/upload.html" class="px-3 py-2 text-sm font-medium text-sky-400 border-b-2 border-sky-400">Upload Reports</a>
-          <a href="/settings.html" class="px-3 py-2 text-sm font-medium text-slate-400 hover:text-white transition">Settings</a>
-        </div>
+        <a href="/dashboard.html" class="flex items-center space-x-3">
+          <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-lg text-slate-950 shadow-md shadow-cyan-500/20">
+            O
+          </div>
+          <span class="text-xl font-bold text-white font-heading">OpsReveal</span>
+        </a>
+
+        <!-- Global Navigation Menu -->
+        <nav class="hidden md:flex items-center space-x-1">
+          <a href="/dashboard.html" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 001 1v4a1 1 0 001 1m-6 0h6"/></svg>
+            <span>Dashboard</span>
+          </a>
+          <a href="/upload.html" class="px-3 py-2 rounded-lg text-xs font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>Upload Reports</span>
+          </a>
+          <a href="/settings.html" class="px-3 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-900 transition flex items-center space-x-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            <span>Settings</span>
+          </a>
+        </nav>
       </div>
-      <div id="userBadge" class="flex items-center text-xs font-mono bg-slate-800 border border-slate-700 text-slate-300 px-3 py-1.5 rounded-full">
+
+      <!-- User Badge -->
+      <div id="userBadge" class="flex items-center text-xs font-mono bg-slate-900 border border-slate-800 text-slate-300 px-3 py-1.5 rounded-full">
         <span class="w-2 h-2 rounded-full bg-slate-500 mr-2"></span> Checking Auth...
       </div>
     </div>
-  </nav>
+  </header>
 
   <!-- Main Container -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-    
-    <!-- Page Header -->
-    <div class="flex items-center justify-between">
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- Header Title Section -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
       <div>
-        <h1 class="text-3xl font-extrabold text-white tracking-tight">Upload Reports</h1>
-        <p class="text-slate-400 text-sm mt-1">Select your upload category, download header templates, and audit leakages in real-time.</p>
+        <h1 class="text-3xl font-extrabold text-white font-heading tracking-tight">Upload Reports</h1>
+        <p class="text-xs text-slate-400 mt-1">Select your upload category, download header templates, and audit leakages in real-time.</p>
       </div>
-      <span class="text-xs font-mono text-slate-500 bg-slate-900 border border-slate-800 px-3 py-1 rounded">Route: /app/uploads</span>
+      <span class="text-xs font-mono text-slate-500 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg self-start md:self-auto">Route: /app/uploads</span>
     </div>
 
     <!-- Error Banner -->
-    <div id="errorBanner" class="hidden p-4 rounded-xl bg-red-950/60 border border-red-800/80 text-red-200 text-sm flex items-start space-x-3">
-      <svg class="w-5 h-5 text-red-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-      <div id="errorMessage"></div>
+    <div id="errorBanner" class="hidden bg-red-950/60 border border-red-800/80 rounded-2xl p-4 text-red-200 text-xs flex items-start space-x-3">
+      <svg class="w-5 h-5 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <div>
+        <h4 class="font-bold text-red-400 mb-0.5">Schema Validation Error</h4>
+        <p id="errorMessage">The uploaded file does not match the required column headers.</p>
+      </div>
     </div>
 
-    <!-- Upload Controls Card -->
+    <!-- Controls Panel -->
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Type Selection Dropdown -->
         <div>
           <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Type of Upload</label>
-          <select id="reportTypeSelect" class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition">
-            <option value="grn">Receiving / GRN Report</option>
+          <select id="reportTypeSelect" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm font-semibold text-cyan-400 focus:border-cyan-500 focus:outline-none transition">
+            <option value="grn" selected>Receiving / GRN Report</option>
             <option value="sales">Sales Report</option>
             <option value="writeoff">WriteOff Report</option>
           </select>
         </div>
 
-        <div>
+        <!-- Download Template Button -->
+        <div class="flex flex-col justify-end">
           <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Template Download Standard</label>
-          <button id="downloadTemplateBtn" class="w-full bg-slate-800 hover:bg-slate-750 text-sky-400 font-medium border border-slate-700 rounded-xl px-4 py-3 flex items-center justify-center space-x-2 transition hover:border-sky-500/50">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          <button id="downloadTemplateBtn" type="button" class="w-full bg-slate-800 hover:bg-slate-700 text-cyan-400 font-semibold px-4 py-3 rounded-xl border border-slate-700/60 text-sm flex items-center justify-center space-x-2 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             <span id="templateBtnText">Download Receiving/GRN Header Template</span>
           </button>
         </div>
       </div>
 
-      <!-- Threshold Inputs for GRN -->
-      <div id="grnThresholds" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-slate-800/60">
+      <!-- Threshold Controls (GRN specific) -->
+      <div id="grnThresholds" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800/60">
         <div>
           <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Min Target Shelf Life % (Default: 60%)</label>
-          <input type="number" id="shelfLifeThreshold" value="60" min="1" max="100" class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition">
+          <input type="number" id="shelfLifeThreshold" value="60" min="1" max="100" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-cyan-400 focus:border-cyan-500 outline-none transition">
         </div>
         <div>
           <label class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Target Margin % (Default: 20%)</label>
-          <input type="number" id="marginThreshold" value="20" min="0" max="100" class="w-full bg-slate-950 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition">
+          <input type="number" id="marginThreshold" value="20" min="0" max="100" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-emerald-400 focus:border-cyan-500 outline-none transition">
         </div>
-      </div>
-
-      <!-- File Upload Dropzone -->
-      <div id="dropZoneContent" class="border-2 border-dashed border-slate-700 hover:border-sky-500/50 rounded-2xl p-8 text-center transition bg-slate-950/40 relative">
-        <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="hidden" />
-        
-        <div id="processingLoader" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-10 space-y-3">
-          <div class="w-8 h-8 border-4 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-          <p class="text-sm font-semibold text-sky-400">Auditing leakages & generating report...</p>
-        </div>
-
-        <div class="space-y-4">
-          <div class="w-12 h-12 rounded-xl bg-slate-800 text-sky-400 flex items-center justify-center mx-auto border border-slate-700">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-          </div>
-          <div>
-            <button id="selectFileBtn" class="text-sky-400 font-semibold hover:underline">Select CSV or Excel File</button>
-            <span class="text-slate-400"> or drag and drop</span>
-            <p class="text-xs text-slate-500 mt-1">Must strictly match the designated header schema.</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Placeholder for Writeoff -->
-      <div id="writeoffPlaceholder" class="hidden border border-amber-800/40 bg-amber-950/20 rounded-2xl p-8 text-center text-amber-300">
-        <p class="font-semibold text-base">WriteOff Processing Module Coming Soon</p>
-        <p class="text-xs text-amber-400/70 mt-1">Template standard is available above for reference.</p>
       </div>
     </div>
 
-    <!-- Live Processing KPIs -->
+    <!-- Dropzone Area -->
+    <div id="uploadContainer" class="rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/40 p-8 text-center hover:border-cyan-500/50 transition relative">
+      <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="hidden">
+
+      <!-- Processing Loader Overlay -->
+      <div id="processingLoader" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center z-10 space-y-3">
+        <div class="w-8 h-8 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+        <p class="text-sm font-semibold text-cyan-400">Auditing leakages & generating report...</p>
+      </div>
+      
+      <!-- WriteOff Placeholder -->
+      <div id="writeoffPlaceholder" class="hidden space-y-3 py-6">
+        <span class="inline-block px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-xs rounded-full uppercase tracking-wider">Coming Soon</span>
+        <h3 class="text-lg font-bold text-white">WriteOff Report Engine Under Maintenance</h3>
+        <p class="text-xs text-slate-400 max-w-md mx-auto">WriteOff calculations and leakage tracking algorithms are currently under active development.</p>
+      </div>
+
+      <!-- Drop Zone Content -->
+      <div id="dropZoneContent" class="max-w-md mx-auto space-y-3">
+        <div class="h-12 w-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mx-auto flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+        </div>
+        <div>
+          <button id="selectFileBtn" type="button" class="text-cyan-400 font-bold text-sm hover:underline">Select CSV or Excel File</button>
+          <span class="text-xs text-slate-400"> or drag and drop</span>
+          <p class="text-[11px] text-slate-500 mt-1">Must strictly match the designated header schema.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary KPI Metric Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lines Uploaded</span>
-        <div id="metricRows" class="text-3xl font-extrabold text-white mt-2">0</div>
-        <span class="text-xs text-slate-500 mt-1 block">Parsed records</span>
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lines Uploaded</div>
+        <div id="metricRows" class="text-3xl font-extrabold text-white font-heading mt-2">0</div>
+        <p class="text-[11px] text-slate-500 mt-1">Parsed records</p>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Leakages Found</span>
-        <div id="metricLeakage" class="text-3xl font-extrabold text-red-400 mt-2">$0.00</div>
-        <span class="text-xs text-slate-500 mt-1 block">Financial impact value</span>
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Leakages Found</div>
+        <div id="metricLeakage" class="text-3xl font-extrabold text-red-400 font-heading mt-2">$0.00</div>
+        <p class="text-[11px] text-slate-500 mt-1">Financial impact value</p>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lines Processed / Flagged</span>
-        <div id="metricExceptions" class="text-3xl font-extrabold text-amber-400 mt-2">0</div>
-        <span class="text-xs text-slate-500 mt-1 block">Audit exceptions</span>
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Lines Processed / Flagged</div>
+        <div id="metricExceptions" class="text-3xl font-extrabold text-amber-400 font-heading mt-2">0</div>
+        <p class="text-[11px] text-slate-500 mt-1">Audit exceptions</p>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Risk Score</span>
-        <div id="metricRisk" class="text-3xl font-extrabold text-emerald-400 mt-2">None</div>
-        <span class="text-xs text-slate-500 mt-1 block">Aggregated risk profile</span>
+      <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl">
+        <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Risk Score</div>
+        <div id="metricRisk" class="text-3xl font-extrabold text-emerald-400 font-heading mt-2">None</div>
+        <p class="text-[11px] text-slate-500 mt-1">Aggregated risk profile</p>
       </div>
     </div>
 
     <!-- Upload History Table -->
     <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
       <div class="p-6 border-b border-slate-800">
-        <h2 class="text-lg font-bold text-white">Upload History</h2>
+        <h3 class="text-base font-bold text-white font-heading">Upload History</h3>
         <p class="text-xs text-slate-400 mt-0.5">Archived audit summaries stored securely in Cloudflare R2.</p>
       </div>
 
       <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm text-slate-300">
-          <thead class="bg-slate-950/80 text-xs text-slate-400 uppercase font-semibold border-b border-slate-800">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-950/80 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
             <tr>
-              <th class="px-6 py-4">Uploaded Date</th>
-              <th class="px-6 py-4">File Name</th>
-              <th class="px-6 py-4">Lines Processed</th>
-              <th class="px-6 py-4">Total Leakages</th>
-              <th class="px-6 py-4">Risk Score</th>
+              <th class="px-6 py-3.5">Uploaded Date</th>
+              <th class="px-6 py-3.5">File Name</th>
+              <th class="px-6 py-3.5">Lines Processed</th>
+              <th class="px-6 py-3.5">Total Leakages</th>
+              <th class="px-6 py-3.5">Risk Score</th>
             </tr>
           </thead>
-          <tbody id="historyTableBody" class="divide-y divide-slate-800/60">
+          <tbody id="historyTableBody" class="divide-y divide-slate-800/60 text-slate-300">
             <tr>
-              <td colspan="5" class="px-6 py-6 text-center text-slate-500 font-medium">Fetching history records...</td>
+              <td colspan="5" class="px-6 py-8 text-center text-slate-500 font-medium">Fetching history records...</td>
             </tr>
           </tbody>
         </table>
@@ -191,8 +231,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
-
     const firebaseConfig = {
       apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
       authDomain: "opsreveal.firebaseapp.com",
@@ -204,181 +242,156 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const WORKER_URL = "https://opsreveal-worker.mithun-preventloss.workers.dev";
+
     let currentUser = null;
 
     const SCHEMAS = {
-      grn: [
-        "receiving_grn_date/month", "supplier_name", "product_sku", "product_name",
-        "category", "receiving_cp", "receiving_mrp", "received_qty",
-        "manufacturing_date", "expiry_date"
-      ],
-      sales: [
-        "sales_date", "product_sku", "product_name", "sold_qty", "cp", "sales_price"
-      ],
-      writeoff: [
-        "writeoff_date", "product_sku", "product_name", "writeoff_reason", "qty", "value"
-      ]
+      grn: ['receiving_grn_date/month', 'product_sku', 'receiving_qty', 'receiving_cp', 'receiving_mrp', 'mfg_date', 'expiry_date'],
+      sales: ['sale_date', 'product_sku', 'sold_qty', 'cp', 'sales_price'],
+      writeoff: ['writeoff_date', 'product_sku', 'writeoff_qty', 'cost_price', 'reason']
     };
 
-    const sanitizeHeader = (str) => String(str || '').trim().toLowerCase().replace(/[\u200B-\u200D\uFEFF]/g, '');
-    const fmtCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
-    const formatDate = (val) => {
-      if (!val) return "";
-      const d = new Date(val);
-      return isNaN(d.getTime()) ? String(val) : d.toISOString().slice(0, 10);
-    };
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const selectEl = document.getElementById('reportTypeSelect');
-      const downloadBtn = document.getElementById('downloadTemplateBtn');
-      const selectFileBtn = document.getElementById('selectFileBtn');
-      const fileInput = document.getElementById('fileInput');
-
-      selectEl.addEventListener('change', handleReportTypeChange);
-      downloadBtn.addEventListener('click', downloadTemplate);
-      selectFileBtn.addEventListener('click', () => fileInput.click());
-      fileInput.addEventListener('change', processFile);
-
-      handleReportTypeChange();
-    });
-
-    // strict EMAIL VERIFICATION GUARD
+    // Auth State Monitor
     onAuthStateChanged(auth, async (user) => {
+      const userBadge = document.getElementById('userBadge');
       if (user) {
-        // Refresh token state to catch immediate verification updates
-        await user.reload();
-
-        if (!user.emailVerified) {
-          // BLOCK ACCESS: User logged in but email is not verified yet
-          window.location.href = "/verify-email.html";
-          return;
-        }
-
-        // ALLOW ACCESS: User logged in and verified
         currentUser = user;
-        document.getElementById('userBadge').innerHTML = `
-          <span class="w-2 h-2 rounded-full bg-emerald-400 mr-2"></span>
-          ${user.email}
-        `;
-        loadHistory();
+        userBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 mr-2"></span> ${user.email}`;
+        await fetchHistory();
       } else {
-        // Redirect to login if unauthenticated
-        window.location.href = "/login.html";
+        window.location.href = '/login.html';
       }
     });
 
-    function handleReportTypeChange() {
-      const type = document.getElementById('reportTypeSelect').value;
-      const btnText = document.getElementById('templateBtnText');
+    // Helper: Currency Formatter
+    function fmtCurrency(val) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
+    }
+
+    // Helper: Date Normalizer
+    function formatDate(val) {
+      if (!val) return null;
+      const d = new Date(val);
+      return isNaN(d.getTime()) ? null : d.toISOString().split('T')[0];
+    }
+
+    // UI Dropdown Change Listener
+    document.getElementById('reportTypeSelect').addEventListener('change', (e) => {
+      const val = e.target.value;
       const grnThresholds = document.getElementById('grnThresholds');
       const dropZoneContent = document.getElementById('dropZoneContent');
       const writeoffPlaceholder = document.getElementById('writeoffPlaceholder');
-      const errorBanner = document.getElementById('errorBanner');
+      const templateBtnText = document.getElementById('templateBtnText');
 
-      errorBanner.classList.add('hidden');
-
-      if (type === 'grn') {
-        btnText.textContent = "Download Receiving/GRN Header Template";
+      if (val === 'grn') {
         grnThresholds.classList.remove('hidden');
         dropZoneContent.classList.remove('hidden');
         writeoffPlaceholder.classList.add('hidden');
-      } else if (type === 'sales') {
-        btnText.textContent = "Download Sales Header Template";
+        templateBtnText.textContent = "Download Receiving/GRN Header Template";
+      } else if (val === 'sales') {
         grnThresholds.classList.add('hidden');
         dropZoneContent.classList.remove('hidden');
         writeoffPlaceholder.classList.add('hidden');
-      } else if (type === 'writeoff') {
-        btnText.textContent = "Download WriteOff Header Template";
+        templateBtnText.textContent = "Download Sales Header Template";
+      } else {
         grnThresholds.classList.add('hidden');
         dropZoneContent.classList.add('hidden');
         writeoffPlaceholder.classList.remove('hidden');
+        templateBtnText.textContent = "Download WriteOff Header Template";
       }
-    }
+    });
 
-    function downloadTemplate() {
+    // Download Template File
+    document.getElementById('downloadTemplateBtn').addEventListener('click', () => {
       const type = document.getElementById('reportTypeSelect').value;
       const headers = SCHEMAS[type];
+      
       if (!headers) return;
 
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet([headers]);
-      ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length + 5, 18) }));
       XLSX.utils.book_append_sheet(wb, ws, "Template");
       XLSX.writeFile(wb, `${type}_header_template.xlsx`);
-    }
+    });
 
-    async function processFile(event) {
-      const file = event.target.files[0];
-      const type = document.getElementById('reportTypeSelect').value;
+    // File Input Triggers
+    const fileInput = document.getElementById('fileInput');
+    document.getElementById('selectFileBtn').addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) processFile(e.target.files[0]);
+    });
+
+    // Drag and Drop Handling
+    const uploadContainer = document.getElementById('uploadContainer');
+    uploadContainer.addEventListener('dragover', (e) => { e.preventDefault(); uploadContainer.classList.add('border-cyan-500'); });
+    uploadContainer.addEventListener('dragleave', () => uploadContainer.classList.remove('border-cyan-500'));
+    uploadContainer.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadContainer.classList.remove('border-cyan-500');
+      if (e.dataTransfer.files.length > 0) processFile(e.dataTransfer.files[0]);
+    });
+
+    // Process Uploaded File
+    async function processFile(file) {
+      const reportType = document.getElementById('reportTypeSelect').value;
       const errorBanner = document.getElementById('errorBanner');
       const errorMessage = document.getElementById('errorMessage');
+      const loader = document.getElementById('processingLoader');
 
-      if (!file || !currentUser) return;
       errorBanner.classList.add('hidden');
+      if (reportType === 'writeoff') return;
 
-      if (type === 'writeoff') {
-        alert("WriteOff processing is coming soon.");
-        return;
-      }
-
-      document.getElementById('processingLoader').classList.remove('hidden');
+      loader.classList.remove('hidden');
 
       const reader = new FileReader();
-      reader.onload = async function(e) {
+      reader.onload = async (e) => {
         try {
           const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array', cellDates: true, dense: true });
+          const workbook = XLSX.read(data, { type: 'array' });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const json = XLSX.utils.sheet_to_json(firstSheet, { defval: "" });
 
-          const headerRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, range: 0 });
-          
-          if (!headerRows || headerRows.length === 0 || !headerRows[0]) {
-            throw new Error("The uploaded file is empty or missing header rows.");
+          if (json.length === 0) throw new Error("The uploaded file is empty.");
+
+          // Validate Headers
+          const fileHeaders = Object.keys(json[0]).map(h => h.trim().toLowerCase());
+          const required = SCHEMAS[reportType];
+          const missing = required.filter(h => !fileHeaders.includes(h));
+
+          if (missing.length > 0) {
+            throw new Error(`Missing required headers: ${missing.join(', ')}`);
           }
 
-          const rawFileHeaders = headerRows[0].map(sanitizeHeader);
-          const requiredHeaders = SCHEMAS[type].map(sanitizeHeader);
-
-          const missingHeaders = SCHEMAS[type].filter((req, idx) => {
-            const sanitizedReq = requiredHeaders[idx];
-            return !rawFileHeaders.includes(sanitizedReq);
-          });
-
-          if (missingHeaders.length > 0) {
-            throw new Error(`Uploaded file format invalid for ${type.toUpperCase()}. Missing required column headers: [${missingHeaders.join(", ")}].`);
+          if (reportType === 'grn') {
+            await processGRNFile(json, file.name);
+          } else if (reportType === 'sales') {
+            await processSalesFile(json, file.name);
           }
-
-          const rawData = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
-          if (rawData.length === 0) {
-            throw new Error("The uploaded file contains headers but zero data rows.");
-          }
-
-          if (type === 'grn') {
-            const shelfThreshold = (parseFloat(document.getElementById('shelfLifeThreshold').value) || 60) / 100;
-            const marginThreshold = (parseFloat(document.getElementById('marginThreshold').value) || 20) / 100;
-            await processGRNFile(rawData, file.name, shelfThreshold, marginThreshold);
-          } else if (type === 'sales') {
-            await processSalesFile(rawData, file.name);
-          }
-
         } catch (err) {
           errorMessage.textContent = err.message;
           errorBanner.classList.remove('hidden');
-        } fontally {
-          document.getElementById('processingLoader').classList.add('hidden');
-          event.target.value = '';
+        } finally {
+          loader.classList.add('hidden');
+          fileInput.value = '';
         }
       };
       reader.readAsArrayBuffer(file);
     }
 
-    async function processGRNFile(data, originalFileName, shelfThreshold, marginThreshold) {
+    // GRN File Audit Engine
+    async function processGRNFile(data, originalFileName) {
+      const shelfThreshold = (parseFloat(document.getElementById('shelfLifeThreshold').value) || 60) / 100;
+      const marginThreshold = (parseFloat(document.getElementById('marginThreshold').value) || 20) / 100;
+
       let totalLeakage = 0;
       let totalExceptions = 0;
 
       const minCPMap = {};
       const minCPSameDayMap = {};
 
+      // Pre-computations
       data.forEach(row => {
         const sku = String(row.product_sku || '').trim();
         const cp = Math.round((parseFloat(row.receiving_cp) || 0) * 100) / 100;
@@ -397,15 +410,15 @@
         const dateStr = formatDate(row['receiving_grn_date/month']);
         const cp = Math.round((parseFloat(row.receiving_cp) || 0) * 100) / 100;
         const mrp = Math.round((parseFloat(row.receiving_mrp) || 0) * 100) / 100;
-        const qty = Math.round((parseFloat(row.received_qty) || 0) * 100) / 100;
-        const mfgStr = formatDate(row.manufacturing_date);
+        const qty = parseFloat(row.receiving_qty) || 0;
+        const mfgStr = formatDate(row.mfg_date);
         const expStr = formatDate(row.expiry_date);
 
         const totalGRNValue = cp * qty;
         let rowLeakage = 0;
         let isFlagged = false;
 
-        // 1. Shelf Life Check
+        // Shelf Life Checks
         let shelfLifeStatus = "OK";
         if (expStr && dateStr) {
           const recD = new Date(dateStr);
@@ -430,7 +443,7 @@
           }
         }
 
-        // 2. Margin Check
+        // Margin Checks
         const marginPct = mrp > 0 ? (mrp - cp) / mrp : 0;
         let marginStatus = "OK";
         if (marginPct < marginThreshold) {
@@ -440,7 +453,7 @@
           isFlagged = true;
         }
 
-        // 3. Price Variance
+        // Price Variance
         const minCP = minCPMap[sku] || cp;
         const cpVariance = (cp - minCP) * qty;
         if (cpVariance > 0) {
@@ -463,17 +476,18 @@
 
       totalLeakage = Math.round(totalLeakage * 100) / 100;
 
-      // STEP 1: TRIGGER INSTANT BROWSER DOWNLOAD OF PROCESSED SHEET
+      // Trigger Download
       const outFileName = `Audited_${originalFileName.replace(/\.[^/.]+$/, "")}.xlsx`;
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(auditedRows);
       XLSX.utils.book_append_sheet(wb, ws, "Audited Data");
       XLSX.writeFile(wb, outFileName);
 
-      // STEP 2: SYNC AUDIT METRICS TO CLOUDFLARE R2
+      // Sync to Cloudflare R2
       await syncAuditToCloudflare(outFileName, data.length, totalLeakage, totalExceptions);
     }
 
+    // Sales File Audit Engine
     async function processSalesFile(data, originalFileName) {
       let totalLeakage = 0;
       let totalExceptions = 0;
@@ -502,17 +516,18 @@
 
       totalLeakage = Math.round(totalLeakage * 100) / 100;
 
-      // STEP 1: TRIGGER INSTANT BROWSER DOWNLOAD OF PROCESSED SHEET
+      // Trigger Download
       const outFileName = `Audited_${originalFileName.replace(/\.[^/.]+$/, "")}.xlsx`;
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(auditedRows);
       XLSX.utils.book_append_sheet(wb, ws, "Audited Sales");
       XLSX.writeFile(wb, outFileName);
 
-      // STEP 2: SYNC AUDIT METRICS TO CLOUDFLARE R2
+      // Sync to Cloudflare R2
       await syncAuditToCloudflare(outFileName, data.length, totalLeakage, totalExceptions);
     }
 
+    // Cloudflare R2 Sync
     async function syncAuditToCloudflare(outFileName, totalRows, totalLeakage, totalExceptions) {
       const riskScore = totalLeakage > 5000 ? "High Risk" : totalLeakage > 1000 ? "Medium Risk" : "Low Risk";
 
@@ -521,9 +536,9 @@
       document.getElementById('metricLeakage').textContent = fmtCurrency(totalLeakage);
       document.getElementById('metricExceptions').textContent = totalExceptions.toLocaleString('en-US');
       
-      const riskEl = document.getElementById('metricRisk');
-      riskEl.textContent = riskScore;
-      riskEl.className = `text-3xl font-extrabold font-heading mt-2 ${
+      const riskElem = document.getElementById('metricRisk');
+      riskElem.textContent = riskScore;
+      riskElem.className = `text-3xl font-extrabold font-heading mt-2 ${
         riskScore === "High Risk" ? "text-red-400" : riskScore === "Medium Risk" ? "text-amber-400" : "text-emerald-400"
       }`;
 
@@ -533,8 +548,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-            'X-User-Id': currentUser.uid
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             fileName: outFileName,
@@ -547,32 +561,31 @@
           })
         });
 
-        loadHistory();
-      } catch (err) {
-        console.error("Cloudflare Sync Error:", err);
+        await fetchHistory();
+      } catch (e) {
+        console.error("Cloudflare Sync Error:", e);
       }
     }
 
-    async function loadHistory() {
-      if (!currentUser) return;
-      const tbody = document.getElementById('historyTableBody');
-
+    // Fetch Upload History
+    async function fetchHistory() {
+      const historyTableBody = document.getElementById('historyTableBody');
       try {
         const token = await currentUser.getIdToken();
-        const res = await fetch(`${WORKER_URL}/api/upload/history`, {
-          headers: { 
-            'Authorization': `Bearer ${token}`, 
-            'X-User-Id': currentUser.uid 
-          }
+        const res = await fetch(`${WORKER_URL}/api/summary/list`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await res.json();
 
-        if (!data.success || !data.history || data.history.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-500">No upload history records found.</td></tr>`;
+        if (!res.ok) throw new Error("Failed to fetch history");
+
+        const history = await res.json();
+
+        if (!history || history.length === 0) {
+          historyTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-slate-500 font-medium">No prior uploads recorded.</td></tr>`;
           return;
         }
 
-        tbody.innerHTML = data.history.map(item => `
+        historyTableBody.innerHTML = history.map(item => `
           <tr class="hover:bg-slate-800/40 transition">
             <td class="px-6 py-4 font-mono text-slate-400">${new Date(item.uploadedAt).toLocaleString()}</td>
             <td class="px-6 py-4 font-bold text-white">${item.fileName}</td>
@@ -580,15 +593,15 @@
             <td class="px-6 py-4 font-bold text-red-400">${fmtCurrency(item.totalLeakage)}</td>
             <td class="px-6 py-4">
               <span class="px-2 py-0.5 rounded text-[11px] font-bold ${
-                item.riskScore === 'High Risk' ? 'bg-red-950 text-red-400 border border-red-800/50' : 
-                item.riskScore === 'Medium Risk' ? 'bg-amber-950 text-amber-400 border border-amber-800/50' : 
-                'bg-emerald-950 text-emerald-400 border border-emerald-800/50'
+                item.riskScore === 'High Risk' ? 'bg-red-950/80 text-red-400 border border-red-800/60' :
+                item.riskScore === 'Medium Risk' ? 'bg-amber-950/80 text-amber-400 border border-amber-800/60' :
+                'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60'
               }">${item.riskScore || 'Low Risk'}</span>
             </td>
           </tr>
         `).join('');
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-red-400">Unable to load history.</td></tr>`;
+        historyTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-6 text-center text-red-400 font-medium">Unable to load history metrics.</td></tr>`;
       }
     }
   </script>
