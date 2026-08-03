@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OpsReveal | Upload & Audit Engine</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -29,7 +30,7 @@
         <a href="/app/settings" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Settings</a>
       </nav>
     </div>
-    <button onclick="handleSignOut()" class="w-full bg-slate-900 hover:bg-slate-800 text-xs text-slate-400 py-2.5 rounded-xl border border-slate-800 font-semibold transition">
+    <button id="signOutBtn" class="w-full bg-slate-900 hover:bg-slate-800 text-xs text-slate-400 py-2.5 rounded-xl border border-slate-800 font-semibold transition">
       Sign Out
     </button>
   </aside>
@@ -48,14 +49,14 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label class="block text-xs font-semibold text-slate-300 mb-2">Select Upload Type</label>
-          <select id="uploadType" onchange="switchSchema()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
+          <select id="uploadType" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-500">
             <option value="receiving">Receiving / GRN Report</option>
             <option value="sales">Sales Report</option>
             <option value="writeoff">Write-Off Report (Coming Soon)</option>
           </select>
         </div>
         <div class="flex items-end">
-          <button onclick="downloadBlankTemplate()" class="w-full bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 py-3 rounded-xl border border-slate-700 font-semibold transition">
+          <button id="downloadTemplateBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-xs text-slate-200 py-3 rounded-xl border border-slate-700 font-semibold transition">
             ↓ Download Blank Template Sheet
           </button>
         </div>
@@ -95,18 +96,18 @@
       </div>
 
       <!-- Upload Drop Zone -->
-      <div id="drop-zone" onclick="document.getElementById('fileInput').click()" class="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 bg-slate-950/40 rounded-2xl p-8 text-center cursor-pointer transition">
+      <div id="drop-zone" class="border-2 border-dashed border-slate-800 hover:border-cyan-500/50 bg-slate-950/40 rounded-2xl p-8 text-center cursor-pointer transition">
         <svg class="mx-auto h-10 w-10 text-slate-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
         <span class="text-sm font-semibold text-slate-200 block" id="file-label">Click or Drop CSV / XLSX File Here</span>
         <span class="text-xs text-slate-500 block mt-1">Supports .csv or .xlsx exports</span>
-        <input type="file" id="fileInput" accept=".csv, .xlsx" class="hidden" onchange="handleFileSelect(event)">
+        <input type="file" id="fileInput" accept=".csv, .xlsx" class="hidden">
       </div>
 
       <div id="err-box" class="hidden bg-rose-950/50 border border-rose-500/50 text-rose-200 p-4 rounded-xl text-xs">
         ❌ Invalid file header structure! Ensure column headers match the exact schema specifications above.
       </div>
 
-      <button id="procBtn" disabled onclick="processDataset()" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3.5 rounded-xl opacity-50 cursor-not-allowed transition">
+      <button id="procBtn" disabled class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-3.5 rounded-xl opacity-50 cursor-not-allowed transition">
         Process & Audit Dataset
       </button>
     </div>
@@ -135,19 +136,19 @@
     </div>
   </main>
 
-  <!-- Auth Guard & Main Script -->
+  <!-- Auth Guard & Application Logic -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     // Standard Public Firebase Credentials
     const firebaseConfig = {
-      apiKey: "YOUR_FIREBASE_API_KEY",
+      apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
       authDomain: "opsreveal.firebaseapp.com",
       projectId: "opsreveal",
-      storageBucket: "opsreveal.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      storageBucket: "opsreveal.firebasestorage.app",
+      messagingSenderId: "890870101711",
+      appId: "1:890870101711:web:4266246996091ea56c69ba"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -163,13 +164,12 @@
       }
     });
 
-    window.handleSignOut = () => {
+    // Attach Sign Out Listener safely inside Module scope
+    document.getElementById('signOutBtn').addEventListener('click', () => {
       signOut(auth).then(() => window.location.href = '/login.html');
-    };
-  </script>
+    });
 
-  <script>
-    const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev"; // 👈 Paste your Cloudflare Worker URL
+    const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
 
     const SCHEMAS = {
       receiving: ["receiving_grn_date", "supplier_name", "product_sku", "product_name", "category", "receiving_cp", "receiving_mrp", "received_qty", "manufacturing_date", "expiry_date"],
@@ -178,10 +178,17 @@
 
     let rawData = [];
 
+    // UI & Event Handlers
+    const uploadTypeSelect = document.getElementById('uploadType');
+    const procBtn = document.getElementById('procBtn');
+    const grnConfig = document.getElementById('grn-config-inputs');
+    const schemaText = document.getElementById('schema-text');
+    const downloadBtn = document.getElementById('downloadTemplateBtn');
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('fileInput');
+
     function switchSchema() {
-      const type = document.getElementById('uploadType').value;
-      const procBtn = document.getElementById('procBtn');
-      const grnConfig = document.getElementById('grn-config-inputs');
+      const type = uploadTypeSelect.value;
 
       if (type === 'receiving') {
         grnConfig.classList.remove('hidden');
@@ -190,26 +197,52 @@
       }
 
       if (type === 'writeoff') {
-        document.getElementById('schema-text').innerText = "Module Coming Soon.";
+        schemaText.innerText = "Module Coming Soon.";
         procBtn.disabled = true;
         procBtn.classList.add('opacity-50', 'cursor-not-allowed');
         return;
       }
-      document.getElementById('schema-text').innerText = SCHEMAS[type].join(" | ");
+      schemaText.innerText = SCHEMAS[type].join(" | ");
     }
+
+    uploadTypeSelect.addEventListener('change', switchSchema);
     switchSchema();
 
-    function downloadBlankTemplate() {
-      const type = document.getElementById('uploadType').value;
+    downloadBtn.addEventListener('click', () => {
+      const type = uploadTypeSelect.value;
       if (type === 'writeoff') return alert("Write-off module is under maintenance.");
       const ws = XLSX.utils.aoa_to_sheet([SCHEMAS[type]]);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Template");
       XLSX.writeFile(wb, `Template_${type}.xlsx`);
-    }
+    });
 
-    function handleFileSelect(evt) {
-      const file = evt.target.files[0];
+    // File Drop Zone Listeners
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-cyan-500', 'bg-slate-900/60');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-cyan-500', 'bg-slate-900/60');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-cyan-500', 'bg-slate-900/60');
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        handleFileSelect(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length) handleFileSelect(e.target.files[0]);
+    });
+
+    function handleFileSelect(file) {
       if (!file) return;
       document.getElementById('file-label').innerText = `Selected File: ${file.name}`;
 
@@ -233,14 +266,15 @@
     }
 
     function validateAndLoad(data) {
-      const type = document.getElementById('uploadType').value;
+      const type = uploadTypeSelect.value;
       const required = SCHEMAS[type];
       const errBox = document.getElementById('err-box');
-      const procBtn = document.getElementById('procBtn');
 
       if (!data || data.length === 0) {
         errBox.classList.remove('hidden');
         errBox.innerText = "❌ File is empty or could not be parsed.";
+        procBtn.disabled = true;
+        procBtn.classList.add('opacity-50', 'cursor-not-allowed');
         return;
       }
 
@@ -260,6 +294,7 @@
       }
     }
 
+    // Formatting Helpers
     const parseDate = (dStr) => {
       if (!dStr) return null;
       const d = new Date(dStr);
@@ -274,8 +309,9 @@
     const formatCurrency = (val) => Number(val || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
     const formatPercent = (val) => isNaN(val) ? "0.0%" : (val * 100).toFixed(1) + "%";
 
-    function processDataset() {
-      const type = document.getElementById('uploadType').value;
+    // Dataset Processing Logic
+    procBtn.addEventListener('click', () => {
+      const type = uploadTypeSelect.value;
       const wb = XLSX.utils.book_new();
 
       if (type === 'receiving') {
@@ -283,7 +319,7 @@
       } else if (type === 'sales') {
         processSalesReport(wb);
       }
-    }
+    });
 
     function processReceivingReport(wb) {
       const shelfLifeInput = Math.min(100, Math.max(1, parseFloat(document.getElementById('input-shelf-life').value) || 60));
@@ -335,8 +371,8 @@
           shelfLifePctStr = "Dates Not Provided";
           shelfLifeExp = "Dates Not Provided";
         } else if (recDate && expDate < recDate) {
-          shelfLifePctStr = "Expired before receving";
-          shelfLifeExp = "Expired before receving";
+          shelfLifePctStr = "Expired before receiving";
+          shelfLifeExp = "Expired before receiving";
         } else if (expDate < mfgDate) {
           shelfLifePctStr = "Data is wrong";
           shelfLifeExp = "Data is wrong";
@@ -346,7 +382,7 @@
           shelfLifePctVal = totalDays > 0 ? (remainingDays / totalDays) : 0;
           shelfLifePctStr = formatPercent(shelfLifePctVal);
 
-          if (shelfLifePctVal <= 0) shelfLifeExp = "Expired before receving";
+          if (shelfLifePctVal <= 0) shelfLifeExp = "Expired before receiving";
           else if (shelfLifePctVal < shelfLifeThresholdFrac) shelfLifeExp = "Low Shelf life";
           else shelfLifeExp = "Ok";
         }
@@ -357,7 +393,6 @@
         const marginExp = diffMargin < 0 ? "There is a Margin decrease" : "No Exception";
         const marginLeakageVal = diffMargin < 0 ? (r.receiving_cp * Math.abs(diffMargin)) * r.received_qty : 0;
 
-        // Margin Exception in Column Y
         const lowMarginExp = marginPct <= profitMarginThresholdFrac ? "Less margin" : "Ok";
 
         const minCpGlobal = globalMinCP[r.product_sku] ?? r.receiving_cp;
@@ -406,7 +441,7 @@
 
       // Sheet 2: Shelf Life Summary
       const sheet2Data = masterRows
-        .filter(r => ["Low Shelf life", "Expired before receving"].includes(r["Shelf Life Exception"]))
+        .filter(r => ["Low Shelf life", "Expired before receiving"].includes(r["Shelf Life Exception"]))
         .map(r => ({
           "product_sku": r.product_sku,
           "product_name": r.product_name,
@@ -418,7 +453,7 @@
         }));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheet2Data), "Shelf Life Exceptions");
 
-      // Sheet 3: Margin Summary (Collects Margin Decreases OR "Less margin")
+      // Sheet 3: Margin Summary
       const sheet3Data = masterRows
         .filter(r => r["Margin Exception"] === "There is a Margin decrease" || r["Margin Threshold Exception (Y)"] === "Less margin")
         .map(r => ({
@@ -528,9 +563,9 @@
         }
       };
 
-      // 1. Async sync to Cloudflare R2 via Worker API
+      // 1. Sync to Cloudflare R2 via Worker API
       try {
-        fetch(`${WORKER_URL}/api/summary/save`, {
+        await fetch(`${WORKER_URL}/api/summary/save`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(summaryPayload)
