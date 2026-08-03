@@ -1,225 +1,241 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950">
+<html lang="en" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create OpsReveal Account | Privacy-First Financial Audit</title>
+  <title>Create OpsReveal Account</title>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    h1, h2, h3, .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .bg-grid { background-image: radial-gradient(rgba(56, 189, 248, 0.08) 1px, transparent 1px); background-size: 32px 32px; }
+    /* Background subtle dot pattern matching design */
+    body {
+      background-color: #030712;
+      background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
   </style>
 </head>
-<body class="h-full text-slate-100 bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-grid">
+<body class="text-slate-100 min-h-screen flex flex-col items-center justify-center p-4 font-sans antialiased">
 
-  <div class="sm:mx-auto sm:w-full sm:max-w-md text-center">
-    <a href="https://opsreveal.preventloss.org" class="inline-flex items-center space-x-3 mb-6">
-      <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-xl text-slate-950 shadow-lg shadow-cyan-500/20">
-        O
-      </div>
-      <span class="text-2xl font-bold tracking-tight text-white font-heading">OpsReveal</span>
-    </a>
-    <h2 class="text-2xl font-extrabold tracking-tight text-white font-heading">Create OpsReveal Account</h2>
-    <p class="mt-1 text-xs text-slate-400">Operational Intelligence &amp; Zero-Trust Audit Platform</p>
+  <!-- Header Section -->
+  <div class="text-center mb-8 space-y-1">
+    <h1 class="text-3xl font-extrabold text-white tracking-tight">Create OpsReveal Account</h1>
+    <p class="text-sm text-slate-400">Operational Intelligence & Zero-Trust Audit Platform</p>
   </div>
 
-  <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-    <div class="bg-slate-900/80 border border-slate-800 backdrop-blur-xl py-8 px-4 shadow-2xl rounded-2xl sm:px-8">
-      
-      <!-- Privacy Banner -->
-      <div class="mb-6 rounded-xl bg-cyan-950/40 border border-cyan-500/30 p-3.5 flex items-start space-x-3 text-xs text-cyan-300">
-        <svg class="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-        </svg>
-        <p>
-          <b>We Value Your Privacy:</b> We do not collect your personal name, physical location, or sensitive identity details. Email is only required for account credentials and essential communications.
-        </p>
+  <!-- Sign Up Card Container -->
+  <div class="w-full max-w-lg bg-[#0b1329]/80 border border-slate-800/80 rounded-2xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl space-y-5">
+    
+    <!-- Privacy Alert Banner -->
+    <div class="p-4 rounded-xl bg-[#09253b]/60 border border-cyan-800/40 text-cyan-300 text-xs flex items-start space-x-3 leading-relaxed">
+      <svg class="w-5 h-5 text-cyan-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+      </svg>
+      <div>
+        <strong class="font-bold text-cyan-200">We Value Your Privacy:</strong> We do not collect your personal name, physical location, or sensitive identity details. Email is only required for account credentials and essential communications.
       </div>
-
-      <!-- Dynamic Alert Container for Backend Errors -->
-      <div id="errorAlert" class="hidden mb-6 rounded-xl bg-red-950/60 border border-red-500/50 p-3.5 text-xs text-red-200">
-        <span id="errorMessage">Missing or insufficient permissions. Please verify your credentials.</span>
-      </div>
-
-      <form id="signupForm" class="space-y-5" onsubmit="handleSignup(event)">
-        
-        <!-- 1st Priority: Work Email (Mandatory) -->
-        <div>
-          <label for="email" class="block text-xs font-semibold text-slate-300 mb-1.5">
-            Work Email <span class="text-cyan-400">*</span>
-          </label>
-          <input id="email" name="email" type="email" required placeholder="name@company.com" 
-            class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition">
-        </div>
-
-        <!-- Mandatory Strict Password -->
-        <div>
-          <label for="password" class="block text-xs font-semibold text-slate-300 mb-1.5">
-            Password <span class="text-cyan-400">*</span>
-          </label>
-          <input id="password" name="password" type="password" required placeholder="••••••••••••" oninput="validatePasswordStrength()"
-            class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition">
-          
-          <!-- Password Conditions Checklist -->
-          <div id="passwordRequirements" class="mt-2.5 space-y-1 text-[11px] text-slate-400">
-            <div id="req-length" class="flex items-center space-x-1.5">
-              <span class="dot text-slate-600">•</span> <span>At least 8 characters</span>
-            </div>
-            <div id="req-cases" class="flex items-center space-x-1.5">
-              <span class="dot text-slate-600">•</span> <span>Contains uppercase &amp; lowercase letters</span>
-            </div>
-            <div id="req-numspec" class="flex items-center space-x-1.5">
-              <span class="dot text-slate-600">•</span> <span>Contains a number &amp; special character (!@#$%^&amp;*)</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Confirm Password -->
-        <div>
-          <label for="confirmPassword" class="block text-xs font-semibold text-slate-300 mb-1.5">
-            Confirm Password <span class="text-cyan-400">*</span>
-          </label>
-          <input id="confirmPassword" name="confirmPassword" type="password" required placeholder="••••••••••••" oninput="validatePasswordMatch()"
-            class="w-full rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition">
-          <p id="matchError" class="hidden text-[11px] text-red-400 mt-1">Passwords do not match.</p>
-        </div>
-
-        <div class="relative my-6">
-          <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-800"></div></div>
-          <div class="relative flex justify-center text-xs uppercase"><span class="bg-slate-900 px-2 text-slate-500 font-semibold">Optional Details</span></div>
-        </div>
-
-        <!-- Optional Field: Full Name -->
-        <div>
-          <div class="flex justify-between items-center mb-1.5">
-            <label for="fullName" class="text-xs font-semibold text-slate-400">Full Name</label>
-            <span class="text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Optional</span>
-          </div>
-          <input id="fullName" name="fullName" type="text" placeholder="e.g. John Doe" 
-            class="w-full rounded-xl bg-slate-950/60 border border-slate-800/80 px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition">
-        </div>
-
-        <!-- Optional Fields Row: Company Name & Role -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <div class="flex justify-between items-center mb-1.5">
-              <label for="companyName" class="text-xs font-semibold text-slate-400">Company</label>
-              <span class="text-[10px] text-slate-500 font-semibold">Optional</span>
-            </div>
-            <input id="companyName" name="companyName" type="text" placeholder="Acme Inc." 
-              class="w-full rounded-xl bg-slate-950/60 border border-slate-800/80 px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition">
-          </div>
-
-          <div>
-            <div class="flex justify-between items-center mb-1.5">
-              <label for="role" class="text-xs font-semibold text-slate-400">Role</label>
-              <span class="text-[10px] text-slate-500 font-semibold">Optional</span>
-            </div>
-            <select id="role" name="role" 
-              class="w-full rounded-xl bg-slate-950/60 border border-slate-800/80 px-3 py-2.5 text-sm text-slate-300 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition">
-              <option value="">Select Role</option>
-              <option value="owner">Owner / Executive</option>
-              <option value="procurement">Procurement Director</option>
-              <option value="audit">Internal Auditor</option>
-              <option value="store_manager">Store Manager</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Submit Button -->
-        <div>
-          <button type="submit" id="submitBtn" class="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 py-3 text-sm font-bold text-slate-950 hover:from-cyan-400 hover:to-blue-500 transition shadow-lg shadow-cyan-500/20 active:scale-95">
-            Create Account
-          </button>
-        </div>
-      </form>
-
-      <div class="mt-6 text-center text-xs text-slate-400">
-        Already have an account? 
-        <a href="https://opsreveal.preventloss.org/login.html" class="text-cyan-400 hover:underline font-semibold">Sign In</a>
-      </div>
-
     </div>
 
-    <!-- Privacy Note -->
-    <p class="mt-8 text-center text-[11px] text-slate-500">
-      Protected by zero-trust client-side processing. <br>
-      Engineered by <a href="https://preventloss.org" target="_blank" class="text-slate-400 hover:underline">PreventLoss.org</a>
-    </p>
+    <!-- Firebase Error Banner -->
+    <div id="errorBanner" class="hidden p-3 rounded-xl bg-red-950/60 border border-red-800/80 text-red-200 text-xs flex items-start space-x-2">
+      <svg class="w-4 h-4 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div id="errorMessage">An error occurred during account creation.</div>
+    </div>
+
+    <!-- Sign Up Form -->
+    <form id="signupForm" class="space-y-4">
+      
+      <!-- Work Email -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Work Email <span class="text-cyan-400">*</span></label>
+        <input type="email" id="email" required placeholder="mithun@preventloss.com" class="w-full bg-[#050b18] border border-slate-800 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition placeholder:text-slate-600">
+      </div>
+
+      <!-- Password -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Password <span class="text-cyan-400">*</span></label>
+        <input type="password" id="password" required placeholder="••••••••••••" class="w-full bg-[#050b18] border border-slate-800 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition placeholder:text-slate-600">
+        
+        <!-- Live Password Checklist -->
+        <div class="mt-2.5 space-y-1 text-[11px]">
+          <div id="checkLen" class="flex items-center text-emerald-400 space-x-1.5">
+            <span>✓</span> <span>At least 8 characters</span>
+          </div>
+          <div id="checkCase" class="flex items-center text-emerald-400 space-x-1.5">
+            <span>✓</span> <span>Contains uppercase & lowercase letters</span>
+          </div>
+          <div id="checkChar" class="flex items-center text-emerald-400 space-x-1.5">
+            <span>✓</span> <span>Contains a number & special character (!@#$%^&*)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirm Password -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1.5">Confirm Password <span class="text-cyan-400">*</span></label>
+        <input type="password" id="confirmPassword" required placeholder="••••••••••••" class="w-full bg-[#050b18] border border-slate-800 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition placeholder:text-slate-600">
+      </div>
+
+      <!-- Divider -->
+      <div class="relative flex py-2 items-center">
+        <div class="flex-grow border-t border-slate-800"></div>
+        <span class="flex-shrink mx-4 text-[10px] font-bold tracking-widest text-slate-500 uppercase">OPTIONAL DETAILS</span>
+        <div class="flex-grow border-t border-slate-800"></div>
+      </div>
+
+      <!-- Full Name -->
+      <div>
+        <div class="flex justify-between items-center mb-1.5">
+          <label class="block text-xs font-semibold text-slate-300">Full Name</label>
+          <span class="text-[10px] uppercase text-slate-500 font-bold">OPTIONAL</span>
+        </div>
+        <input type="text" id="fullName" placeholder="e.g. John Doe" class="w-full bg-[#050b18] border border-slate-800 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition placeholder:text-slate-600">
+      </div>
+
+      <!-- Company & Role Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="block text-xs font-semibold text-slate-300">Company</label>
+            <span class="text-[10px] uppercase text-slate-500 font-bold">Optional</span>
+          </div>
+          <input type="text" id="company" placeholder="Acme Inc." class="w-full bg-[#050b18] border border-slate-800 text-white text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition placeholder:text-slate-600">
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="block text-xs font-semibold text-slate-300">Role</label>
+            <span class="text-[10px] uppercase text-slate-500 font-bold">Optional</span>
+          </div>
+          <select id="role" class="w-full bg-[#050b18] border border-slate-800 text-slate-300 text-sm rounded-xl px-4 py-3 focus:outline-none focus:border-sky-500 transition">
+            <option value="">Select Role</option>
+            <option value="Auditor">Auditor</option>
+            <option value="Operations Manager">Operations Manager</option>
+            <option value="Supply Chain Lead">Supply Chain Lead</option>
+            <option value="Executive">Executive</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-bold text-sm rounded-xl py-3.5 flex items-center justify-center space-x-2 transition shadow-lg shadow-sky-500/20 mt-4 disabled:opacity-50">
+        <span id="btnText">Create Account</span>
+        <div id="btnSpinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+      </button>
+
+      <!-- Already Have Account Link -->
+      <div class="text-center text-xs text-slate-400 pt-2">
+        Already have an account? <a href="/login.html" class="text-sky-400 hover:underline font-semibold">Sign In</a>
+      </div>
+
+    </form>
   </div>
 
-  <script>
-    function validatePasswordStrength() {
-      const password = document.getElementById('password').value;
+  <!-- Firebase Sign-Up Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
+      authDomain: "opsreveal.firebaseapp.com",
+      projectId: "opsreveal",
+      storageBucket: "opsreveal.firebasestorage.app",
+      messagingSenderId: "890870101711",
+      appId: "1:890870101711:web:4266246996091ea56c69ba"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    // Dynamic Password Checklist Updates
+    const passwordInput = document.getElementById('password');
+    passwordInput.addEventListener('input', () => {
+      const val = passwordInput.value;
       
-      const reqLength = password.length >= 8;
-      const reqCases = /[A-Z]/.test(password) && /[a-z]/.test(password);
-      const reqNumSpec = /[0-9]/.test(password) && /[!@#$%^&*(),.?":{}|<>]/.test(password);
+      const lenValid = val.length >= 8;
+      const caseValid = /[a-z]/.test(val) && /[A-Z]/.test(val);
+      const charValid = /\d/.test(val) && /[!@#$%^&*(),.?":{}|<>]/.test(val);
 
-      updateRequirementUI('req-length', reqLength);
-      updateRequirementUI('req-cases', reqCases);
-      updateRequirementUI('req-numspec', reqNumSpec);
+      updateCheckUI('checkLen', lenValid);
+      updateCheckUI('checkCase', caseValid);
+      updateCheckUI('checkChar', charValid);
+    });
 
-      return reqLength && reqCases && reqNumSpec;
-    }
-
-    function updateRequirementUI(elementId, isValid) {
+    function updateCheckUI(elementId, isValid) {
       const el = document.getElementById(elementId);
-      const dot = el.querySelector('.dot');
       if (isValid) {
-        el.classList.remove('text-slate-400');
-        el.classList.add('text-emerald-400');
-        dot.textContent = '✓';
-        dot.classList.remove('text-slate-600');
-        dot.classList.add('text-emerald-400');
+        el.className = "flex items-center text-emerald-400 space-x-1.5";
       } else {
-        el.classList.remove('text-emerald-400');
-        el.classList.add('text-slate-400');
-        dot.textContent = '•';
-        dot.classList.remove('text-emerald-400');
-        dot.classList.add('text-slate-600');
+        el.className = "flex items-center text-slate-500 space-x-1.5";
       }
     }
 
-    function validatePasswordMatch() {
+    // Form Submission
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const confirmPassword = document.getElementById('confirmPassword').value;
-      const matchError = document.getElementById('matchError');
+      const fullName = document.getElementById('fullName').value.trim();
 
-      if (confirmPassword && password !== confirmPassword) {
-        matchError.classList.remove('hidden');
-        return false;
-      } else {
-        matchError.classList.add('hidden');
-        return true;
-      }
-    }
+      const errorBanner = document.getElementById('errorBanner');
+      const errorMessage = document.getElementById('errorMessage');
+      const submitBtn = document.getElementById('submitBtn');
+      const btnText = document.getElementById('btnText');
+      const btnSpinner = document.getElementById('btnSpinner');
 
-    function handleSignup(event) {
-      event.preventDefault();
-      const isPasswordValid = validatePasswordStrength();
-      const isMatchValid = validatePasswordMatch();
+      errorBanner.classList.add('hidden');
 
-      if (!isPasswordValid || !isMatchValid) {
+      if (password !== confirmPassword) {
+        errorMessage.textContent = "Passwords do not match.";
+        errorBanner.classList.remove('hidden');
         return;
       }
 
-      // Collect data, falling back gracefully for optional fields
-      const payload = {
-        email: document.getElementById('email').value,
-        password: document.getElementById('password').value,
-        fullName: document.getElementById('fullName').value || null,
-        companyName: document.getElementById('companyName').value || null,
-        role: document.getElementById('role').value || null
-      };
+      if (password.length < 8) {
+        errorMessage.textContent = "Password must be at least 8 characters long.";
+        errorBanner.classList.remove('hidden');
+        return;
+      }
 
-      // Perform authentication endpoint POST here
-      console.log('Submitted Payload:', payload);
-    }
+      submitBtn.disabled = true;
+      btnText.textContent = "Creating Account...";
+      btnSpinner.classList.remove('hidden');
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        
+        if (fullName) {
+          await updateProfile(userCredential.user, { displayName: fullName });
+        }
+
+        window.location.href = "/upload.html";
+
+      } catch (error) {
+        let msg = "Failed to create account.";
+        if (error.code === 'auth/email-already-in-use') {
+          msg = "This email is already registered. Please sign in.";
+        } else if (error.code === 'auth/weak-password') {
+          msg = "Password is too weak. Make sure it satisfies all requirements.";
+        } else {
+          msg = error.message;
+        }
+
+        errorMessage.textContent = msg;
+        errorBanner.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        btnText.textContent = "Create Account";
+        btnSpinner.classList.add('hidden');
+      }
+    });
   </script>
+
 </body>
 </html>
