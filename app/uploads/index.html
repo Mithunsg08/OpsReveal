@@ -60,7 +60,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800/80 pb-6">
       <div>
         <h1 class="text-2xl font-extrabold text-white font-heading">Upload Reports</h1>
-        <p class="text-xs text-slate-400 mt-1">Select your upload category, download header templates, and audit leakages.</p>
+        <p class="text-xs text-slate-400 mt-1">Select your upload category, download header templates, and audit leakages securely.</p>
       </div>
       <div class="text-xs text-slate-500 font-mono bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
         Route: /app/uploads
@@ -108,14 +108,14 @@
     <div id="uploadContainer" class="rounded-2xl border-2 border-dashed border-slate-800 bg-slate-900/40 p-8 text-center hover:border-cyan-500/50 transition">
       <input type="file" id="fileInput" accept=".csv, .xlsx" class="hidden">
       
-      <!-- WriteOff Coming Soon Placeholder -->
+      <!-- WriteOff Placeholder -->
       <div id="writeoffPlaceholder" class="hidden space-y-3 py-6">
         <span class="inline-block px-3 py-1 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-xs rounded-full uppercase tracking-wider">Coming Soon</span>
         <h3 class="text-lg font-bold text-white">WriteOff Report Engine Under Maintenance</h3>
         <p class="text-xs text-slate-400 max-w-md mx-auto">WriteOff calculations and leakage tracking algorithms are currently under active development.</p>
       </div>
 
-      <!-- Active Drop Zone Content -->
+      <!-- Drop Zone Content -->
       <div id="dropZoneContent" class="max-w-md mx-auto space-y-3">
         <div class="h-12 w-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 mx-auto flex items-center justify-center">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
@@ -132,7 +132,7 @@
         <div class="w-full bg-slate-950 rounded-full h-2 border border-slate-800 overflow-hidden">
           <div class="bg-gradient-to-r from-cyan-500 to-blue-500 h-2 rounded-full w-full animate-pulse"></div>
         </div>
-        <span class="text-[11px] text-cyan-400 font-semibold block">Validating Schema & Executing Audit Engine...</span>
+        <span class="text-[11px] text-cyan-400 font-semibold block">Validating Schema & Processing Locally in Browser...</span>
       </div>
     </div>
 
@@ -177,7 +177,7 @@
       <div class="p-5 border-b border-slate-800 flex items-center justify-between">
         <div>
           <h3 class="text-base font-bold text-white font-heading">Upload History</h3>
-          <p class="text-xs text-slate-400">Archived summaries and report downloads stored in Cloudflare R2.</p>
+          <p class="text-xs text-slate-400">Archived audit summaries stored securely in Cloudflare R2.</p>
         </div>
       </div>
 
@@ -223,7 +223,6 @@
     const auth = getAuth(app);
     let currentUser = null;
 
-    // Standardized Schemas for Downloader and Validation Engine
     const SCHEMAS = {
       grn: [
         "receiving_grn_date/month", "supplier_name", "product_sku", "product_name",
@@ -246,7 +245,6 @@
       return isNaN(d.getTime()) ? String(val) : d.toISOString().slice(0, 10);
     };
 
-    // Attach Event Listeners
     document.addEventListener("DOMContentLoaded", () => {
       const selectEl = document.getElementById('reportTypeSelect');
       const downloadBtn = document.getElementById('downloadTemplateBtn');
@@ -313,9 +311,7 @@
 
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.aoa_to_sheet([headers]);
-      
       ws['!cols'] = headers.map(h => ({ wch: Math.max(h.length + 5, 18) }));
-
       XLSX.utils.book_append_sheet(wb, ws, "Template");
       XLSX.writeFile(wb, `${type}_header_template.xlsx`);
     }
@@ -343,7 +339,6 @@
           const workbook = XLSX.read(data, { type: 'array', cellDates: true, dense: true });
           const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
 
-          // FAST HEADER VALIDATION (<100ms)
           const headerRows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, range: 0 });
           
           if (!headerRows || headerRows.length === 0 || !headerRows[0]) {
@@ -362,7 +357,6 @@
             throw new Error(`Uploaded file format invalid for ${type.toUpperCase()}. Missing required column headers: [${missingHeaders.join(", ")}].`);
           }
 
-          // PARSE FULL DATA AFTER FAST VALIDATION PASSES
           const rawData = XLSX.utils.sheet_to_json(firstSheet, { raw: false });
           if (rawData.length === 0) {
             throw new Error("The uploaded file contains headers but zero data rows.");
@@ -408,8 +402,16 @@
         if (!(key in minCPSameDayMap) || cp < minCPSameDayMap[key]) minCPSameDayMap[key] = cp;
       });
 
-      data.forEach((row, i) => {
-        const idx = i + 2;
+      const minMarginMap = {};
+      data.forEach(row => {
+        const sku = row.product_sku;
+        const cp = parseFloat(row.receiving_cp) || 0;
+        const mrp = parseFloat(row.receiving_mrp) || 0;
+        const margin = mrp > 0 ? (mrp - cp) / mrp : 0;
+        if (!(sku in minMarginMap) || margin < minMarginMap[sku]) minMarginMap[sku] = margin;
+      });
+
+      data.forEach((row) => {
         const dateStr = formatDate(row['receiving_grn_date/month']);
         const cp = parseFloat(row.receiving_cp) || 0;
         const mrp = parseFloat(row.receiving_mrp) || 0;
@@ -418,6 +420,49 @@
         const expStr = formatDate(row.expiry_date);
 
         const totalGRNValue = cp * qty;
+
+        let shelfLifeVal = "Dates Not Provided";
+        let shelfLifeEx = "Ok";
+
+        if (expStr && dateStr) {
+          const recD = new Date(dateStr);
+          const expD = new Date(expStr);
+
+          if (expD < recD) {
+            shelfLifeVal = "Expired before receving";
+            shelfLifeEx = "Expired before receving";
+          } else if (mfgStr) {
+            const mfgD = new Date(mfgStr);
+            if (expD < mfgD) {
+              shelfLifeVal = "Data is wrong";
+              shelfLifeEx = "Data is wrong";
+            } else {
+              const totalDays = expD - mfgD;
+              const remainingDays = expD - recD;
+              const pct = totalDays > 0 ? remainingDays / totalDays : 0;
+              shelfLifeVal = (pct * 100).toFixed(2) + "%";
+
+              if (pct <= 0) shelfLifeEx = "Expired before receving";
+              else if (pct < shelfThreshold) shelfLifeEx = "Low Shelf life";
+              else shelfLifeEx = "Ok";
+            }
+          }
+        }
+
+        const marginPct = mrp > 0 ? (mrp - cp) / mrp : 0;
+        const minMargin = minMarginMap[row.product_sku] || marginPct;
+        const diffMargin = marginPct - minMargin;
+        const marginEx = diffMargin < 0 ? "There is a Margin decrease" : "No Exception";
+        const marginLeakageVal = diffMargin < 0 ? (cp * Math.abs(diffMargin)) * qty : 0;
+
+        const minCPWhole = minCPMap[row.product_sku] || cp;
+        const cpLeakageWhole = (cp - minCPWhole) * qty;
+        const cpExWhole = cpLeakageWhole > 0 ? "You Got Charged More" : "Suppliers providing same price for the Sku's";
+
+        const sameDayKey = `${dateStr}_${row.product_sku}`;
+        const minCPSameDay = minCPSameDayMap[sameDayKey] || cp;
+        const cpLeakageSameDay = (cp - minCPSameDay) * qty;
+        const cpExSameDay = cpLeakageSameDay > 0 ? "You Got Charged More" : "Suppliers providing same price for the Sku's";
 
         processedRows.push({
           "receiving_grn_date/month": dateStr,
@@ -431,33 +476,20 @@
           "manufacturing_date": mfgStr,
           "expiry_date": expStr,
           "Total GRN Value": totalGRNValue,
-          "Shelf Life %": `=IF(J${idx}="","Dates Not Provided",IF(J${idx}<A${idx},"Expired before receving",IF(I${idx}="","Dates Not Provided",IF(J${idx}<I${idx},"Data is wrong",IFERROR((J${idx}-A${idx})/(J${idx}-I${idx}),"")))))`,
-          "Shelf Life Exception": `=IF(L${idx}="Dates Not Provided","Dates Not Provided",IF(L${idx}="Data is wrong","Data is wrong",IF(L${idx}="Expired before receving","Expired before receving",IF(L${idx}<=0,"Expired before receving",IF(L${idx}<${shelfThreshold},"Low Shelf life","Ok")))))`,
-          "Margin %": `=(G${idx}-F${idx})/G${idx}`,
-          "Min margin": `=MINIFS(N:N,C:C,C${idx})`,
-          "Diff margin": `=N${idx}-O${idx}`,
-          "Margin Exception": `=IF(P${idx}>=0,"No Exception","There is a Margin decrease")`,
-          "Margin Leakage Value": `=IF(P${idx}=0,0,(F${idx}*P${idx})*H${idx})`,
-          "Min CP(whole data)": `=MINIFS(F:F,C:C,C${idx})`,
-          "CP Leakage (whole data)": `=(F${idx}-R${idx})*H${idx}`,
-          "CP Exception (whole data)": `=IF(S${idx}>0,"You Got Charged More","Suppliers providing same price for the Sku's")`,
-          "Min CP(Same day/Same month)": `=MINIFS(F:F,A:A,A${idx},C:C,C${idx})`,
-          "CP Leakage (Same day/Same month)": `=IF(U${idx}=0,0,(F${idx}-U${idx})*H${idx})`,
-          "CP Exception (Same day/Same month)": `=IF(V${idx}>0,"You Got Charged More","Suppliers providing same price for the Sku's")`
+          "Shelf Life %": shelfLifeVal,
+          "Shelf Life Exception": shelfLifeEx,
+          "Margin %": `${(marginPct * 100).toFixed(2)}%`,
+          "Min margin": `${(minMargin * 100).toFixed(2)}%`,
+          "Diff margin": `${(diffMargin * 100).toFixed(2)}%`,
+          "Margin Exception": marginEx,
+          "Margin Leakage Value": marginLeakageVal,
+          "Min CP(whole data)": minCPWhole,
+          "CP Leakage (whole data)": cpLeakageWhole,
+          "CP Exception (whole data)": cpExWhole,
+          "Min CP(Same day/Same month)": minCPSameDay,
+          "CP Leakage (Same day/Same month)": cpLeakageSameDay,
+          "CP Exception (Same day/Same month)": cpExSameDay
         });
-
-        let shelfLifeEx = "Ok";
-        if (expStr && mfgStr && dateStr) {
-          const recD = new Date(dateStr), mfgD = new Date(mfgStr), expD = new Date(expStr);
-          if (expD < recD) shelfLifeEx = "Expired before receving";
-          else if (expD > mfgD && ((expD - recD) / (expD - mfgD)) < shelfThreshold) shelfLifeEx = "Low Shelf life";
-        }
-
-        const marginPct = mrp > 0 ? (mrp - cp) / mrp : 0;
-        const minCPWhole = minCPMap[row.product_sku] || cp;
-        const cpLeakageWhole = (cp - minCPWhole) * qty;
-        const minCPSameDay = minCPSameDayMap[`${dateStr}_${row.product_sku}`] || cp;
-        const cpLeakageSameDay = (cp - minCPSameDay) * qty;
 
         if (shelfLifeEx === "Low Shelf life" || shelfLifeEx === "Expired before receving") {
           sheet1Data.push({ "SKU": row.product_sku, "Product Name": row.product_name, "Receiving Date": dateStr, "Expiry Date": expStr, "Shelf Life Exception": shelfLifeEx, "Total GRN Value (Leakage)": totalGRNValue });
@@ -498,9 +530,13 @@
       outWorkbook.Sheets["CP Overcharge (Same Day)"] = createStyledSheet(sheet4Data.length ? sheet4Data : [{ "Status": "No CP Overcharge Found (Same Day)" }]);
 
       const outFileName = `Audited_GRN_${new Date().toISOString().slice(0,10)}.xlsx`;
+      
+      // 1. Process and Download Locally in Browser First
       XLSX.writeFile(outWorkbook, outFileName);
 
-      await syncAuditToCloudflare(outFileName, data.length, totalLeakage, totalExceptions);
+      // 2. Upload only the resulting workbook file & sync summary metrics to Cloudflare
+      const userScopedKey = await uploadProcessedFileToR2(outWorkbook, outFileName);
+      await syncAuditToCloudflare(outFileName, data.length, totalLeakage, totalExceptions, userScopedKey);
     }
 
     async function processSalesFile(data, originalFileName) {
@@ -510,12 +546,14 @@
 
       let totalLeakage = 0, totalExceptions = 0;
 
-      data.forEach((row, i) => {
-        const idx = i + 2;
+      data.forEach((row) => {
         const dateStr = formatDate(row.sales_date);
         const soldQty = parseFloat(row.sold_qty) || 0;
         const cp = parseFloat(row.cp) || 0;
         const salesPrice = parseFloat(row.sales_price) || 0;
+
+        const salesLeakage = (salesPrice - cp) * soldQty;
+        const salesEx = salesLeakage > 0 ? "No Exception" : "Sold in Negative margin";
 
         processedRows.push({
           "sales_date": dateStr,
@@ -524,12 +562,12 @@
           "sold_qty": soldQty,
           "cp": cp,
           "sales_price": salesPrice,
-          "Sales Leakages": `=(F${idx}-E${idx})*D${idx}`,
-          "Sales Exception": `=IF(G${idx}>0,"No Exception","Sold in Negative margin")`
+          "Sales Leakages": salesLeakage,
+          "Sales Exception": salesEx
         });
 
         if (salesPrice < cp) {
-          const absLeakage = Math.abs((salesPrice - cp) * soldQty);
+          const absLeakage = Math.abs(salesLeakage);
           summaryRows.push({
             "sales_date": dateStr,
             "product_sku": row.product_sku,
@@ -556,12 +594,44 @@
       outWorkbook.Sheets["Negative Margin Summary"] = createStyledSheet(summaryRows.length ? summaryRows : [{ "Status": "No Negative Margin Sales Detected" }]);
 
       const outFileName = `Audited_Sales_${new Date().toISOString().slice(0,10)}.xlsx`;
+      
+      // 1. Process and Download Locally in Browser First
       XLSX.writeFile(outWorkbook, outFileName);
 
-      await syncAuditToCloudflare(outFileName, data.length, totalLeakage, totalExceptions);
+      // 2. Upload only the resulting workbook file & sync summary metrics to Cloudflare
+      const userScopedKey = await uploadProcessedFileToR2(outWorkbook, outFileName);
+      await syncAuditToCloudflare(outFileName, data.length, totalLeakage, totalExceptions, userScopedKey);
     }
 
-    async function syncAuditToCloudflare(fileName, totalRows, totalLeakage, totalExceptions) {
+    async function uploadProcessedFileToR2(processedWorkbook, fileName) {
+      try {
+        const token = await currentUser.getIdToken();
+        const userScopedKey = `users/${currentUser.uid}/${Date.now()}_${fileName}`;
+
+        const wbout = XLSX.write(processedWorkbook, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+        const formData = new FormData();
+        formData.append('file', blob, fileName);
+        formData.append('key', userScopedKey);
+
+        await fetch(`${WORKER_URL}/api/upload/store-file`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'X-User-Id': currentUser.uid
+          },
+          body: formData
+        });
+
+        return userScopedKey;
+      } catch (err) {
+        console.error("Cloudflare R2 Upload Error:", err);
+        return null;
+      }
+    }
+
+    async function syncAuditToCloudflare(outFileName, totalRows, totalLeakage, totalExceptions, storageKey) {
       const riskScore = totalLeakage > 5000 ? "High Risk" : totalLeakage > 1000 ? "Medium Risk" : "Low Risk";
 
       document.getElementById('metricRows').textContent = totalRows.toLocaleString('en-US');
@@ -583,7 +653,14 @@
             'Authorization': `Bearer ${token}`,
             'X-User-Id': currentUser.uid
           },
-          body: JSON.stringify({ fileName, totalRows, totalLeakage, totalExceptions, riskScore })
+          body: JSON.stringify({
+            key: storageKey,
+            fileName: outFileName,
+            totalRows,
+            totalLeakage,
+            totalExceptions,
+            riskScore
+          })
         });
 
         loadHistory();
@@ -592,6 +669,37 @@
       }
     }
 
+    window.downloadFile = async function(storageKey, fileName) {
+      if (!currentUser || !storageKey) return;
+
+      try {
+        const token = await currentUser.getIdToken();
+        const response = await fetch(`${WORKER_URL}/api/upload/download?key=${encodeURIComponent(storageKey)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'X-User-Id': currentUser.uid
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Unable to download report file from server.");
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = fileName || "Audited_Report.xlsx";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+
+      } catch (err) {
+        alert(`Download failed: ${err.message}`);
+      }
+    };
+
     async function loadHistory() {
       if (!currentUser) return;
       const tbody = document.getElementById('historyTableBody');
@@ -599,7 +707,10 @@
       try {
         const token = await currentUser.getIdToken();
         const res = await fetch(`${WORKER_URL}/api/upload/history`, {
-          headers: { 'Authorization': `Bearer ${token}`, 'X-User-Id': currentUser.uid }
+          headers: { 
+            'Authorization': `Bearer ${token}`, 
+            'X-User-Id': currentUser.uid 
+          }
         });
         const data = await res.json();
 
