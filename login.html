@@ -62,14 +62,33 @@
   </div>
 
   <script type="module">
-    import { auth, db } from '/app/auth-guard.js';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
+      getAuth, 
       signInWithEmailAndPassword, 
       sendEmailVerification, 
       GoogleAuthProvider, 
       signInWithPopup 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { 
+      getFirestore, 
+      doc, 
+      getDoc 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
+      authDomain: "opsreveal.firebaseapp.com",
+      projectId: "opsreveal",
+      storageBucket: "opsreveal.firebasestorage.app",
+      messagingSenderId: "890870101711",
+      appId: "1:890870101711:web:4266246996091ea56c69ba",
+      measurementId: "G-LCWJSW9SKY"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
     // Password Eye Toggle
     window.togglePasswordVisibility = () => {
@@ -84,7 +103,7 @@
       }
     };
 
-    // Email/Password Login Function
+    // Email/Password Login
     window.handleLogin = async (e) => {
       e.preventDefault();
       const email = document.getElementById('email').value;
@@ -104,18 +123,18 @@
           await sendEmailVerification(result.user, {
             url: `${window.location.origin}/login.html`
           });
-          showError("Your email is not verified. We sent another verification email to your inbox.");
+          showError("Your email is not verified. We sent another verification link to your email.");
           return;
         }
 
-        // 2. Firestore User Profile Check
+        // 2. Firestore Profile Check
         const userDoc = await getDoc(doc(db, "users", result.user.uid));
         if (!userDoc.exists()) {
           showError("User profile not found. Please sign up first.");
           return;
         }
 
-        // 3. Successful Navigation
+        // 3. Navigation
         window.location.href = '/app/dashboard.html';
       } catch (err) {
         showError(err.message);
@@ -125,7 +144,7 @@
       }
     };
 
-    // Google Login Function
+    // Google Login
     window.handleGoogleLogin = async () => {
       try {
         hideError();

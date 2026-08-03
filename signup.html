@@ -123,21 +123,21 @@
       serverTimestamp 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
       authDomain: "opsreveal.firebaseapp.com",
       projectId: "opsreveal",
       storageBucket: "opsreveal.firebasestorage.app",
       messagingSenderId: "890870101711",
-      appId: "1:890870101711:web:4266246996091ea56c69ba"
+      appId: "1:890870101711:web:4266246996091ea56c69ba",
+      measurementId: "G-LCWJSW9SKY"
     };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Password Eye Toggle
+    // Password Toggle Helper
     window.toggleVisibility = (inputId, eyeId) => {
       const input = document.getElementById(inputId);
       const eye = document.getElementById(eyeId);
@@ -150,7 +150,7 @@
       }
     };
 
-    // Helper: Create Company & User Record in Firestore
+    // Helper: Create Firestore documents
     async function createCompanyRecord({ companyName, domain, ownerUid, ownerEmail, fullName, role }) {
       const companyRef = doc(db, "companies", ownerUid);
       const userRef = doc(db, "users", ownerUid);
@@ -213,7 +213,7 @@
           role
         });
 
-        // 4. Redirect to Dashboard / Verification Notice
+        // 4. Redirect to Login
         window.location.href = '/login.html';
       } catch (err) {
         showError(err.message);
