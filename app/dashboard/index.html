@@ -164,7 +164,9 @@
     </div>
   </main>
 
-  <script>
+  <script type="module">
+    import { isSuperAdmin } from '/app/auth-guard.js';
+
     const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
     const formatUSD = (val) => Number(val || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -173,22 +175,18 @@
     async function loadAndRenderDashboard(user) {
       let combinedRecords = [];
 
-      // 1. Fetch from Firestore (Scoped to user, or global if SuperAdmin)
-      if (user && user.uid) {
-        const firestoreRecords = await window.fetchFirestoreAudits(user);
-        combinedRecords = [...combinedRecords, ...firestoreRecords];
-      }
-
-      // 2. Fetch from Cloudflare R2 Worker API
+      // 1. Fetch FIRST from Cloudflare R2 Worker API
       try {
-        const isAdmin = user && user.email && user.email.toLowerCase() === "mithun@preventloss.org";
-        const workerEndpoint = isAdmin ? `${WORKER_URL}/api/summary/list` : `${WORKER_URL}/api/summary/list?userId=${user.uid}`;
+        const isAdmin = user && (isSuperAdmin(user) || user.email?.toLowerCase() === "mithun@preventloss.org");
+        const workerEndpoint = isAdmin 
+          ? `${WORKER_URL}/api/summary/list` 
+          : `${WORKER_URL}/api/summary/list?userId=${user.uid}`;
         
         const res = await fetch(workerEndpoint);
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data.summaries)) {
-            // Further client-side guard: filter out summaries of other users unless SuperAdmin
+            // Client-side guard: filter out summaries of other users unless SuperAdmin
             const userSummaries = isAdmin 
               ? data.summaries 
               : data.summaries.filter(s => s.userId === user.uid);
@@ -196,7 +194,13 @@
           }
         }
       } catch (err) {
-        console.warn("Cloudflare worker sync bypassed:", err);
+        console.warn("Cloudflare worker sync failed/bypassed:", err);
+      }
+
+      // 2. Fetch SECOND from Firestore (Scoped to user, or global if SuperAdmin)
+      if (user && user.uid) {
+        const firestoreRecords = await window.fetchFirestoreAudits(user);
+        combinedRecords = [...combinedRecords, ...firestoreRecords];
       }
 
       // 3. Fallback / Merge with User-Scoped LocalStorage
