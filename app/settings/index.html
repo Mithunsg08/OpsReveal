@@ -1,217 +1,211 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-950 dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>OpsReveal | Account Settings</title>
-
+  <title>OpsReveal - Settings</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style> body { font-family: 'Inter', sans-serif; } </style>
 
-  <!-- PayPal JavaScript SDK (Replace YOUR_PAYPAL_CLIENT_ID with your actual PayPal Client ID) -->
-  <script src="https://www.paypal.com/sdk/js?client-id=sb&currency=USD"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Firebase Auth Guard -->
-  <script type="module">
-    import { auth, ensureUserProfile, isSuperAdmin } from '/app/auth-guard.js';
-    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  <!-- PayPal JS SDK -->
+  <!-- REPLACE 'test' or 'YOUR_PAYPAL_CLIENT_ID' with your real PayPal Client ID -->
+  <script src="https://www.paypal.com/sdk/js?AQJdsPXgrc6vkxHfX2WSJSroKw-GLCOCRuhBVjGpISGsmhEksKJf865-x2fGSKsVV2oYEodjLR-PTizO=sb&currency=USD"></script>
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user || (!user.emailVerified && !user.providerData?.some(p => p.providerId === 'google.com'))) {
-        window.location.replace('/login.html');
-      } else {
-        await ensureUserProfile(user);
-        document.body.style.display = 'flex';
-        initSettingsPage(user);
-      }
-    });
-  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, h4, .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
 </head>
+<body style="display: none;" class="min-h-screen bg-slate-950 text-slate-100 flex antialiased relative">
 
-<body style="display: none;" class="bg-slate-950 text-slate-100 min-h-screen flex antialiased">
-
-  <!-- Sidebar Nav -->
-  <aside class="w-64 border-r border-slate-800 bg-slate-950 p-6 flex flex-col justify-between shrink-0">
-    <div class="space-y-8">
-      <div class="flex items-center space-x-3">
-        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-black text-slate-950">O</div>
+  <!-- LEFT HAND SIDEBAR NAVIGATION -->
+  <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 min-h-screen z-20">
+    <div>
+      <div class="h-16 flex items-center px-6 border-b border-slate-800/80 space-x-3">
+        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-lg text-slate-950 shadow-md shadow-cyan-500/20">
+          O
+        </div>
         <div>
-          <h1 class="font-bold text-white text-base">OpsReveal</h1>
-          <span class="text-[10px] text-slate-500">Prevent Capital Loss</span>
+          <span class="font-heading font-extrabold text-xl text-white tracking-tight block">OpsReveal</span>
+          <span class="text-[10px] text-slate-500 block -mt-1 font-medium">Prevent Capital Loss</span>
         </div>
       </div>
-      <nav class="space-y-1.5 text-sm font-medium">
-        <a href="/app/dashboard" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Dashboard</a>
-        <a href="/app/uploads" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Upload Reports</a>
-        <a href="/app/settings" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-slate-900 text-white">Settings</a>
+
+      <nav class="p-4 space-y-1.5">
+        <a href="/app/dashboard" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="/app/uploads/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <span>Upload Reports</span>
+        </a>
+
+        <a href="/app/settings" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm transition">
+          <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span>Settings</span>
+        </a>
       </nav>
     </div>
 
-    <div class="border-t border-slate-800 pt-4 space-y-3">
-      <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs">
-        <span class="text-[10px] text-slate-500 block font-semibold">ACTIVE PLAN</span>
-        <span id="plan-label" class="font-bold text-cyan-400">Starter Tier</span>
+    <div class="p-4 border-t border-slate-800 space-y-3">
+      <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800/80 text-xs space-y-2">
+        <div>
+          <span class="text-[10px] text-slate-500 block font-semibold uppercase">Active Plan</span>
+          <span id="planLabel" class="font-bold text-cyan-400">Starter Tier</span>
+        </div>
+        
+        <div id="usageMeters" class="pt-2 border-t border-slate-800/60 space-y-1.5">
+          <div class="flex justify-between text-[11px]">
+            <span class="text-slate-400">Monthly Uploads:</span>
+            <span id="meterUploads" class="font-mono font-semibold text-slate-200">0 / 4</span>
+          </div>
+          <div class="flex justify-between text-[11px]">
+            <span class="text-slate-400">Monthly Lines:</span>
+            <span id="meterLines" class="font-mono font-semibold text-slate-200">0 / 20k</span>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 pt-2 border-t border-slate-800/60">
+          <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+          <span id="userEmailDisplay" class="text-xs font-medium text-slate-300 truncate">loading...</span>
+        </div>
       </div>
-      <button onclick="logoutUser()" class="w-full bg-slate-900 hover:bg-slate-800 text-xs text-slate-400 py-2.5 rounded-xl border border-slate-800 font-semibold transition">
+
+      <button onclick="logoutUser()" class="w-full bg-slate-950 hover:bg-slate-800 text-xs text-slate-400 py-2 rounded-xl border border-slate-800 font-semibold transition">
         Sign Out
       </button>
     </div>
   </aside>
 
-  <!-- Main Container -->
-  <main class="flex-1 p-8 space-y-6 max-w-4xl mx-auto overflow-y-auto">
-    <div class="flex items-center justify-between border-b border-slate-800 pb-5">
+  <!-- MAIN SETTINGS CONTENT -->
+  <main class="flex-1 min-w-0 overflow-y-auto px-8 py-8">
+    <div class="max-w-4xl mx-auto space-y-8">
+      
       <div>
-        <h2 class="text-2xl font-bold text-white">Account Settings</h2>
-        <p class="text-xs text-slate-400">Manage your profile details, resource limits, subscription, and team access.</p>
+        <h1 class="text-3xl font-extrabold text-white font-heading tracking-tight">Account Settings</h1>
+        <p class="text-xs text-slate-400 mt-1">Manage your profile details, resource limits, subscription, and team access.</p>
       </div>
-      <span id="role-badge" class="px-2.5 py-1 rounded text-xs font-bold bg-cyan-950 text-cyan-400 border border-cyan-800 uppercase">
-        Standard User
-      </span>
-    </div>
 
-    <div id="status-msg" class="hidden p-4 rounded-xl text-xs font-semibold"></div>
-
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-8">
-
-      <!-- Usage & Report Limits Summary -->
-      <div class="space-y-4">
-        <h3 class="font-bold text-white border-b border-slate-800 pb-3 text-base">Monthly Resource Usage</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
-          <!-- Upload Count Metric -->
-          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-            <div class="flex justify-between items-center text-xs">
-              <span class="text-slate-400 font-medium">Report Uploads (Monthly)</span>
-              <span id="uploads-count-text" class="font-bold text-cyan-400">0 / 4</span>
+      <!-- MONTHLY RESOURCE USAGE CARD -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider">Monthly Resource Usage</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Uploads Bar -->
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-2">
+            <div class="flex justify-between text-xs font-semibold">
+              <span class="text-slate-400">Report Uploads (Monthly)</span>
+              <span id="usageUploadsText" class="text-cyan-400 font-mono">0 / 4</span>
             </div>
-            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-              <div id="uploads-bar" class="bg-cyan-500 h-full transition-all duration-300" style="width: 0%"></div>
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div id="usageUploadsBar" class="bg-cyan-500 h-full w-0 transition-all duration-500"></div>
             </div>
-            <p id="uploads-subtext" class="text-[10px] text-slate-500">Starter limit: Maximum 4 uploads per month.</p>
+            <p id="uploadsLimitLabel" class="text-[10px] text-slate-500">Starter limit: Maximum 4 uploads per month.</p>
           </div>
 
-          <!-- Lines Processed Metric -->
-          <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
-            <div class="flex justify-between items-center text-xs">
-              <span class="text-slate-400 font-medium">Lines Processed (Monthly)</span>
-              <span id="lines-count-text" class="font-bold text-cyan-400">0 / 20,000</span>
+          <!-- Lines Bar -->
+          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-2">
+            <div class="flex justify-between text-xs font-semibold">
+              <span class="text-slate-400">Lines Processed (Monthly)</span>
+              <span id="usageLinesText" class="text-cyan-400 font-mono">0 / 20,000</span>
             </div>
-            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-              <div id="lines-bar" class="bg-cyan-500 h-full transition-all duration-300" style="width: 0%"></div>
+            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div id="usageLinesBar" class="bg-cyan-500 h-full w-0 transition-all duration-500"></div>
             </div>
-            <p id="lines-subtext" class="text-[10px] text-slate-500">Starter limit: Maximum 20,000 report lines per month.</p>
+            <p id="linesLimitLabel" class="text-[10px] text-slate-500">Starter limit: Maximum 20,000 report lines per month.</p>
           </div>
-
         </div>
       </div>
-      
-      <!-- Profile Settings -->
-      <div class="space-y-4">
-        <h3 class="font-bold text-white border-b border-slate-800 pb-3 text-base">Profile Info</h3>
-        <form id="profileForm" onsubmit="updateProfileInfo(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+
+      <!-- PROFILE INFO -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider">Profile Info</h3>
+        <form id="profileForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block mb-1 text-slate-300 font-medium">Full Name</label>
-            <input type="text" id="prof-name" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500">
+            <label class="block text-xs text-slate-400 font-semibold mb-1">Full Name</label>
+            <input type="text" id="profName" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
           </div>
           <div>
-            <label class="block mb-1 text-slate-300 font-medium">Email Address</label>
-            <input type="email" id="prof-email" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500">
+            <label class="block text-xs text-slate-400 font-semibold mb-1">Email Address</label>
+            <input type="email" id="profEmail" disabled class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-500 cursor-not-allowed">
           </div>
           <div>
-            <label class="block mb-1 text-slate-300 font-medium">Country</label>
-            <input type="text" id="prof-country" placeholder="United States" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500">
+            <label class="block text-xs text-slate-400 font-semibold mb-1">Country</label>
+            <input type="text" id="profCountry" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
           </div>
           <div>
-            <label class="block mb-1 text-slate-300 font-medium">Company Name</label>
-            <input type="text" id="prof-company" placeholder="Acme Corp" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-white focus:outline-none focus:border-cyan-500">
+            <label class="block text-xs text-slate-400 font-semibold mb-1">Company Name</label>
+            <input type="text" id="profCompany" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
           </div>
           <div class="md:col-span-2 flex justify-end">
-            <button type="submit" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl transition">
-              Save Profile Changes
-            </button>
+            <button type="submit" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs transition">Save Profile Changes</button>
           </div>
         </form>
       </div>
 
-      <!-- Security Settings -->
-      <div class="space-y-4">
-        <h3 class="font-bold text-white border-b border-slate-800 pb-3 text-base">Security</h3>
-        <div class="flex items-center justify-between bg-slate-950 p-4 rounded-xl border border-slate-800">
-          <div>
-            <span class="block text-sm font-semibold text-white">Password Reset</span>
-            <span class="text-xs text-slate-400">Send an automated password reset link to your verified email.</span>
-          </div>
-          <button onclick="sendPasswordResetEmail()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold px-4 py-2 rounded-xl text-xs transition">
-            Send Reset Link
-          </button>
-        </div>
-      </div>
-
-      <!-- Subscription Plan & PayPal Integration -->
-      <div class="space-y-4">
-        <h3 class="font-bold text-white border-b border-slate-800 pb-3 text-base">Subscription Plan</h3>
-        <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-4">
+      <!-- SUBSCRIPTION PLAN & PAYPAL PAYMENTS -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider">Subscription Plan</h3>
+        
+        <div id="starterPlanBox" class="bg-slate-950/60 border border-slate-800 p-5 rounded-xl space-y-4">
           <div class="flex items-center justify-between">
             <div>
-              <span class="block text-sm font-bold text-white" id="plan-card-title">Starter Tier ($0/mo)</span>
-              <span class="text-xs text-slate-400" id="plan-card-desc">Basic single-user access: limit 20K lines/month and 4 uploads/month.</span>
+              <h4 class="font-extrabold text-white text-base font-heading">Starter Plan ($0/mo)</h4>
+              <p class="text-xs text-slate-400 mt-0.5">Basic single-user access: limit 20,000 lines/month and 4 uploads/month.</p>
             </div>
-            <div id="plan-badge-container">
-              <span id="plan-status-pill" class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full font-semibold">Active Plan</span>
-            </div>
+            <span id="starterActiveBadge" class="bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-xs font-bold border border-slate-700">Active Plan</span>
           </div>
 
-          <!-- PayPal Checkout Button Container -->
-          <div id="paypal-button-wrapper" class="pt-2 max-w-sm">
-            <label class="block text-xs font-semibold text-cyan-400 mb-2">Upgrade to Professional ($99/mo) with PayPal:</label>
-            <div id="paypal-button-container"></div>
+          <div id="paypalUpgradeContainer" class="pt-4 border-t border-slate-800/80 space-y-3">
+            <p class="text-xs font-bold text-amber-400">Upgrade to Professional ($99/mo) with PayPal:</p>
+            <div class="max-w-md">
+              <div id="paypal-button-container"></div>
+            </div>
           </div>
+        </div>
 
-          <!-- Downgrade Option (Visible only for Professional) -->
-          <div id="downgrade-wrapper" class="hidden pt-2">
-            <button onclick="downgradePlan()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold px-4 py-2 rounded-xl text-xs transition">
-              Downgrade to Starter Tier
-            </button>
+        <div id="proPlanBox" class="hidden bg-emerald-950/20 border border-emerald-500/40 p-5 rounded-xl">
+          <div class="flex items-center justify-between">
+            <div>
+              <h4 class="font-extrabold text-emerald-400 text-base font-heading">Professional Plan ($99/mo)</h4>
+              <p class="text-xs text-emerald-200/80 mt-0.5">Unlimited uploads, unlimited lines, and up to 5 team collaborator seats unlocked.</p>
+            </div>
+            <span class="bg-emerald-500 text-slate-950 px-3 py-1 rounded-full text-xs font-extrabold shadow-md shadow-emerald-500/20">Active Plan</span>
           </div>
         </div>
       </div>
 
-      <!-- Team Access Management -->
-      <div class="space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+      <!-- TEAM COLLABORATORS -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+        <div class="flex items-center justify-between">
           <div>
-            <h3 class="font-bold text-white text-base">Team Collaborators</h3>
-            <p class="text-xs text-slate-400">Invite up to 5 team members to access your uploads and dashboard.</p>
+            <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider">Team Collaborators</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Invite up to 5 team members to access your uploads and dashboard.</p>
           </div>
-          <span id="collab-count-badge" class="bg-slate-950 border border-slate-800 px-3 py-1 rounded-full text-xs font-bold text-cyan-400">
-            0 / 5 Seats Used
-          </span>
+          <span id="seatsBadge" class="text-xs font-bold text-slate-400 bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">0 / 5 Seats Used</span>
         </div>
 
-        <div id="collab-locked-overlay" class="bg-slate-950/60 border border-slate-800 p-6 rounded-xl text-center space-y-2">
-          <span class="text-lg">🔒</span>
-          <h4 class="text-sm font-bold text-white">Professional Feature</h4>
-          <p class="text-xs text-slate-400 max-w-md mx-auto">
-            Upgrade your account to the Professional Plan to add up to 5 colleagues and share your OpsReveal dashboard access.
-          </p>
+        <div id="teamLockedState" class="bg-slate-950/80 border border-slate-800/80 p-8 rounded-xl text-center space-y-2">
+          <svg class="w-8 h-8 text-amber-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <h4 class="text-sm font-bold text-white font-heading">Professional Feature</h4>
+          <p class="text-xs text-slate-400">Upgrade your account to the Professional Plan to add up to 5 colleagues and share your OpsReveal dashboard access.</p>
         </div>
 
-        <div id="collab-active-panel" class="hidden space-y-4">
+        <div id="teamUnlockedState" class="hidden space-y-4">
           <div class="flex gap-2">
-            <input type="email" id="invite-email" placeholder="colleague@company.com" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
-            <button onclick="promptInviteColleague()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs transition">
-              + Send Invite
-            </button>
+            <input type="email" id="inviteEmail" placeholder="colleague@company.com" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
+            <button onclick="inviteTeamMember()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Invite Member</button>
           </div>
-
-          <div class="bg-slate-950 rounded-xl border border-slate-800 p-4">
-            <h4 class="text-xs font-semibold text-slate-400 mb-3">Active Invites & Members</h4>
-            <ul id="collab-list" class="divide-y divide-slate-800 text-xs text-slate-300">
-              <!-- Dynamically rendered -->
-            </ul>
+          <div id="teamList" class="text-xs text-slate-400 divide-y divide-slate-800 border-t border-slate-800/60 pt-2">
+            <p class="py-2 italic">No team members invited yet.</p>
           </div>
         </div>
       </div>
@@ -219,340 +213,149 @@
     </div>
   </main>
 
-  <!-- Confirmation Modal -->
-  <div id="confirmModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
-      <div class="h-12 w-12 bg-amber-500/10 text-amber-400 rounded-full flex items-center justify-center mx-auto text-xl font-bold">⚠️</div>
-      <h3 class="text-lg font-bold text-white text-center">Confirm Team Access</h3>
-      <p class="text-xs text-slate-300 leading-relaxed text-center">
-        The invited colleague (<span id="modal-collab-email" class="text-cyan-400 font-bold"></span>) will receive **full administrative access** to your uploaded financial files, reports, and dashboard metrics.
-      </p>
-      <p class="text-[11px] text-amber-400 bg-amber-950/30 border border-amber-800/50 p-3 rounded-xl text-center">
-        Are you sure you want to share complete access with this colleague?
-      </p>
-      <div class="grid grid-cols-2 gap-3 pt-2">
-        <button onclick="closeModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs transition">
-          Cancel
-        </button>
-        <button onclick="confirmAndSendInvite()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition">
-          Yes, Send Invite
-        </button>
-      </div>
-    </div>
-  </div>
-
   <script type="module">
-    import { auth, db, isSuperAdmin } from '/app/auth-guard.js';
-    import { 
-      updateEmail, 
-      sendPasswordResetEmail as fbSendReset 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { 
-      doc, 
-      getDoc, 
-      updateDoc 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { auth, db, ensureUserProfile } from '/app/auth-guard.js';
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    let activeUser = null;
-    let pendingInviteEmail = "";
-    let userProfileData = {};
+    const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
+    let currentUser = null;
 
-    window.initSettingsPage = async (user) => {
-      activeUser = user;
-      document.getElementById('prof-email').value = user.email || "";
-
-      // Super Admin detection
-      if (isSuperAdmin(user)) {
-        const badge = document.getElementById('role-badge');
-        badge.innerText = "Super Admin";
-        badge.className = "px-2.5 py-1 rounded text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase";
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.replace('/login.html');
+        return;
       }
+      currentUser = user;
+      document.getElementById('userEmailDisplay').textContent = user.email;
+      document.getElementById('profEmail').value = user.email;
 
-      // Load User Profile from Firestore
+      const profile = await ensureUserProfile(user);
+      
+      // Populate Form Details
+      document.getElementById('profName').value = profile?.name || '';
+      document.getElementById('profCountry').value = profile?.country || '';
+      document.getElementById('profCompany').value = profile?.company || '';
+
+      const isPro = (profile?.plan || '').toLowerCase().includes('pro');
+      updatePlanUI(isPro);
+
+      document.body.style.display = 'flex';
+
+      // Load Monthly Cloudflare Telemetry
+      fetchMonthlyUsage(user.uid, isPro);
+
+      // Initialize PayPal Buttons if on Starter plan
+      if (!isPro) {
+        initPayPalButton(user.uid);
+      }
+    });
+
+    window.logoutUser = () => {
+      signOut(auth).then(() => window.location.replace('/login.html'));
+    };
+
+    function updatePlanUI(isPro) {
+      if (isPro) {
+        document.getElementById('planLabel').innerText = 'Professional Tier';
+        document.getElementById('starterActiveBadge').classList.add('hidden');
+        document.getElementById('paypalUpgradeContainer').classList.add('hidden');
+        document.getElementById('proPlanBox').classList.remove('hidden');
+        
+        // Unlock Team Section
+        document.getElementById('teamLockedState').classList.add('hidden');
+        document.getElementById('teamUnlockedState').classList.remove('hidden');
+
+        document.getElementById('uploadsLimitLabel').textContent = 'Professional Limit: Unlimited uploads';
+        document.getElementById('linesLimitLabel').textContent = 'Professional Limit: Unlimited lines';
+      }
+    }
+
+    async function fetchMonthlyUsage(userId, isPro) {
       try {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (snap.exists()) {
-          userProfileData = snap.data();
-          document.getElementById('prof-name').value = userProfileData.fullName || user.displayName || "";
-          document.getElementById('prof-country').value = userProfileData.country || "";
-          document.getElementById('prof-company').value = userProfileData.company || "";
+        const res = await fetch(`${CF_API_URL}?userId=${userId}`);
+        const records = await res.json();
+        
+        const now = new Date();
+        const currentMonthRecords = (Array.isArray(records) ? records : []).filter(item => {
+          const dateStr = item.uploadedDate || item.uploaded_date || item.createdAt || item.timestamp;
+          if (!dateStr) return false;
+          const d = new Date(dateStr);
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        });
+
+        const uploads = currentMonthRecords.length;
+        const lines = currentMonthRecords.reduce((sum, r) => sum + Number(r.linesProcessed || r.lines_processed || 0), 0);
+
+        // Sidebar Meters
+        document.getElementById('meterUploads').textContent = `${uploads} / ${isPro ? '∞' : '4'}`;
+        document.getElementById('meterLines').textContent = `${lines.toLocaleString('en-US')} / ${isPro ? '∞' : '20k'}`;
+
+        // Settings Page Progress Bars
+        document.getElementById('usageUploadsText').textContent = `${uploads} / ${isPro ? 'Unlimited' : '4'}`;
+        document.getElementById('usageLinesText').textContent = `${lines.toLocaleString('en-US')} / ${isPro ? 'Unlimited' : '20,000'}`;
+
+        const uploadPct = isPro ? 10 : Math.min(100, (uploads / 4) * 100);
+        const linePct = isPro ? 10 : Math.min(100, (lines / 20000) * 100);
+
+        document.getElementById('usageUploadsBar').style.width = `${uploadPct}%`;
+        document.getElementById('usageLinesBar').style.width = `${linePct}%`;
+
+        if (!isPro && (uploads >= 4 || lines >= 20000)) {
+          document.getElementById('usageUploadsBar').classList.replace('bg-cyan-500', 'bg-amber-500');
+          document.getElementById('usageLinesBar').classList.replace('bg-cyan-500', 'bg-amber-500');
+        }
+      } catch (e) {
+        console.error("Failed to load Cloudflare usage stats:", e);
+      }
+    }
+
+    function initPayPalButton(userId) {
+      if (!window.paypal) return;
+
+      paypal.Buttons({
+        style: {
+          layout: 'vertical',
+          color:  'gold',
+          shape:  'rect',
+          label:  'paypal'
+        },
+        createOrder: function(data, actions) {
+          return actions.order.create({
+            purchase_units: [{
+              description: "OpsReveal Professional Plan Subscription",
+              amount: {
+                currency_code: "USD",
+                value: "99.00"
+              }
+            }]
+          });
+        },
+        onApprove: async function(data, actions) {
+          const details = await actions.order.capture();
           
-          renderUsageMetrics(userProfileData);
-          renderPlanUI(userProfileData.plan || "starter");
-          renderCollabsUI(userProfileData.invitedColleagues || []);
-          initPayPalButtons();
-        }
-      } catch (err) {
-        console.warn("Error fetching user profile data:", err);
-      }
-    };
-
-    function renderUsageMetrics(data) {
-      const plan = data.plan || 'starter';
-      const uploadsUsed = data.monthlyUploads || 0;
-      const linesUsed = data.monthlyLines || 0;
-
-      const uploadsText = document.getElementById('uploads-count-text');
-      const uploadsBar = document.getElementById('uploads-bar');
-      const uploadsSubtext = document.getElementById('uploads-subtext');
-
-      const linesText = document.getElementById('lines-count-text');
-      const linesBar = document.getElementById('lines-bar');
-      const linesSubtext = document.getElementById('lines-subtext');
-
-      if (plan === 'Professional') {
-        uploadsText.innerText = `${uploadsUsed} / Unlimited`;
-        uploadsBar.style.width = '100%';
-        uploadsSubtext.innerText = "Professional Plan: Unlimited monthly uploads unlocked.";
-
-        linesText.innerText = `${linesUsed.toLocaleString()} / Unlimited`;
-        linesBar.style.width = '100%';
-        linesSubtext.innerText = "Professional Plan: Unlimited report line processing unlocked.";
-      } else {
-        // Starter Plan Limits (4 uploads, 20,000 lines)
-        const uploadPct = Math.min((uploadsUsed / 4) * 100, 100);
-        uploadsText.innerText = `${uploadsUsed} / 4`;
-        uploadsBar.style.width = `${uploadPct}%`;
-        if (uploadsUsed >= 4) {
-          uploadsBar.classList.replace('bg-cyan-500', 'bg-rose-500');
-          uploadsSubtext.innerText = "Monthly upload limit reached. Upgrade to Professional ($99) for unlimited access.";
-          uploadsSubtext.classList.add('text-rose-400');
-        }
-
-        const linesPct = Math.min((linesUsed / 20000) * 100, 100);
-        linesText.innerText = `${linesUsed.toLocaleString()} / 20,000`;
-        linesBar.style.width = `${linesPct}%`;
-        if (linesUsed >= 20000) {
-          linesBar.classList.replace('bg-cyan-500', 'bg-rose-500');
-          linesSubtext.innerText = "Monthly lines limit reached. Upgrade to Professional ($99) for unlimited access.";
-          linesSubtext.classList.add('text-rose-400');
-        }
-      }
-    }
-
-    function renderPlanUI(plan) {
-      const planLabel = document.getElementById('plan-label');
-      const planTitle = document.getElementById('plan-card-title');
-      const planDesc = document.getElementById('plan-card-desc');
-      const paypalWrapper = document.getElementById('paypal-button-wrapper');
-      const downgradeWrapper = document.getElementById('downgrade-wrapper');
-      const collabOverlay = document.getElementById('collab-locked-overlay');
-      const collabPanel = document.getElementById('collab-active-panel');
-
-      if (plan === 'Professional') {
-        planLabel.innerText = "Professional Tier";
-        planTitle.innerText = "Professional Plan ($99/mo)";
-        planDesc.innerText = "Unlimited uploads, unlimited lines, and up to 5 team seats unlocked.";
-        
-        paypalWrapper.classList.add('hidden');
-        downgradeWrapper.classList.remove('hidden');
-        collabOverlay.classList.add('hidden');
-        collabPanel.classList.remove('hidden');
-      } else {
-        planLabel.innerText = "Starter Tier";
-        planTitle.innerText = "Starter Plan ($0/mo)";
-        planDesc.innerText = "Basic single-user access: limit 20,000 lines/month and 4 uploads/month.";
-
-        paypalWrapper.classList.remove('hidden');
-        downgradeWrapper.classList.add('hidden');
-        collabOverlay.classList.remove('hidden');
-        collabPanel.classList.add('hidden');
-      }
-    }
-
-    function initPayPalButtons() {
-      const container = document.getElementById('paypal-button-container');
-      if (!container || container.children.length > 0) return;
-
-      if (typeof paypal !== 'undefined') {
-        paypal.Buttons({
-          style: {
-            layout: 'vertical',
-            color:  'gold',
-            shape:  'rect',
-            label:  'pay'
-          },
-          createOrder: function(data, actions) {
-            return actions.order.create({
-              purchase_units: [{
-                description: 'OpsReveal Professional Tier Subscription',
-                amount: {
-                  value: '99.00'
-                }
-              }]
+          // Payment Successful: Upgrade Plan in Firestore
+          try {
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, {
+              plan: "Professional Tier",
+              status: "active",
+              paypalOrderId: details.id,
+              upgradedAt: new Date().toISOString()
             });
-          },
-          onApprove: async function(data, actions) {
-            const details = await actions.order.capture();
-            await completeUpgradeToPro(details);
-          },
-          onError: function(err) {
-            showStatus("PayPal Payment Error: " + err.message, "error");
+
+            alert("Payment successful! Your account has been upgraded to the Professional Plan.");
+            window.location.reload();
+          } catch (error) {
+            console.error("Error updating profile after payment:", error);
+            alert("Payment captured, but failed to update profile automatically. Please contact support.");
           }
-        }).render('#paypal-button-container');
-      }
-    }
-
-    async function completeUpgradeToPro(paymentDetails) {
-      try {
-        const userRef = doc(db, "users", activeUser.uid);
-        await updateDoc(userRef, { 
-          plan: "Professional",
-          updatedAt: new Date().toISOString()
-        });
-
-        userProfileData.plan = "Professional";
-        localStorage.setItem('opsreveal_plan', "Professional");
-        
-        renderPlanUI("Professional");
-        renderUsageMetrics(userProfileData);
-        showStatus("Payment successful! Your account has been upgraded to Professional Tier.", "success");
-      } catch (err) {
-        showStatus("Failed to update account tier: " + err.message, "error");
-      }
-    }
-
-    window.downgradePlan = async () => {
-      try {
-        const userRef = doc(db, "users", activeUser.uid);
-        await updateDoc(userRef, { plan: "starter" });
-
-        userProfileData.plan = "starter";
-        localStorage.setItem('opsreveal_plan', "starter");
-        renderPlanUI("starter");
-        renderUsageMetrics(userProfileData);
-        showStatus("Plan updated to Starter Tier.", "success");
-      } catch (err) {
-        showStatus(err.message, "error");
-      }
-    };
-
-    function renderCollabsUI(list) {
-      const countBadge = document.getElementById('collab-count-badge');
-      const listContainer = document.getElementById('collab-list');
-
-      countBadge.innerText = `${list.length} / 5 Seats Used`;
-
-      if (list.length === 0) {
-        listContainer.innerHTML = `<li class="py-3 text-slate-500 text-center">No colleagues invited yet.</li>`;
-        return;
-      }
-
-      listContainer.innerHTML = list.map((item, idx) => `
-        <li class="py-3 flex items-center justify-between">
-          <div>
-            <span class="font-semibold text-white block">${item.email}</span>
-            <span class="text-[10px] text-slate-500">Invited: ${new Date(item.invitedAt).toLocaleDateString()}</span>
-          </div>
-          <div class="flex items-center space-x-3">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-950 text-amber-400 border border-amber-800">
-              Pending Verification
-            </span>
-            <button onclick="removeColleague(${idx})" class="text-rose-400 hover:underline text-xs">Remove</button>
-          </div>
-        </li>
-      `).join('');
-    }
-
-    window.updateProfileInfo = async (e) => {
-      e.preventDefault();
-      const name = document.getElementById('prof-name').value;
-      const email = document.getElementById('prof-email').value;
-      const country = document.getElementById('prof-country').value;
-      const company = document.getElementById('prof-company').value;
-
-      try {
-        if (email !== activeUser.email) {
-          await updateEmail(activeUser, email);
+        },
+        onError: function(err) {
+          console.error("PayPal Error:", err);
+          alert("Payment could not be completed. Please try again.");
         }
-
-        const userRef = doc(db, "users", activeUser.uid);
-        await updateDoc(userRef, {
-          fullName: name,
-          email: email,
-          country: country,
-          company: company
-        });
-
-        showStatus("Profile information updated successfully!", "success");
-      } catch (err) {
-        showStatus(err.message, "error");
-      }
-    };
-
-    window.sendPasswordResetEmail = async () => {
-      try {
-        await fbSendReset(auth, activeUser.email);
-        showStatus(`Password reset email sent to ${activeUser.email}`, "success");
-      } catch (err) {
-        showStatus(err.message, "error");
-      }
-    };
-
-    window.promptInviteColleague = () => {
-      const emailInput = document.getElementById('invite-email');
-      const email = emailInput.value.trim();
-
-      const currentCollabs = userProfileData.invitedColleagues || [];
-      if (currentCollabs.length >= 5) {
-        showStatus("You have reached the maximum limit of 5 collaborator seats.", "error");
-        return;
-      }
-
-      if (!email || !email.includes('@')) {
-        showStatus("Please enter a valid email address.", "error");
-        return;
-      }
-
-      pendingInviteEmail = email;
-      document.getElementById('modal-collab-email').innerText = email;
-      document.getElementById('confirmModal').classList.remove('hidden');
-    };
-
-    window.confirmAndSendInvite = async () => {
-      closeModal();
-      const currentCollabs = userProfileData.invitedColleagues || [];
-
-      const newInvite = {
-        email: pendingInviteEmail,
-        invitedAt: new Date().toISOString(),
-        status: "pending"
-      };
-
-      currentCollabs.push(newInvite);
-
-      const userRef = doc(db, "users", activeUser.uid);
-      await updateDoc(userRef, { invitedColleagues: currentCollabs });
-
-      userProfileData.invitedColleagues = currentCollabs;
-      renderCollabsUI(currentCollabs);
-      document.getElementById('invite-email').value = "";
-
-      showStatus(`Invite registered for ${pendingInviteEmail}.`, "success");
-    };
-
-    window.removeColleague = async (index) => {
-      const currentCollabs = userProfileData.invitedColleagues || [];
-      currentCollabs.splice(index, 1);
-
-      const userRef = doc(db, "users", activeUser.uid);
-      await updateDoc(userRef, { invitedColleagues: currentCollabs });
-
-      userProfileData.invitedColleagues = currentCollabs;
-      renderCollabsUI(currentCollabs);
-      showStatus("Collaborator removed.", "success");
-    };
-
-    window.closeModal = () => {
-      document.getElementById('confirmModal').classList.add('hidden');
-    };
-
-    function showStatus(msg, type) {
-      const box = document.getElementById('status-msg');
-      box.innerText = msg;
-      box.className = `p-4 rounded-xl text-xs font-semibold ${type === 'success' ? 'bg-emerald-950/80 border border-emerald-800 text-emerald-300' : 'bg-rose-950/80 border border-rose-800 text-rose-300'}`;
-      box.classList.remove('hidden');
-      setTimeout(() => box.classList.add('hidden'), 6000);
+      }).render('#paypal-button-container');
     }
   </script>
 </body>
