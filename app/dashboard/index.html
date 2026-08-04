@@ -1,421 +1,376 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-950 dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <title>OpsReveal | Dashboard</title>
-
+  <title>OpsReveal - Dashboard Overview</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <style> body { font-family: 'Inter', sans-serif; } </style>
 
-  <!-- Firebase Auth Guard & Core Loader -->
-  <script type="module">
-    import { auth, db, ensureUserProfile, isSuperAdmin } from '/app/auth-guard.js';
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
-    onAuthStateChanged(auth, async (user) => {
-      if (!user || (!user.emailVerified && !user.providerData?.some(p => p.providerId === 'google.com'))) {
-        window.location.replace('/login.html');
-      } else {
-        const userProfile = await ensureUserProfile(user);
-        document.body.style.display = 'flex';
-        
-        const isGlobalAdmin = user.email && user.email.toLowerCase() === "mithun@preventloss.org";
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, h4, .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .bg-grid { 
+      background-image: radial-gradient(rgba(56, 189, 248, 0.08) 1px, transparent 1px); 
+      background-size: 32px 32px; 
+    }
+  </style>
 
-        if (isGlobalAdmin || isSuperAdmin(user)) {
-          const badge = document.getElementById('admin-badge');
-          if (badge) badge.classList.remove('hidden');
-          const planLabel = document.getElementById('plan-label');
-          if (planLabel) planLabel.innerText = "Global Admin Tier";
-        } else {
-          const planLabel = document.getElementById('plan-label');
-          if (planLabel) {
-            const currentPlan = userProfile?.plan || 'Starter Tier';
-            planLabel.innerText = currentPlan;
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              500: '#0284c7',
+              900: '#0c4a6e',
+              950: '#082f49',
+            }
           }
         }
-
-        window.loadAndRenderDashboard(user, userProfile);
       }
+    }
+  </script>
+</head>
+<body style="display: none;" class="min-h-screen bg-slate-950 text-slate-100 flex antialiased relative">
+
+  <!-- LEFT HAND SIDEBAR NAVIGATION -->
+  <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 min-h-screen z-20">
+    <div>
+      <div class="h-16 flex items-center px-6 border-b border-slate-800/80 space-x-3">
+        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-lg text-slate-950 shadow-md shadow-cyan-500/20">
+          O
+        </div>
+        <div>
+          <span class="font-heading font-extrabold text-xl text-white tracking-tight block">OpsReveal</span>
+          <span class="text-[10px] text-slate-500 block -mt-1 font-medium">Prevent Capital Loss</span>
+        </div>
+      </div>
+
+      <nav class="p-4 space-y-1.5">
+        <a href="/app/dashboard" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm transition">
+          <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="/app/uploads/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <span>Upload Reports</span>
+        </a>
+
+        <a href="/app/settings" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span>Settings</span>
+        </a>
+      </nav>
+    </div>
+
+    <div class="p-4 border-t border-slate-800 space-y-3">
+      <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800/80 text-xs space-y-2">
+        <div>
+          <span class="text-[10px] text-slate-500 block font-semibold uppercase">Active Plan</span>
+          <span id="planLabel" class="font-bold text-cyan-400">Starter Tier</span>
+        </div>
+        
+        <div id="usageMeters" class="pt-2 border-t border-slate-800/60 space-y-1.5">
+          <div class="flex justify-between text-[11px]">
+            <span class="text-slate-400">Monthly Uploads:</span>
+            <span id="meterUploads" class="font-mono font-semibold text-slate-200">0 / 4</span>
+          </div>
+          <div class="flex justify-between text-[11px]">
+            <span class="text-slate-400">Monthly Lines:</span>
+            <span id="meterLines" class="font-mono font-semibold text-slate-200">0 / 20k</span>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 pt-2 border-t border-slate-800/60">
+          <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+          <span id="userEmailDisplay" class="text-xs font-medium text-slate-300 truncate">loading...</span>
+        </div>
+      </div>
+
+      <button onclick="logoutUser()" class="w-full bg-slate-950 hover:bg-slate-800 text-xs text-slate-400 py-2 rounded-xl border border-slate-800 font-semibold transition">
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT AREA -->
+  <main class="flex-1 min-w-0 overflow-y-auto bg-grid px-8 py-8">
+    
+    <div class="flex items-center justify-between pb-6 border-b border-slate-800/80">
+      <div>
+        <h1 class="text-3xl font-extrabold text-white font-heading tracking-tight">Dashboard Overview</h1>
+        <p class="text-xs text-slate-400 mt-1">Total accumulated audit metrics and risk telemetry.</p>
+      </div>
+
+      <div class="flex items-center space-x-3">
+        <select id="timeRangeFilter" onchange="filterDashboardData()" class="bg-slate-900 border border-slate-800 text-xs font-medium text-slate-300 rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500 transition">
+          <option value="all">Till Date (All Time)</option>
+          <option value="month">Current Month</option>
+          <option value="7days">Last 7 Days</option>
+        </select>
+
+        <a href="/app/uploads/" class="flex items-center space-x-2 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl shadow-lg shadow-cyan-500/20 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+          <span>New Audit</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- DYNAMIC EXCEEDED LIMIT BANNER -->
+    <div id="quotaExceededBanner" class="hidden mt-6 bg-amber-950/40 border border-amber-500/40 rounded-2xl p-4 flex items-center justify-between shadow-xl">
+      <div>
+        <h4 class="text-sm font-bold text-amber-400 font-heading">Free Starter Usage Limit Exceeded</h4>
+        <p class="text-xs text-amber-200/80 mt-0.5">Your free usage is over (4 uploads or 20,000 lines this month). Upgrade to Professional for $99/mo with unlimited uploads, unlimited lines, and up to 5 additional team seats.</p>
+      </div>
+      <a href="/app/settings" class="shrink-0 ml-4 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold px-4 py-2 rounded-xl transition shadow-md">
+        Upgrade for $99
+      </a>
+    </div>
+
+    <!-- METRICS CARDS -->
+    <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Audited Reports</p>
+        <p id="cardTotalReports" class="text-3xl font-extrabold text-white font-heading mt-2">0</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Receiving / GRN Leakage</p>
+        <p id="cardGRNLeakage" class="text-3xl font-extrabold text-cyan-400 font-heading mt-2">$0.00</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sales Margin Erosion</p>
+        <p id="cardSalesErosion" class="text-3xl font-extrabold text-amber-400 font-heading mt-2">$0.00</p>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
+        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Write-Off Inventory Loss</p>
+        <p id="cardWriteoffLoss" class="text-3xl font-extrabold text-rose-400 font-heading mt-2">$0.00</p>
+      </div>
+    </div>
+
+    <!-- RECENT AUDIT HISTORY TABLE -->
+    <div class="mt-8 bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+      <div class="p-6 border-b border-slate-800 flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-bold text-white font-heading">Recent Audit History</h3>
+        </div>
+        <span id="showingCountBadge" class="text-xs text-slate-400 font-medium">Showing 0 audit runs</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-950/80 text-slate-400 font-bold uppercase tracking-wider border-b border-slate-800">
+            <tr>
+              <th class="py-3.5 px-6">Timestamp</th>
+              <th class="py-3.5 px-6">Report / File Name</th>
+              <th class="py-3.5 px-6">Lines Analyzed</th>
+              <th class="py-3.5 px-6">Flagged Exceptions</th>
+              <th class="py-3.5 px-6">Risk Assessment</th>
+              <th class="py-3.5 px-6">Financial Leakage</th>
+            </tr>
+          </thead>
+          <tbody id="dashboardHistoryBody" class="divide-y divide-slate-800/60 text-slate-300">
+            <tr>
+              <td colspan="6" class="py-8 text-center text-slate-500 font-medium">
+                Loading telemetry from Cloudflare...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script type="module">
+    import { auth, ensureUserProfile, isSuperAdmin } from '/app/auth-guard.js';
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
+
+    let rawAuditRecords = [];
+    let currentUser = null;
+    let currentUserProfile = null;
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.replace('/login.html');
+        return;
+      }
+
+      currentUser = user;
+      document.getElementById('userEmailDisplay').textContent = user.email;
+
+      const profile = await ensureUserProfile(user);
+      currentUserProfile = profile;
+
+      const isGlobalAdmin = user.email && user.email.toLowerCase() === "mithun@preventloss.org";
+      
+      if (isGlobalAdmin || isSuperAdmin(user)) {
+        document.getElementById('planLabel').innerText = "Global Admin Tier";
+        document.getElementById('usageMeters').classList.add('hidden');
+      } else {
+        const planName = profile?.plan || 'Starter Tier';
+        document.getElementById('planLabel').innerText = planName;
+      }
+
+      document.body.style.display = 'flex';
+
+      // Check if redirected due to quota limit
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('reason') === 'quota_exceeded') {
+        document.getElementById('quotaExceededBanner').classList.remove('hidden');
+      }
+
+      fetchDashboardTelemetry(user.uid);
     });
 
     window.logoutUser = () => {
       signOut(auth).then(() => window.location.replace('/login.html'));
     };
 
-    window.fetchFirestoreAudits = async (user) => {
+    async function fetchDashboardTelemetry(userId) {
       try {
-        let q;
-        const isGlobalAdmin = user && user.email && user.email.toLowerCase() === "mithun@preventloss.org";
+        const res = await fetch(`${CF_API_URL}?userId=${userId}`);
+        if (!res.ok) throw new Error("Backend unavailable");
         
-        if (isGlobalAdmin || isSuperAdmin(user)) {
-          q = query(collection(db, "audits"));
-        } else {
-          q = query(collection(db, "audits"), where("userId", "==", user.uid));
-        }
-        
-        const querySnapshot = await getDocs(q);
-        const firestoreAudits = [];
-        querySnapshot.forEach((doc) => {
-          firestoreAudits.push({ id: doc.id, ...doc.data() });
-        });
-        return firestoreAudits;
+        rawAuditRecords = await res.json();
+        if (!Array.isArray(rawAuditRecords)) rawAuditRecords = [];
+
+        calculateMonthlyQuotaUsage();
+        filterDashboardData();
+
       } catch (err) {
-        console.warn("Firestore audit fetch failed:", err);
-        return [];
+        console.error("Error fetching dashboard telemetry:", err);
+        document.getElementById('dashboardHistoryBody').innerHTML = `
+          <tr><td colspan="6" class="py-8 text-center text-red-400 font-medium">Failed to load audit history from Cloudflare.</td></tr>
+        `;
       }
-    };
-  </script>
-</head>
-
-<body style="display: none;" class="bg-slate-950 text-slate-100 min-h-screen flex antialiased">
-
-  <!-- Sidebar Nav -->
-  <aside class="w-64 border-r border-slate-800 bg-slate-950 p-6 flex flex-col justify-between shrink-0">
-    <div class="space-y-8">
-      <div class="flex items-center space-x-3">
-        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-black text-slate-950">O</div>
-        <div>
-          <h1 class="font-bold text-white text-base">OpsReveal</h1>
-          <span class="text-[10px] text-slate-500">Prevent Capital Loss</span>
-        </div>
-      </div>
-      <nav class="space-y-1.5 text-sm font-medium">
-        <a href="/app/dashboard" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl bg-slate-900 text-white">Dashboard</a>
-        <a href="/app/uploads" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Upload Reports</a>
-        <a href="/app/settings" class="flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900">Settings</a>
-      </nav>
-    </div>
-
-    <div class="border-t border-slate-800 pt-4 space-y-3">
-      <div class="bg-slate-900 p-3 rounded-xl border border-slate-800 text-xs">
-        <span class="text-[10px] text-slate-500 block font-semibold">ACTIVE PLAN</span>
-        <span id="plan-label" class="font-bold text-cyan-400">Starter Tier</span>
-        <span id="admin-badge" class="hidden mt-1 inline-block px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase">Global Admin</span>
-        
-        <!-- Usage Meter -->
-        <div id="starter-usage-box" class="mt-2 pt-2 border-t border-slate-800 space-y-1 text-[11px] hidden">
-          <div class="flex justify-between text-slate-400">
-            <span>Monthly Uploads:</span>
-            <span id="usage-uploads" class="font-semibold text-white">0 / 4</span>
-          </div>
-          <div class="flex justify-between text-slate-400">
-            <span>Monthly Lines:</span>
-            <span id="usage-lines" class="font-semibold text-white">0 / 20k</span>
-          </div>
-        </div>
-      </div>
-      <button onclick="logoutUser()" class="w-full bg-slate-900 hover:bg-slate-800 text-xs text-slate-400 py-2.5 rounded-xl border border-slate-800 font-semibold transition">
-        Sign Out
-      </button>
-    </div>
-  </aside>
-
-  <!-- Main Content -->
-  <main class="flex-1 p-8 space-y-6 max-w-6xl mx-auto overflow-y-auto">
-    <div class="flex items-center justify-between border-b border-slate-800 pb-5">
-      <div>
-        <h2 class="text-2xl font-bold text-white">Dashboard Overview</h2>
-        <p class="text-xs text-slate-400">Total accumulated audit metrics and risk telemetry.</p>
-      </div>
-      <div class="flex items-center space-x-3">
-        <select id="dash-filter" onchange="renderDashboard()" class="bg-slate-900 border border-slate-800 text-xs rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500">
-          <option value="till_date">Till Date (All Time)</option>
-          <option value="today">Today</option>
-          <option value="yesterday">Yesterday</option>
-          <option value="this_week">This Week</option>
-          <option value="this_month">This Month</option>
-        </select>
-        <a href="/app/uploads" id="btn-new-audit" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">
-          + New Audit
-        </a>
-      </div>
-    </div>
-
-    <!-- Quota Warning / Upgrade Redirect Banner -->
-    <div id="quota-warning-banner" class="hidden p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between">
-      <div>
-        <p class="font-bold text-sm text-amber-400">Free Starter Usage Limit Exceeded</p>
-        <p class="mt-0.5 text-slate-300">Your free usage is over (4 uploads or 20,000 lines this month). Upgrade to Professional for $99/mo with unlimited uploads, unlimited lines, and up to 5 additional team seats.</p>
-      </div>
-      <a href="/app/settings" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition ml-4 shrink-0">Upgrade for $99</a>
-    </div>
-
-    <!-- Summary Metric Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-        <span class="text-xs text-slate-400 font-medium">Total Audited Reports</span>
-        <span id="m-count" class="text-3xl font-bold text-white block mt-2">0</span>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-        <span class="text-xs text-slate-400 font-medium">Receiving / GRN Leakage</span>
-        <span id="m-rec" class="text-3xl font-bold text-cyan-400 block mt-2">$0.00</span>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-        <span class="text-xs text-slate-400 font-medium">Sales Margin Erosion</span>
-        <span id="m-sales" class="text-3xl font-bold text-amber-400 block mt-2">$0.00</span>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-        <span class="text-xs text-slate-400 font-medium">Write-Off Inventory Loss</span>
-        <span id="m-write" class="text-3xl font-bold text-rose-400 block mt-2">$0.00</span>
-      </div>
-    </div>
-
-    <!-- Detailed Audit History Table -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
-      <div class="flex items-center justify-between">
-        <h3 class="text-base font-bold text-white">Recent Audit History</h3>
-        <span class="text-xs text-slate-500" id="filtered-count-label">Loading history...</span>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="border-b border-slate-800 text-slate-400">
-            <tr>
-              <th class="pb-3">Timestamp</th>
-              <th class="pb-3">Report / File Name</th>
-              <th class="pb-3">Lines Analyzed</th>
-              <th class="pb-3">Flagged Exceptions</th>
-              <th class="pb-3">Risk Assessment</th>
-              <th class="pb-3">Financial Leakage</th>
-            </tr>
-          </thead>
-          <tbody id="history-rows" class="divide-y divide-slate-800 text-slate-300">
-            <tr>
-              <td colspan="6" class="py-6 text-center text-slate-500">Syncing audit records...</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-
-  <script type="module">
-    import { isSuperAdmin } from '/app/auth-guard.js';
-
-    const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
-    const formatUSD = (val) => {
-      if (typeof val === 'string') {
-        val = parseFloat(val.replace(/[^0-9.-]+/g, ""));
-      }
-      return Number(val || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
-    };
-
-    let globalHistory = [];
-    let currentUser = null;
-    let currentUserProfile = null;
-
-    // Helper functions mapping Cloudflare + Firestore field schemas
-    function parseLeakage(item) {
-      let val = item.total_leakages ?? item.totalLeakages ?? item.leakageUSD ?? item.totalLeakageUSD ?? item.financialLeakage ?? 0;
-      if (typeof val === 'string') {
-        val = parseFloat(val.replace(/[^0-9.-]+/g, ""));
-      }
-      return Number(val || 0);
     }
 
-    function parseLines(item) {
-      return Number(item.lines_processed ?? item.linesProcessed ?? item.lines ?? item.totalLines ?? item.rows ?? 0);
-    }
-
-    function parseDate(item) {
-      return item.uploaded_date ?? item.uploadedDate ?? item.date ?? item.timestamp ?? item.createdAt ?? null;
-    }
-
-    function parseFileName(item) {
-      return item.file_name ?? item.fileName ?? item.type ?? item.reportType ?? "Audit Report";
-    }
-
-    async function loadAndRenderDashboard(user, profile) {
-      currentUser = user;
-      currentUserProfile = profile;
-      let combinedRecords = [];
-
-      const isGlobalAdmin = user && user.email && user.email.toLowerCase() === "mithun@preventloss.org";
-
-      // 1. Fetch Cloudflare Upload Summaries
-      try {
-        const workerEndpoint = isGlobalAdmin 
-          ? `${WORKER_URL}/api/summary/list` 
-          : `${WORKER_URL}/api/summary/list?userId=${user.uid}&uid=${user.uid}`;
-        
-        const res = await fetch(workerEndpoint);
-        if (res.ok) {
-          const data = await res.json();
-          // Workers endpoint returns data in summaries OR results array
-          const rawSummaries = data.summaries || data.results || data.data || (Array.isArray(data) ? data : []);
-          
-          if (Array.isArray(rawSummaries)) {
-            const userSummaries = isGlobalAdmin 
-              ? rawSummaries 
-              : rawSummaries.filter(s => {
-                  if (!s.userId && !s.uid && !s.user_id) return true; // Worker already pre-filtered server-side
-                  return (s.userId === user.uid) || (s.uid === user.uid) || (s.user_id === user.uid);
-                });
-            combinedRecords = [...combinedRecords, ...userSummaries];
-          }
-        }
-      } catch (err) {
-        console.warn("Cloudflare worker fetch failed:", err);
-      }
-
-      // 2. Fetch Firestore
-      if (user && user.uid) {
-        const firestoreRecords = await window.fetchFirestoreAudits(user);
-        combinedRecords = [...combinedRecords, ...firestoreRecords];
-      }
-
-      // 3. Fallback LocalStorage
-      const storageKey = `opsreveal_history_${user.uid}`;
-      const localRecords = JSON.parse(localStorage.getItem(storageKey) || '[]');
-      combinedRecords = [...combinedRecords, ...localRecords];
-
-      // 4. Robust Deduplication
-      const seenKeys = new Set();
-      globalHistory = combinedRecords.filter((item, idx) => {
-        const d = parseDate(item) || `nodate_${idx}`;
-        const f = parseFileName(item);
-        const l = parseLeakage(item);
-        
-        const uniqueId = item.id ? item.id : `${d}_${f}_${l}`;
-        if (seenKeys.has(uniqueId)) return false;
-        seenKeys.add(uniqueId);
-        return true;
-      });
-
-      localStorage.setItem(storageKey, JSON.stringify(globalHistory));
-
-      // Display warning if redirected due to quota limit
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get('reason') === 'quota_exceeded') {
-        const banner = document.getElementById('quota-warning-banner');
-        if (banner) banner.classList.remove('hidden');
-      }
-
-      checkPlanQuotas(isGlobalAdmin);
-      renderDashboard();
-    }
-
-    function checkPlanQuotas(isGlobalAdmin) {
-      if (isGlobalAdmin) return;
-
-      const userPlan = (currentUserProfile?.plan || 'starter').toLowerCase();
-      if (userPlan.includes('professional') || userPlan.includes('pro')) return;
-
-      // Calculate Current Month Usage
+    function calculateMonthlyQuotaUsage() {
       const now = new Date();
-      const currentMonthRecords = globalHistory.filter(item => {
-        const t = parseDate(item);
-        if (!t) return false;
-        const d = new Date(t);
+      const currentMonthRecords = rawAuditRecords.filter(item => {
+        const dateStr = item.uploadedDate || item.uploaded_date || item.createdAt || item.timestamp;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
       });
 
-      const uploadsCount = currentMonthRecords.length;
-      const linesCount = currentMonthRecords.reduce((sum, item) => sum + parseLines(item), 0);
+      const totalUploads = currentMonthRecords.length;
+      const totalLines = currentMonthRecords.reduce((sum, item) => {
+        return sum + Number(item.linesProcessed || item.lines_processed || item.lines || 0);
+      }, 0);
 
-      const usageBox = document.getElementById('starter-usage-box');
-      if (usageBox) {
-        usageBox.classList.remove('hidden');
-        document.getElementById('usage-uploads').innerText = `${uploadsCount} / 4`;
-        document.getElementById('usage-lines').innerText = `${linesCount.toLocaleString()} / 20k`;
-      }
+      document.getElementById('meterUploads').textContent = `${totalUploads} / 4`;
+      document.getElementById('meterLines').textContent = `${totalLines.toLocaleString('en-US')} / 20k`;
 
-      // Flag quota exceeded status
-      if (uploadsCount >= 4 || linesCount >= 20000) {
-        const banner = document.getElementById('quota-warning-banner');
-        if (banner) banner.classList.remove('hidden');
-        
-        // Save flag so uploads page can check immediately
-        localStorage.setItem(`quota_exceeded_${currentUser.uid}`, "true");
-      } else {
-        localStorage.removeItem(`quota_exceeded_${currentUser.uid}`);
+      const isGlobalAdmin = currentUser?.email?.toLowerCase() === "mithun@preventloss.org";
+      const isPro = (currentUserProfile?.plan || '').toLowerCase().includes('pro');
+
+      // Unhide alert banner automatically if monthly limit is hit
+      if (!isGlobalAdmin && !isPro && (totalUploads >= 4 || totalLines >= 20000)) {
+        document.getElementById('quotaExceededBanner').classList.remove('hidden');
       }
     }
 
-    function isDateInFilter(dateStr, filter) {
-      if (!dateStr) return true;
-      const date = new Date(dateStr);
+    window.filterDashboardData = function() {
+      const filterValue = document.getElementById('timeRangeFilter').value;
       const now = new Date();
-      if (isNaN(date.getTime())) return true;
 
-      if (filter === 'today') return date.toDateString() === now.toDateString();
-      if (filter === 'yesterday') {
-        const yest = new Date(now);
-        yest.setDate(now.getDate() - 1);
-        return date.toDateString() === yest.toDateString();
-      }
-      if (filter === 'this_week') {
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() - now.getDay());
-        return date >= startOfWeek;
-      }
-      if (filter === 'this_month') {
-        return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
-      }
-      return true;
-    }
+      const filtered = rawAuditRecords.filter(item => {
+        const dateStr = item.uploadedDate || item.uploaded_date || item.createdAt || item.timestamp;
+        if (!dateStr) return false;
+        const recordDate = new Date(dateStr);
 
-    function renderDashboard() {
-      const filter = document.getElementById('dash-filter').value;
-      const filteredHistory = globalHistory.filter(item => {
-        const timeVal = parseDate(item);
-        return isDateInFilter(timeVal, filter);
+        if (filterValue === 'month') {
+          return recordDate.getMonth() === now.getMonth() && recordDate.getFullYear() === now.getFullYear();
+        } else if (filterValue === '7days') {
+          const sevenDaysAgo = new Date();
+          sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+          return recordDate >= sevenDaysAgo;
+        }
+        return true; // 'all'
       });
 
-      let rec = 0, sales = 0, write = 0;
-      filteredHistory.forEach(item => {
-        const loss = parseLeakage(item);
-        const fileName = parseFileName(item).toLowerCase();
+      renderMetricsAndTable(filtered);
+    };
 
-        if (fileName.includes('sales') || fileName.includes('margin')) sales += loss;
-        else if (fileName.includes('write') || fileName.includes('inventory')) write += loss;
-        else rec += loss; // Standard receiving fallback
+    function renderMetricsAndTable(records) {
+      let grnLeakage = 0;
+      let salesErosion = 0;
+      let writeoffLoss = 0;
+
+      records.forEach(r => {
+        const type = (r.reportType || '').toLowerCase();
+        const leakage = Number(r.totalLeakages || r.total_leakages || 0);
+
+        if (type.includes('grn') || type.includes('receiving')) {
+          grnLeakage += leakage;
+        } else if (type.includes('sales')) {
+          salesErosion += leakage;
+        } else if (type.includes('write')) {
+          writeoffLoss += leakage;
+        } else {
+          // Default fallback to GRN if not explicitly sales/writeoff
+          grnLeakage += leakage;
+        }
       });
 
-      document.getElementById('m-count').innerText = filteredHistory.length;
-      document.getElementById('m-rec').innerText = formatUSD(rec);
-      document.getElementById('m-sales').innerText = formatUSD(sales);
-      document.getElementById('m-write').innerText = formatUSD(write);
-      document.getElementById('filtered-count-label').innerText = `Showing ${filteredHistory.length} audit runs`;
+      document.getElementById('cardTotalReports').textContent = records.length;
+      document.getElementById('cardGRNLeakage').textContent = '$' + grnLeakage.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('cardSalesErosion').textContent = '$' + salesErosion.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      document.getElementById('cardWriteoffLoss').textContent = '$' + writeoffLoss.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-      const tbody = document.getElementById('history-rows');
-      if (filteredHistory.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">No audit records found for this period.</td></tr>';
+      document.getElementById('showingCountBadge').textContent = `Showing ${records.length} audit run${records.length === 1 ? '' : 's'}`;
+
+      const tbody = document.getElementById('dashboardHistoryBody');
+      
+      if (records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500 font-medium">No audit records found for this period.</td></tr>`;
         return;
       }
 
-      tbody.innerHTML = filteredHistory.map(h => {
-        const timestamp = parseDate(h);
-        const displayDate = timestamp ? new Date(timestamp).toLocaleString() : 'N/A';
-        const fileName = parseFileName(h);
-        const totalLines = parseLines(h);
-        const leakage = parseLeakage(h);
-        
-        const riskLevel = (h.risk_score || h.riskScore || 'HIGH').toString().toUpperCase();
-        const flaggedCount = Number(h.flaggedLines ?? h.flagged_exceptions ?? (h.data ? h.data.filter(d => d.Audit_Status !== 'OK').length : 0));
+      tbody.innerHTML = records.map(item => {
+        const dateStr = item.uploadedDate || item.uploaded_date || item.createdAt || item.timestamp;
+        const formattedDate = dateStr ? new Date(dateStr).toLocaleString('en-US') : 'N/A';
+        const fileName = item.fileName || item.file_name || 'Unnamed Report';
+        const lines = Number(item.linesProcessed || item.lines_processed || 0);
+        const exceptions = Number(item.flaggedExceptionsCount || item.flagged_exceptions || 0);
+        const leakage = Number(item.totalLeakages || item.total_leakages || 0);
+        const risk = item.riskScore || item.risk_score || (exceptions === 0 ? "None" : exceptions < 10 ? "Low" : exceptions < 50 ? "Medium" : "High");
 
         return `
-          <tr>
-            <td class="py-3.5 text-slate-400">${displayDate}</td>
-            <td class="py-3.5 font-semibold text-white">${fileName}</td>
-            <td class="py-3.5 text-slate-300 font-medium">${totalLines.toLocaleString()}</td>
-            <td class="py-3.5 text-amber-400 font-semibold">${flaggedCount.toLocaleString()}</td>
-            <td class="py-3.5">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${riskLevel.includes('HIGH') ? 'bg-rose-950 text-rose-400 border border-rose-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
-                ${riskLevel}
-              </span>
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-4 px-6 font-mono text-slate-400">${formattedDate}</td>
+            <td class="py-4 px-6 font-semibold text-white">${fileName}</td>
+            <td class="py-4 px-6 font-mono">${lines.toLocaleString('en-US')}</td>
+            <td class="py-4 px-6 font-mono text-amber-400 font-semibold">${exceptions.toLocaleString('en-US')}</td>
+            <td class="py-4 px-6 font-semibold">
+              <span class="px-2.5 py-1 rounded-full text-[10px] uppercase tracking-wider font-bold ${
+                risk === 'None' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800/60' :
+                risk === 'Low' ? 'bg-yellow-950 text-yellow-400 border border-yellow-800/60' :
+                risk === 'Medium' ? 'bg-amber-950 text-amber-400 border border-amber-800/60' :
+                'bg-red-950 text-red-400 border border-red-800/60'
+              }">${risk}</span>
             </td>
-            <td class="py-3.5 font-bold text-rose-400">${formatUSD(leakage)}</td>
+            <td class="py-4 px-6 font-mono font-bold text-cyan-400">$${leakage.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
           </tr>
         `;
       }).join('');
     }
-
-    window.renderDashboard = renderDashboard;
-    window.loadAndRenderDashboard = loadAndRenderDashboard;
   </script>
 </body>
 </html>
