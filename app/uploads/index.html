@@ -228,7 +228,75 @@
 
   </main>
 
-  <script type="module">
+<script type="module">
+  import { auth, ensureUserProfile, isSuperAdmin } from '/app/auth-guard.js';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+  const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
+
+  onAuthStateChanged(auth, async (user) => {
+    // 1. Unauthenticated users -> Redirect to Login
+    if (!user) {
+      window.location.replace('/login.html');
+      return;
+    }
+
+    // 2. Load User Profile
+    const profile = await ensureUserProfile(user);
+    const isGlobalAdmin = user.email && user.email.toLowerCase() === "mithun@preventloss.org";
+
+    // 3. QUOTA GUARD CHECK (Skip for Global Admin & Super Admins)
+    if (!isGlobalAdmin && !isSuperAdmin(user)) {
+      const userPlan = (profile?.plan || 'starter').toLowerCase();
+      
+      // Starter plan users only
+      if (!userPlan.includes('professional') && !userPlan.includes('pro')) {
+        try {
+          // Fetch user's current upload activity from Cloudflare
+          const res = await fetch(`${WORKER_URL}/api/summary/list?userId=${user.uid}&uid=${user.uid}`);
+          if (res.ok) {
+            const data = await res.json();
+            const summaries = data.summaries || data.results || (Array.isArray(data) ? data : []);
+            
+            const now = new Date();
+            const currentMonthRecords = summaries.filter(s => {
+              const dateStr = s.uploaded_date || s.uploadedDate || s.createdAt || s.timestamp;
+              if (!dateStr) return false;
+              const d = new Date(dateStr);
+              return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            });
+
+            const totalUploads = currentMonthRecords.length;
+            const totalLines = currentMonthRecords.reduce((sum, s) => {
+              return sum + Number(s.lines_processed || s.linesProcessed || s.lines || 0);
+            }, 0);
+
+            // IF STARTER LIMIT EXCEEDED: Block access and redirect back to Dashboard
+            if (totalUploads >= 4 || totalLines >= 20000) {
+              window.location.replace('/app/dashboard?reason=quota_exceeded');
+              return; // Stop execution
+            }
+          }
+        } catch (err) {
+          console.warn("Quota check network error, falling back to local state check:", err);
+          if (localStorage.getItem(`quota_exceeded_${user.uid}`) === "true") {
+            window.location.replace('/app/dashboard?reason=quota_exceeded');
+            return;
+          }
+        }
+      }
+    }
+
+    // 4. If quotas are within limits or user is Admin/Pro, reveal body and render page
+    document.body.style.display = 'flex';
+
+    // Call your upload page initialization/rendering function here
+    if (typeof window.initUploadsPage === 'function') {
+      window.initUploadsPage(user, profile);
+    }
+  });
+</script>
+    
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
