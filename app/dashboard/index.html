@@ -46,7 +46,6 @@
       signOut(auth).then(() => window.location.replace('/login.html'));
     };
 
-    // Global Function to Fetch User-scoped or Admin-global Firestore Audits
     window.fetchFirestoreAudits = async (user) => {
       try {
         let q;
@@ -97,7 +96,7 @@
         <span id="plan-label" class="font-bold text-cyan-400">Starter Tier</span>
         <span id="admin-badge" class="hidden mt-1 inline-block px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30 uppercase">Global Admin</span>
         
-        <!-- Usage Meter for Starter Users -->
+        <!-- Usage Meter -->
         <div id="starter-usage-box" class="mt-2 pt-2 border-t border-slate-800 space-y-1 text-[11px] hidden">
           <div class="flex justify-between text-slate-400">
             <span>Monthly Uploads:</span>
@@ -136,10 +135,13 @@
       </div>
     </div>
 
-    <!-- Tier Quota Limit Warning Banner (Shows when Starter limits hit) -->
+    <!-- Quota Warning / Upgrade Redirect Banner -->
     <div id="quota-warning-banner" class="hidden p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center justify-between">
-      <span><strong>Starter Quota Exceeded:</strong> You've reached the free Starter tier limit (4 uploads or 20,000 lines this month). Upgrade to Professional ($99/mo) for unlimited uploads & 5 extra team seats.</span>
-      <a href="/app/settings" class="px-3 py-1.5 rounded-lg bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition ml-4 shrink-0">Upgrade Plan</a>
+      <div>
+        <p class="font-bold text-sm text-amber-400">Free Starter Usage Limit Exceeded</p>
+        <p class="mt-0.5 text-slate-300">Your free usage is over (4 uploads or 20,000 lines this month). Upgrade to Professional for $99/mo with unlimited uploads, unlimited lines, and up to 5 additional team seats.</p>
+      </div>
+      <a href="/app/settings" class="px-4 py-2 rounded-xl bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 transition ml-4 shrink-0">Upgrade for $99</a>
     </div>
 
     <!-- Summary Metric Cards -->
@@ -173,7 +175,7 @@
           <thead class="border-b border-slate-800 text-slate-400">
             <tr>
               <th class="pb-3">Timestamp</th>
-              <th class="pb-3">Report Type</th>
+              <th class="pb-3">Report / File Name</th>
               <th class="pb-3">Lines Analyzed</th>
               <th class="pb-3">Flagged Exceptions</th>
               <th class="pb-3">Risk Assessment</th>
@@ -194,18 +196,36 @@
     import { isSuperAdmin } from '/app/auth-guard.js';
 
     const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
-    const formatUSD = (val) => Number(val || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
+    const formatUSD = (val) => {
+      if (typeof val === 'string') {
+        val = parseFloat(val.replace(/[^0-9.-]+/g, ""));
+      }
+      return Number(val || 0).toLocaleString("en-US", { style: "currency", currency: "USD" });
+    };
 
     let globalHistory = [];
     let currentUser = null;
     let currentUserProfile = null;
 
-    function getLeakageVal(item) {
-      return Number(item.leakageUSD ?? item.totalLeakageUSD ?? item.financialLeakage ?? item.leakage ?? 0);
+    // Helper functions mapping Cloudflare + Firestore field schemas
+    function parseLeakage(item) {
+      let val = item.total_leakages ?? item.totalLeakages ?? item.leakageUSD ?? item.totalLeakageUSD ?? item.financialLeakage ?? 0;
+      if (typeof val === 'string') {
+        val = parseFloat(val.replace(/[^0-9.-]+/g, ""));
+      }
+      return Number(val || 0);
     }
 
-    function getTimeVal(item) {
-      return item.date || item.timestamp || item.createdAt || item.time || null;
+    function parseLines(item) {
+      return Number(item.lines_processed ?? item.linesProcessed ?? item.lines ?? item.totalLines ?? item.rows ?? 0);
+    }
+
+    function parseDate(item) {
+      return item.uploaded_date ?? item.uploadedDate ?? item.date ?? item.timestamp ?? item.createdAt ?? null;
+    }
+
+    function parseFileName(item) {
+      return item.file_name ?? item.fileName ?? item.type ?? item.reportType ?? "Audit Report";
     }
 
     async function loadAndRenderDashboard(user, profile) {
@@ -215,7 +235,7 @@
 
       const isGlobalAdmin = user && user.email && user.email.toLowerCase() === "mithun@preventloss.org";
 
-      // 1. Fetch from Cloudflare R2 Worker API
+      // 1. Fetch Cloudflare Upload Summaries
       try {
         const workerEndpoint = isGlobalAdmin 
           ? `${WORKER_URL}/api/summary/list` 
@@ -224,74 +244,77 @@
         const res = await fetch(workerEndpoint);
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data.summaries)) {
+          // Workers endpoint returns data in summaries OR results array
+          const rawSummaries = data.summaries || data.results || data.data || (Array.isArray(data) ? data : []);
+          
+          if (Array.isArray(rawSummaries)) {
             const userSummaries = isGlobalAdmin 
-              ? data.summaries 
-              : data.summaries.filter(s => 
-                  (s.userId && s.userId === user.uid) || 
-                  (s.uid && s.uid === user.uid) ||
-                  (s.user_id && s.user_id === user.uid) ||
-                  !s.userId
-                );
+              ? rawSummaries 
+              : rawSummaries.filter(s => {
+                  if (!s.userId && !s.uid && !s.user_id) return true; // Worker already pre-filtered server-side
+                  return (s.userId === user.uid) || (s.uid === user.uid) || (s.user_id === user.uid);
+                });
             combinedRecords = [...combinedRecords, ...userSummaries];
           }
         }
       } catch (err) {
-        console.warn("Cloudflare worker sync failed:", err);
+        console.warn("Cloudflare worker fetch failed:", err);
       }
 
-      // 2. Fetch from Firestore
+      // 2. Fetch Firestore
       if (user && user.uid) {
         const firestoreRecords = await window.fetchFirestoreAudits(user);
         combinedRecords = [...combinedRecords, ...firestoreRecords];
       }
 
-      // 3. Fallback to LocalStorage
+      // 3. Fallback LocalStorage
       const storageKey = `opsreveal_history_${user.uid}`;
       const localRecords = JSON.parse(localStorage.getItem(storageKey) || '[]');
       combinedRecords = [...combinedRecords, ...localRecords];
 
-      // 4. Safe Deduplication
+      // 4. Robust Deduplication
       const seenKeys = new Set();
       globalHistory = combinedRecords.filter((item, idx) => {
-        const timeKey = getTimeVal(item) || `no_time_${idx}`;
-        const typeKey = (item.type || item.reportType || "unknown").toLowerCase();
-        const leakageKey = getLeakageVal(item);
+        const d = parseDate(item) || `nodate_${idx}`;
+        const f = parseFileName(item);
+        const l = parseLeakage(item);
         
-        const uniqueId = item.id ? item.id : `${timeKey}_${typeKey}_${leakageKey}`;
-        
+        const uniqueId = item.id ? item.id : `${d}_${f}_${l}`;
         if (seenKeys.has(uniqueId)) return false;
         seenKeys.add(uniqueId);
         return true;
       });
 
       localStorage.setItem(storageKey, JSON.stringify(globalHistory));
-      
-      // Enforce Starter Tier Quota Tracking
-      checkPlanQuotas(isGlobalAdmin);
 
+      // Display warning if redirected due to quota limit
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('reason') === 'quota_exceeded') {
+        const banner = document.getElementById('quota-warning-banner');
+        if (banner) banner.classList.remove('hidden');
+      }
+
+      checkPlanQuotas(isGlobalAdmin);
       renderDashboard();
     }
 
     function checkPlanQuotas(isGlobalAdmin) {
-      if (isGlobalAdmin) return; // Admin has no quota limit
+      if (isGlobalAdmin) return;
 
-      const userPlan = currentUserProfile?.plan || 'starter';
-      if (userPlan.toLowerCase().includes('professional') || userPlan.toLowerCase().includes('pro')) {
-        return; // Professional plan has unlimited uploads and lines
-      }
+      const userPlan = (currentUserProfile?.plan || 'starter').toLowerCase();
+      if (userPlan.includes('professional') || userPlan.includes('pro')) return;
 
-      // Starter Plan Calculation (Current Month Usage)
+      // Calculate Current Month Usage
       const now = new Date();
       const currentMonthRecords = globalHistory.filter(item => {
-        const t = getTimeVal(item);
+        const t = parseDate(item);
         if (!t) return false;
         const d = new Date(t);
         return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
       });
 
       const uploadsCount = currentMonthRecords.length;
-      const linesCount = currentMonthRecords.reduce((sum, item) => sum + Number(item.lines || item.totalLines || item.rows || 0), 0);
+      const linesCount = currentMonthRecords.reduce((sum, item) => sum + parseLines(item), 0);
 
       const usageBox = document.getElementById('starter-usage-box');
       if (usageBox) {
@@ -300,10 +323,15 @@
         document.getElementById('usage-lines').innerText = `${linesCount.toLocaleString()} / 20k`;
       }
 
-      // Check limits: 4 uploads OR 20,000 lines
+      // Flag quota exceeded status
       if (uploadsCount >= 4 || linesCount >= 20000) {
         const banner = document.getElementById('quota-warning-banner');
         if (banner) banner.classList.remove('hidden');
+        
+        // Save flag so uploads page can check immediately
+        localStorage.setItem(`quota_exceeded_${currentUser.uid}`, "true");
+      } else {
+        localStorage.removeItem(`quota_exceeded_${currentUser.uid}`);
       }
     }
 
@@ -313,38 +341,38 @@
       const now = new Date();
       if (isNaN(date.getTime())) return true;
 
-      if (filter === 'today') {
-        return date.toDateString() === now.toDateString();
-      } else if (filter === 'yesterday') {
+      if (filter === 'today') return date.toDateString() === now.toDateString();
+      if (filter === 'yesterday') {
         const yest = new Date(now);
         yest.setDate(now.getDate() - 1);
         return date.toDateString() === yest.toDateString();
-      } else if (filter === 'this_week') {
+      }
+      if (filter === 'this_week') {
         const startOfWeek = new Date(now);
         startOfWeek.setDate(now.getDate() - now.getDay());
         return date >= startOfWeek;
-      } else if (filter === 'this_month') {
+      }
+      if (filter === 'this_month') {
         return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
       }
-      return true; // "till_date"
+      return true;
     }
 
     function renderDashboard() {
       const filter = document.getElementById('dash-filter').value;
       const filteredHistory = globalHistory.filter(item => {
-        const timeVal = getTimeVal(item);
+        const timeVal = parseDate(item);
         return isDateInFilter(timeVal, filter);
       });
 
       let rec = 0, sales = 0, write = 0;
       filteredHistory.forEach(item => {
-        const loss = getLeakageVal(item);
-        const type = (item.type || item.reportType || '').toLowerCase();
+        const loss = parseLeakage(item);
+        const fileName = parseFileName(item).toLowerCase();
 
-        if (type.includes('rec') || type.includes('grn')) rec += loss;
-        else if (type.includes('sale') || type.includes('margin')) sales += loss;
-        else if (type.includes('write') || type.includes('inventory')) write += loss;
-        else rec += loss;
+        if (fileName.includes('sales') || fileName.includes('margin')) sales += loss;
+        else if (fileName.includes('write') || fileName.includes('inventory')) write += loss;
+        else rec += loss; // Standard receiving fallback
       });
 
       document.getElementById('m-count').innerText = filteredHistory.length;
@@ -360,23 +388,24 @@
       }
 
       tbody.innerHTML = filteredHistory.map(h => {
-        const timestamp = getTimeVal(h);
+        const timestamp = parseDate(h);
         const displayDate = timestamp ? new Date(timestamp).toLocaleString() : 'N/A';
-        const totalLines = Number(h.lines || h.totalLines || h.rows || 0);
-        const flaggedCount = Number(h.flaggedLines ?? (h.data ? h.data.filter(d => d.Audit_Status !== 'OK').length : 0));
-        const riskScore = h.riskScore ?? (totalLines > 0 ? Math.round((flaggedCount / totalLines) * 100) : 0);
-        const leakage = getLeakageVal(h);
-        const typeDisplay = h.type || h.reportType || 'N/A';
+        const fileName = parseFileName(h);
+        const totalLines = parseLines(h);
+        const leakage = parseLeakage(h);
+        
+        const riskLevel = (h.risk_score || h.riskScore || 'HIGH').toString().toUpperCase();
+        const flaggedCount = Number(h.flaggedLines ?? h.flagged_exceptions ?? (h.data ? h.data.filter(d => d.Audit_Status !== 'OK').length : 0));
 
         return `
           <tr>
             <td class="py-3.5 text-slate-400">${displayDate}</td>
-            <td class="py-3.5 font-semibold text-white uppercase">${typeDisplay}</td>
+            <td class="py-3.5 font-semibold text-white">${fileName}</td>
             <td class="py-3.5 text-slate-300 font-medium">${totalLines.toLocaleString()}</td>
             <td class="py-3.5 text-amber-400 font-semibold">${flaggedCount.toLocaleString()}</td>
             <td class="py-3.5">
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${riskScore > 30 ? 'bg-rose-950 text-rose-400 border border-rose-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
-                ${riskScore}% Risk
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${riskLevel.includes('HIGH') ? 'bg-rose-950 text-rose-400 border border-rose-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">
+                ${riskLevel}
               </span>
             </td>
             <td class="py-3.5 font-bold text-rose-400">${formatUSD(leakage)}</td>
