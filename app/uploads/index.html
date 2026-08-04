@@ -45,12 +45,15 @@
 </head>
 <body style="display: none;" class="min-h-screen bg-slate-950 text-slate-100 flex antialiased relative">
 
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
   <!-- PROCESSING MODAL OVERLAY -->
   <div id="processingModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex flex-col items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center flex flex-col items-center">
       <div class="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
       <h3 class="text-lg font-extrabold text-white font-heading">Processing Data</h3>
-      <p class="text-xs text-slate-400 mt-2">Validating format and processing your report...</p>
+      <p class="text-xs text-slate-400 mt-2">Validating schema and processing audit leakages...</p>
     </div>
   </div>
 
@@ -197,7 +200,7 @@
     <div class="mt-4 px-4 py-3 bg-slate-900/60 border border-slate-800/80 rounded-xl flex items-center justify-between text-xs text-slate-400">
       <div class="flex items-center space-x-2">
         <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-        <span><strong>Client-Side Confidentiality Guard:</strong> Raw file data is processed locally in your browser and instantly downloaded. If you refresh, line-item data disappears—only aggregated financial metrics persist.</span>
+        <span><strong>Client-Side Confidentiality Guard:</strong> Raw file data is processed locally in your browser and instantly downloaded. Sensitive structural identifiers are auto-sanitized before transmission.</span>
       </div>
     </div>
 
@@ -243,6 +246,35 @@
     
     let currentUser = null;
     let currentUserProfile = null;
+
+    // Toast Engine
+    window.showToast = function(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const bg = type === 'error' ? 'bg-red-950 border-red-800 text-red-200' : 'bg-slate-900 border-cyan-500/40 text-slate-100';
+      toast.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs font-semibold ${bg} transition-all duration-300 opacity-0 transform translate-y-2`;
+      toast.innerText = message;
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.remove('opacity-0', 'translate-y-2');
+      }, 10);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    };
+
+    // Sensitive Data Scrubber
+    function sanitizeDataString(val) {
+      if (typeof val !== 'string') return val;
+      // Scrubber filters specific identifier patterns
+      return val
+        .replace(/\b\d{4}[-\s]?\d{4}[-\s]?\d{4}\b/g, '[Aadhaar Redacted]')
+        .replace(/\b\d{6}[-\s]?[1-4]\d{6}\b/g, '[RRN Redacted]')
+        .replace(/\b\d{12}\b/g, '[MyNumber Redacted]');
+    }
 
     // Helper: Check and enforce quota limits
     async function checkAndEnforceQuota(user, profile) {
@@ -353,7 +385,6 @@
       const file = e.target.files[0];
       if (!file) return;
 
-      // Verify quota limit before processing any new file selection
       const allowed = await checkAndEnforceQuota(currentUser, currentUserProfile);
       if (!allowed) return;
 
@@ -395,6 +426,8 @@
               processSalesReport(rawData.slice(1), file.name);
             }
 
+            showToast("Report successfully parsed and audited!", "info");
+
           } catch (err) {
             console.error(err);
             showError("Error parsing file. Please verify it is a valid Excel/CSV document.");
@@ -409,6 +442,7 @@
     function showError(msg) {
       document.getElementById('errorMessage').textContent = msg;
       document.getElementById('errorBanner').classList.remove('hidden');
+      showToast(msg, "error");
     }
 
     function hideModal() {
@@ -469,10 +503,10 @@
         if (!row || row.length === 0) return;
 
         const dateVal = row[0] ? String(row[0]).substring(0, 10) : '';
-        const supplier = row[1] ? String(row[1]) : '';
-        const sku = String(row[2] || '').trim();
-        const name = row[3] ? String(row[3]) : '';
-        const category = row[4] ? String(row[4]) : '';
+        const supplier = row[1] ? sanitizeDataString(String(row[1])) : '';
+        const sku = sanitizeDataString(String(row[2] || '').trim());
+        const name = row[3] ? sanitizeDataString(String(row[3])) : '';
+        const category = row[4] ? sanitizeDataString(String(row[4])) : '';
         const cp = parseFloat(row[5] || 0);
         const mrp = parseFloat(row[6] || 0);
         const qty = parseFloat(row[7] || 0);
@@ -615,7 +649,7 @@
 
       saveDetailedSummaryToCloudflare({
         reportType: "GRN",
-        fileName: fileName,
+        fileName: sanitizeDataString(fileName),
         linesProcessed: rows.length,
         totalLeakages: totalLeakages,
         flaggedExceptionsCount: flaggedExceptionsCount,
@@ -641,8 +675,8 @@
         if (!row || row.length === 0) return;
 
         const salesDate = row[0] ? String(row[0]).substring(0, 10) : '';
-        const sku = String(row[1] || '').trim();
-        const name = row[2] ? String(row[2]) : '';
+        const sku = sanitizeDataString(String(row[1] || '').trim());
+        const name = row[2] ? sanitizeDataString(String(row[2])) : '';
         const qty = parseFloat(row[3] || 0);
         const cp = parseFloat(row[4] || 0);
         const salesPrice = parseFloat(row[5] || 0);
@@ -691,7 +725,7 @@
 
       saveDetailedSummaryToCloudflare({
         reportType: "Sales",
-        fileName: fileName,
+        fileName: sanitizeDataString(fileName),
         linesProcessed: rows.length,
         totalLeakages: totalLeakages,
         flaggedExceptionsCount: flaggedExceptionsCount,
@@ -778,7 +812,7 @@
         tbody.innerHTML = recentHistory.map(item => `
           <tr class="hover:bg-slate-800/40 transition">
             <td class="py-4 px-6 font-mono text-slate-400">${new Date(item.uploadedDate).toLocaleString('en-US')}</td>
-            <td class="py-4 px-6 font-semibold text-white">${item.fileName}</td>
+            <td class="py-4 px-6 font-semibold text-white">${sanitizeDataString(item.fileName)}</td>
             <td class="py-4 px-6 font-mono">${item.linesProcessed.toLocaleString('en-US')}</td>
             <td class="py-4 px-6 font-mono font-bold text-cyan-400">$${item.totalLeakages.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
             <td class="py-4 px-6 font-semibold">
