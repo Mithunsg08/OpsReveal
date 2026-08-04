@@ -240,10 +240,46 @@
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
-    const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
     
     let currentUser = null;
     let currentUserProfile = null;
+
+    // Helper: Check and enforce quota limits
+    async function checkAndEnforceQuota(user, profile) {
+      const isGlobalAdmin = user.email && user.email.toLowerCase() === "mithun@preventloss.org";
+      if (isGlobalAdmin || isSuperAdmin(user)) return true;
+
+      const userPlan = (profile?.plan || 'starter').toLowerCase();
+      if (userPlan.includes('professional') || userPlan.includes('pro')) return true;
+
+      try {
+        const res = await fetch(`${CF_API_URL}?userId=${user.uid}`);
+        if (res.ok) {
+          const summaries = await res.json();
+          const now = new Date();
+          
+          const currentMonthRecords = (Array.isArray(summaries) ? summaries : []).filter(s => {
+            const dateStr = s.uploadedDate || s.uploaded_date || s.createdAt || s.timestamp;
+            if (!dateStr) return false;
+            const d = new Date(dateStr);
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+          });
+
+          const totalUploads = currentMonthRecords.length;
+          const totalLines = currentMonthRecords.reduce((sum, s) => {
+            return sum + Number(s.linesProcessed || s.lines_processed || s.lines || 0);
+          }, 0);
+
+          if (totalUploads >= 4 || totalLines >= 20000) {
+            window.location.replace('/app/dashboard?reason=quota_exceeded');
+            return false;
+          }
+        }
+      } catch (err) {
+        console.warn("Quota check network warning:", err);
+      }
+      return true;
+    }
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -259,55 +295,16 @@
       
       const isGlobalAdmin = user.email && user.email.toLowerCase() === "mithun@preventloss.org";
       
-      // Update UI Plan Label
       if (isGlobalAdmin || isSuperAdmin(user)) {
         document.getElementById('planLabel').innerText = "Global Admin Tier";
       } else {
         document.getElementById('planLabel').innerText = profile?.plan || 'Starter Tier';
       }
 
-      // QUOTA GUARD (STARTER PLAN RESTRICTIONS)
-      if (!isGlobalAdmin && !isSuperAdmin(user)) {
-        const userPlan = (profile?.plan || 'starter').toLowerCase();
-        
-        // Professional users bypass limits completely
-        if (!userPlan.includes('professional') && !userPlan.includes('pro')) {
-          try {
-            const res = await fetch(`${WORKER_URL}/api/summary/list?userId=${user.uid}&uid=${user.uid}`);
-            if (res.ok) {
-              const data = await res.json();
-              const summaries = data.summaries || data.results || (Array.isArray(data) ? data : []);
-              
-              const now = new Date();
-              const currentMonthRecords = summaries.filter(s => {
-                const dateStr = s.uploaded_date || s.uploadedDate || s.createdAt || s.timestamp;
-                if (!dateStr) return false;
-                const d = new Date(dateStr);
-                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-              });
+      // Check Quota on Initial Load
+      const allowed = await checkAndEnforceQuota(user, profile);
+      if (!allowed) return;
 
-              const totalUploads = currentMonthRecords.length;
-              const totalLines = currentMonthRecords.reduce((sum, s) => {
-                return sum + Number(s.lines_processed || s.linesProcessed || s.lines || 0);
-              }, 0);
-
-              // Limit reached: Redirect Starter user back to Dashboard
-              if (totalUploads >= 4 || totalLines >= 20000) {
-                window.location.replace('/app/dashboard?reason=quota_exceeded');
-                return; 
-              }
-            }
-          } catch (err) {
-            console.warn("Quota check network error:", err);
-            if (localStorage.getItem(`quota_exceeded_${user.uid}`) === "true") {
-              window.location.replace('/app/dashboard?reason=quota_exceeded');
-              return;
-            }
-          }
-        }
-      }
-
-      // Display page if authenticated and within limits
       document.body.style.display = 'flex';
       fetchUploadHistory(user.uid);
     });
@@ -352,9 +349,13 @@
       XLSX.writeFile(wb, `${type}_header_template.xlsx`);
     };
 
-    window.handleFileSelect = function(e) {
+    window.handleFileSelect = async function(e) {
       const file = e.target.files[0];
       if (!file) return;
+
+      // Verify quota limit before processing any new file selection
+      const allowed = await checkAndEnforceQuota(currentUser, currentUserProfile);
+      if (!allowed) return;
 
       document.getElementById('processingModal').classList.remove('hidden');
 
