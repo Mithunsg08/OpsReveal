@@ -43,7 +43,7 @@
     }
   </script>
 </head>
-<body class="min-h-screen bg-slate-950 text-slate-100 flex antialiased relative">
+<body style="display: none;" class="min-h-screen bg-slate-950 text-slate-100 flex antialiased relative">
 
   <!-- PROCESSING MODAL OVERLAY -->
   <div id="processingModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex flex-col items-center justify-center p-4">
@@ -82,11 +82,18 @@
       </nav>
     </div>
 
-    <div class="p-4 border-t border-slate-800">
-      <div class="flex items-center space-x-3 px-3 py-2 rounded-xl bg-slate-950/50 border border-slate-800/80">
-        <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-        <span id="userEmailDisplay" class="text-xs font-medium text-slate-300 truncate">loading...</span>
+    <div class="p-4 border-t border-slate-800 space-y-3">
+      <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800/80 text-xs">
+        <span class="text-[10px] text-slate-500 block font-semibold uppercase">Active Plan</span>
+        <span id="planLabel" class="font-bold text-cyan-400">Starter Tier</span>
+        <div class="flex items-center space-x-2 mt-2 pt-2 border-t border-slate-800/60">
+          <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+          <span id="userEmailDisplay" class="text-xs font-medium text-slate-300 truncate">loading...</span>
+        </div>
       </div>
+      <button onclick="logoutUser()" class="w-full bg-slate-950 hover:bg-slate-800 text-xs text-slate-400 py-2 rounded-xl border border-slate-800 font-semibold transition">
+        Sign Out
+      </button>
     </div>
   </aside>
 
@@ -228,102 +235,86 @@
 
   </main>
 
-<script type="module">
-  import { auth, ensureUserProfile, isSuperAdmin } from '/app/auth-guard.js';
-  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  <script type="module">
+    import { auth, db, ensureUserProfile, isSuperAdmin } from '/app/auth-guard.js';
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-  const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
+    const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
+    const WORKER_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
+    
+    let currentUser = null;
+    let currentUserProfile = null;
 
-  onAuthStateChanged(auth, async (user) => {
-    // 1. Unauthenticated users -> Redirect to Login
-    if (!user) {
-      window.location.replace('/login.html');
-      return;
-    }
-
-    // 2. Load User Profile
-    const profile = await ensureUserProfile(user);
-    const isGlobalAdmin = user.email && user.email.toLowerCase() === "mithun@preventloss.org";
-
-    // 3. QUOTA GUARD CHECK (Skip for Global Admin & Super Admins)
-    if (!isGlobalAdmin && !isSuperAdmin(user)) {
-      const userPlan = (profile?.plan || 'starter').toLowerCase();
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.replace('/login.html');
+        return;
+      }
       
-      // Starter plan users only
-      if (!userPlan.includes('professional') && !userPlan.includes('pro')) {
-        try {
-          // Fetch user's current upload activity from Cloudflare
-          const res = await fetch(`${WORKER_URL}/api/summary/list?userId=${user.uid}&uid=${user.uid}`);
-          if (res.ok) {
-            const data = await res.json();
-            const summaries = data.summaries || data.results || (Array.isArray(data) ? data : []);
-            
-            const now = new Date();
-            const currentMonthRecords = summaries.filter(s => {
-              const dateStr = s.uploaded_date || s.uploadedDate || s.createdAt || s.timestamp;
-              if (!dateStr) return false;
-              const d = new Date(dateStr);
-              return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-            });
+      currentUser = user;
+      document.getElementById('userEmailDisplay').textContent = user.email;
 
-            const totalUploads = currentMonthRecords.length;
-            const totalLines = currentMonthRecords.reduce((sum, s) => {
-              return sum + Number(s.lines_processed || s.linesProcessed || s.lines || 0);
-            }, 0);
+      const profile = await ensureUserProfile(user);
+      currentUserProfile = profile;
+      
+      const isGlobalAdmin = user.email && user.email.toLowerCase() === "mithun@preventloss.org";
+      
+      // Update UI Plan Label
+      if (isGlobalAdmin || isSuperAdmin(user)) {
+        document.getElementById('planLabel').innerText = "Global Admin Tier";
+      } else {
+        document.getElementById('planLabel').innerText = profile?.plan || 'Starter Tier';
+      }
 
-            // IF STARTER LIMIT EXCEEDED: Block access and redirect back to Dashboard
-            if (totalUploads >= 4 || totalLines >= 20000) {
-              window.location.replace('/app/dashboard?reason=quota_exceeded');
-              return; // Stop execution
+      // QUOTA GUARD (STARTER PLAN RESTRICTIONS)
+      if (!isGlobalAdmin && !isSuperAdmin(user)) {
+        const userPlan = (profile?.plan || 'starter').toLowerCase();
+        
+        // Professional users bypass limits completely
+        if (!userPlan.includes('professional') && !userPlan.includes('pro')) {
+          try {
+            const res = await fetch(`${WORKER_URL}/api/summary/list?userId=${user.uid}&uid=${user.uid}`);
+            if (res.ok) {
+              const data = await res.json();
+              const summaries = data.summaries || data.results || (Array.isArray(data) ? data : []);
+              
+              const now = new Date();
+              const currentMonthRecords = summaries.filter(s => {
+                const dateStr = s.uploaded_date || s.uploadedDate || s.createdAt || s.timestamp;
+                if (!dateStr) return false;
+                const d = new Date(dateStr);
+                return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+              });
+
+              const totalUploads = currentMonthRecords.length;
+              const totalLines = currentMonthRecords.reduce((sum, s) => {
+                return sum + Number(s.lines_processed || s.linesProcessed || s.lines || 0);
+              }, 0);
+
+              // Limit reached: Redirect Starter user back to Dashboard
+              if (totalUploads >= 4 || totalLines >= 20000) {
+                window.location.replace('/app/dashboard?reason=quota_exceeded');
+                return; 
+              }
             }
-          }
-        } catch (err) {
-          console.warn("Quota check network error, falling back to local state check:", err);
-          if (localStorage.getItem(`quota_exceeded_${user.uid}`) === "true") {
-            window.location.replace('/app/dashboard?reason=quota_exceeded');
-            return;
+          } catch (err) {
+            console.warn("Quota check network error:", err);
+            if (localStorage.getItem(`quota_exceeded_${user.uid}`) === "true") {
+              window.location.replace('/app/dashboard?reason=quota_exceeded');
+              return;
+            }
           }
         }
       }
-    }
 
-    // 4. If quotas are within limits or user is Admin/Pro, reveal body and render page
-    document.body.style.display = 'flex';
-
-    // Call your upload page initialization/rendering function here
-    if (typeof window.initUploadsPage === 'function') {
-      window.initUploadsPage(user, profile);
-    }
-  });
-</script>
-    
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
-      authDomain: "opsreveal.firebaseapp.com",
-      projectId: "opsreveal",
-      storageBucket: "opsreveal.firebasestorage.app",
-      messagingSenderId: "890870101711",
-      appId: "1:890870101711:web:4266246996091ea56c69ba"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    let currentUser = null;
-
-    const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
-
-    onAuthStateChanged(auth, (user) => {
-      if (!user) {
-        window.location.href = '/login.html';
-      } else {
-        currentUser = user;
-        document.getElementById('userEmailDisplay').textContent = user.email;
-        fetchUploadHistory(user.uid);
-      }
+      // Display page if authenticated and within limits
+      document.body.style.display = 'flex';
+      fetchUploadHistory(user.uid);
     });
+
+    window.logoutUser = () => {
+      signOut(auth).then(() => window.location.replace('/login.html'));
+    };
 
     const SCHEMAS = {
       grn: [
@@ -461,7 +452,6 @@
       let totalLeakages = 0;
       let flaggedExceptionsCount = 0;
 
-      // DETAILED LEAKAGE TRACKERS FOR CLOUDFLARE BACKEND
       const leakageBreakdown = {
         shelfLifeExceptions: { count: 0, leakageValue: 0 },
         marginLeakages: { count: 0, leakageValue: 0 },
@@ -530,7 +520,6 @@
 
         let isFlagged = false;
 
-        // Shelf Life Exception
         if (shelfLifeExceptionVal === "Low Shelf life" || shelfLifeExceptionVal === "Expired before receiving") {
           isFlagged = true;
           totalLeakages += totalGRNVal;
@@ -543,7 +532,6 @@
           });
         }
 
-        // Margin Decrease Exception
         if (marginExceptionVal === "There is a Margin decrease") {
           isFlagged = true;
           totalLeakages += marginLeakageVal;
@@ -556,7 +544,6 @@
           });
         }
 
-        // CP Leakage Whole Data
         if (cpExceptionWholeVal === "You Got Charged More") {
           isFlagged = true;
           totalLeakages += cpLeakageWholeVal;
@@ -569,7 +556,6 @@
           });
         }
 
-        // CP Leakage Same Day/Month
         if (cpExceptionSameDayVal === "You Got Charged More") {
           isFlagged = true;
           totalLeakages += cpLeakageSameDayVal;
@@ -614,7 +600,6 @@
 
       renderMetrics(rows.length, totalLeakages, flaggedExceptionsCount);
 
-      // Export Multi-sheet Excel
       const wb = XLSX.utils.book_new();
       const wsMain = XLSX.utils.json_to_sheet(outputData);
       wsMain['!cols'] = Array(24).fill({ wch: 22 });
@@ -627,7 +612,6 @@
 
       XLSX.writeFile(wb, `Audited_GRN_Report_${Date.now()}.xlsx`);
 
-      // SAVE DETAILED AUDIT DATA TO CLOUDFLARE BACKEND
       saveDetailedSummaryToCloudflare({
         reportType: "GRN",
         fileName: fileName,
@@ -704,7 +688,6 @@
 
       XLSX.writeFile(wb, `Audited_Sales_Report_${Date.now()}.xlsx`);
 
-      // SAVE DETAILED AUDIT DATA TO CLOUDFLARE BACKEND
       saveDetailedSummaryToCloudflare({
         reportType: "Sales",
         fileName: fileName,
@@ -737,14 +720,13 @@
     }
 
     // -------------------------------------------------------------
-    // CLOUDFLARE BACKEND STORAGE (FULL DETAILED PAYLOAD)
+    // CLOUDFLARE BACKEND STORAGE
     // -------------------------------------------------------------
     async function saveDetailedSummaryToCloudflare(auditDetails) {
       if (!currentUser) return;
 
       const risk = auditDetails.flaggedExceptionsCount === 0 ? "None" : auditDetails.flaggedExceptionsCount < 10 ? "Low" : auditDetails.flaggedExceptionsCount < 50 ? "Medium" : "High";
 
-      // Rich Payload structure stored in R2
       const payload = {
         userId: currentUser.uid,
         userEmail: currentUser.email,
