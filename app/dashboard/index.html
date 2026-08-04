@@ -104,7 +104,7 @@
         </div>
       </div>
 
-      <!-- EXCEEDED BANNER (Hidden by default, shown dynamically for Starter limit breaches) -->
+      <!-- EXCEEDED BANNER -->
       <div id="upgradeBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between">
         <div>
           <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Free Starter Usage Limit Exceeded</h4>
@@ -187,15 +187,20 @@
       document.getElementById('userEmailDisplay').textContent = user.email;
       document.body.style.display = 'flex';
 
-      // REALTIME FIRESTORE LISTENER (Instant Pro plan sync)
+      // Clean up URL parameters (e.g. ?reason=quota_exceeded) once logged in
+      if (window.location.search.includes('reason=')) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      // REALTIME FIRESTORE LISTENER
       onSnapshot(doc(db, "users", user.uid), (docSnap) => {
         const profile = docSnap.data() || {};
         
-        // Flexible Case-Insensitive Check
+        // Flexible Plan Check
         const rawPlan = String(profile.plan || '').toLowerCase();
-        const isPro = rawPlan.includes('pro');
+        const isPro = rawPlan.includes('pro') || rawPlan.includes('tier') || profile.status === 'active';
 
-        updatePlanUI(isPro, profile);
+        updatePlanUI(isPro);
         fetchDashboardData(user.uid, isPro);
       });
     });
@@ -204,7 +209,7 @@
       signOut(auth).then(() => window.location.replace('/login.html'));
     };
 
-    function updatePlanUI(isPro, profile) {
+    function updatePlanUI(isPro) {
       const planLabel = document.getElementById('planLabel');
       
       if (isPro) {
@@ -225,7 +230,7 @@
 
         calculateAndRenderData(isPro);
       } catch (err) {
-        console.error("Error fetching usage data:", err);
+        console.error("Error fetching dashboard telemetry:", err);
       }
     }
 
@@ -244,7 +249,7 @@
       const monthUploads = monthRecords.length;
       const monthLines = monthRecords.reduce((acc, r) => acc + Number(r.linesProcessed || r.lines_processed || 0), 0);
 
-      // Meter Sidebars
+      // Sidebar Meters
       document.getElementById('meterUploads').textContent = isPro ? 'Unlimited' : `${monthUploads} / 4`;
       document.getElementById('meterLines').textContent = isPro ? 'Unlimited' : `${monthLines.toLocaleString('en-US')} / 20k`;
 
@@ -268,8 +273,12 @@
       // Render Dashboard Metrics
       document.getElementById('metricReports').textContent = filtered.length;
       
+      // Multi-key property fallback to guarantee receiving GRN leakage gets calculated properly
       let grnLeak = 0;
-      filtered.forEach(r => grnLeak += Number(r.totalLeakage || r.financial_leakage || 0));
+      filtered.forEach(r => {
+        const leakVal = r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? r.leakageAmount ?? 0;
+        grnLeak += Number(leakVal);
+      });
       
       document.getElementById('metricGrn').textContent = `$${grnLeak.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -278,7 +287,7 @@
       const tbody = document.getElementById('auditTableBody');
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500 italic">No audit records found for this timeframe.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500 italic">No audit records found.</td></tr>`;
         return;
       }
 
@@ -286,8 +295,12 @@
         const date = new Date(r.uploadedDate || r.timestamp || Date.now()).toLocaleString();
         const fileName = r.fileName || r.filename || 'report.csv';
         const lines = Number(r.linesProcessed || r.lines_processed || 0).toLocaleString();
-        const exceptions = Number(r.exceptionsCount || r.exceptions || 0).toLocaleString();
-        const leakage = Number(r.totalLeakage || r.financial_leakage || 0);
+        
+        // Multi-key property fallback for exception count
+        const exceptions = Number(r.exceptionsCount ?? r.exceptions ?? r.flagged_exceptions ?? r.exceptions_count ?? 0).toLocaleString();
+        
+        // Multi-key property fallback for row leakage amount
+        const leakage = Number(r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? r.leakageAmount ?? 0);
         
         let riskClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
         let riskText = 'LOW';
