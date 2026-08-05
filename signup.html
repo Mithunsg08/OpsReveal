@@ -40,8 +40,8 @@
 
     <!-- HEADER -->
     <div>
-      <h2 class="text-xl font-bold text-white font-heading">Create your account</h2>
-      <p class="text-xs text-slate-400 mt-1">Get started with your OpsReveal operational analytics workspace.</p>
+      <h2 class="text-xl font-bold text-white font-heading" id="formHeading">Create your account</h2>
+      <p class="text-xs text-slate-400 mt-1" id="formSubheading">Get started with your OpsReveal operational analytics workspace.</p>
     </div>
 
     <!-- SIGNUP FORM -->
@@ -75,7 +75,7 @@
       </div>
 
       <button type="submit" id="submitBtn" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition shadow-lg shadow-cyan-500/20 flex items-center justify-center">
-        <span id="btnText">Create Account & Send Verification</span>
+        <span id="btnText">Create Account</span>
         <span id="btnSpinner" class="hidden">Processing...</span>
       </button>
     </form>
@@ -137,6 +137,7 @@
         const isAdmin = user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
         const targetCompanyId = invitedBy ? invitedBy : user.uid;
         const userRole = isAdmin ? "SuperAdmin" : (invitedBy ? "Collaborator" : "Owner");
+        const accountStatus = invitedBy ? "Verified" : "Pending";
 
         if (!invitedBy) {
           const companyRef = doc(db, "companies", user.uid);
@@ -148,7 +149,7 @@
           }, { merge: true });
         }
 
-        // 1. Create or update user profile document
+        // 1. Create User Document for the NEW user using their specific user.uid
         const userRef = doc(db, "users", user.uid);
         await setDoc(userRef, {
           uid: user.uid,
@@ -159,37 +160,36 @@
           companyId: targetCompanyId,
           invitedBy: invitedBy || null,
           plan: "starter",
-          status: "Verified",
+          status: accountStatus,
           onboardingCompleted: true,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         }, { merge: true });
 
-        // 2. If invited, update the inviter's Firestore teamMembers array
+        // 2. If invited, update the inviter's document: correct the uid and mark as Verified
         if (invitedBy) {
-          const ownerRef = doc(db, "users", invitedBy);
-          const ownerSnap = await getDoc(ownerRef);
+          const inviterRef = doc(db, "users", invitedBy);
+          const inviterSnap = await getDoc(inviterRef);
 
-          if (ownerSnap.exists()) {
-            const ownerData = ownerSnap.data();
-            let teamMembers = ownerData.teamMembers || [];
+          if (inviterSnap.exists()) {
+            const inviterData = inviterSnap.data();
+            let teamMembers = inviterData.teamMembers || [];
 
-            let updated = false;
+            let matched = false;
             teamMembers = teamMembers.map(member => {
               if (member.email && member.email.toLowerCase() === user.email.toLowerCase()) {
-                updated = true;
+                matched = true;
                 return {
                   ...member,
+                  uid: user.uid, // Set the correct new user's UID
                   status: "Verified",
-                  uid: user.uid,
                   updatedAt: new Date().toISOString()
                 };
               }
               return member;
             });
 
-            // If not found in the array, push a new entry
-            if (!updated) {
+            if (!matched) {
               teamMembers.push({
                 email: user.email,
                 uid: user.uid,
@@ -199,7 +199,7 @@
               });
             }
 
-            await updateDoc(ownerRef, { teamMembers });
+            await updateDoc(inviterRef, { teamMembers });
           }
         }
 
@@ -208,7 +208,7 @@
       }
     }
 
-    // Execute setup after DOM loads
+    // Initialize UI on DOM load
     window.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const invitedBy = urlParams.get('invitedBy');
@@ -224,6 +224,14 @@
       const submitBtn = document.getElementById('submitBtn');
       const btnText = document.getElementById('btnText');
       const btnSpinner = document.getElementById('btnSpinner');
+      const formHeading = document.getElementById('formHeading');
+      const formSubheading = document.getElementById('formSubheading');
+
+      if (invitedBy && formHeading && formSubheading) {
+        formHeading.textContent = "Accept Invitation";
+        formSubheading.textContent = "Set your password to complete your account setup and join the workspace.";
+        if (btnText) btnText.textContent = "Complete Sign Up";
+      }
 
       if (invitedEmail && emailInput) {
         emailInput.value = decodeURIComponent(invitedEmail);
@@ -282,25 +290,28 @@
         setLoading(true);
 
         try {
-          // 1. Create User in Firebase Auth
+          // 1. Register Auth user
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-          // 2. Sync profile and mark team member status as Verified in Firestore
+          // 2. Sync profile & update inviter team structure
           await syncMinimalUserProfile(userCredential.user, invitedBy);
 
-          // 3. Send Firebase Email Verification
-          await sendEmailVerification(userCredential.user);
-
-          // 4. Redirect to verify email page
-          window.location.href = '/verify-email.html';
+          if (invitedBy) {
+            // Bypass verification email and go straight to app
+            window.location.href = '/app/dashboard';
+          } else {
+            // Direct regular sign-ups to email verification flow
+            await sendEmailVerification(userCredential.user);
+            window.location.href = '/verify-email.html';
+          }
 
         } catch (err) {
           setLoading(false);
           if (err.code === 'auth/email-already-in-use') {
-            showError("This email already has an account. Please sign in instead.");
+            showError("This email already has an account. Redirecting to sign in...");
             setTimeout(() => {
               window.location.href = `/login.html?email=${encodeURIComponent(email)}&invitedBy=${invitedBy || ''}`;
-            }, 2500);
+            }, 2000);
           } else {
             showError(err.message.replace('Firebase: ', ''));
           }
