@@ -52,14 +52,23 @@ export function initAuthGuard() {
         return;
       }
 
-      await ensureUserProfile(user);
+      // Check profile & enforce status
+      const profile = await ensureUserProfile(user);
+      
+      // If profile exists and status is NOT active, block access and log out
+      if (profile && profile.status !== "active") {
+        alert("Your account is currently inactive. Access has been restricted.");
+        await signOut(auth);
+        window.location.replace('/login.html?reason=account_inactive');
+        return;
+      }
     }
   });
 }
 
 // User Profile Creator & Self-Healing Sync
 export async function ensureUserProfile(user, extraData = {}) {
-  if (!user) return;
+  if (!user) return null;
   
   const userRef = doc(db, "users", user.uid);
   const snap = await getDoc(userRef);
@@ -67,6 +76,7 @@ export async function ensureUserProfile(user, extraData = {}) {
   const isAdmin = isSuperAdmin(user);
 
   if (!snap.exists()) {
+    // 1. Create Company Workspace
     const companyRef = doc(db, "companies", user.uid);
     await setDoc(companyRef, {
       companyName: extraData.companyName || (isAdmin ? "OpsReveal Admin Workspace" : `${user.displayName || 'User'}'s Workspace`),
@@ -75,16 +85,25 @@ export async function ensureUserProfile(user, extraData = {}) {
       createdAt: serverTimestamp()
     }, { merge: true });
 
-    await setDoc(userRef, {
+    // 2. Create Default User Document
+    const newUserData = {
       uid: user.uid,
       email: user.email,
       fullName: extraData.fullName || user.displayName || "OpsReveal User",
       role: isAdmin ? "SuperAdmin" : (extraData.role || "Owner"),
       companyId: user.uid,
+      plan: extraData.plan || "starter",     // Default plan: 'starter'
+      status: extraData.status || "active",  // Default status: 'active'
       onboardingCompleted: true,
-      createdAt: serverTimestamp()
-    }, { merge: true });
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    };
+
+    await setDoc(userRef, newUserData, { merge: true });
+    return newUserData;
   }
+
+  return snap.data();
 }
 
 // Global Logout Handler
