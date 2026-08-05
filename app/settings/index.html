@@ -26,44 +26,6 @@
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <!-- CONFIRMATION MODAL FOR TEAM INVITES -->
-  <div id="inviteModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center space-x-3">
-        <div class="h-10 w-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-        </div>
-        <div>
-          <h3 class="text-base font-bold text-white font-heading">Confirm Team Invitation</h3>
-          <p class="text-xs text-slate-400">Please review access privileges before sending.</p>
-        </div>
-      </div>
-
-      <div class="bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-xl text-xs space-y-1.5">
-        <p class="font-bold text-amber-400 flex items-center space-x-1.5">
-          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-          <span>Full Access Warning</span>
-        </p>
-        <p class="text-amber-200/80 leading-relaxed">
-          Invited team members will gain full access to view, upload, and manage all operational reports and features on this account.
-        </p>
-      </div>
-
-      <p class="text-xs text-slate-300">
-        An invitation email will be dispatched to <strong id="modalTargetEmail" class="text-cyan-400 font-mono"></strong> via Resend with a secure workspace access link.
-      </p>
-
-      <div class="flex space-x-3 pt-2">
-        <button onclick="closeInviteModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2.5 rounded-xl border border-slate-700 transition">
-          Cancel
-        </button>
-        <button id="confirmInviteBtn" onclick="sendConfirmedInvite()" class="flex-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg shadow-cyan-500/20">
-          Send Invitation Email
-        </button>
-      </div>
-    </div>
-  </div>
-
   <!-- OWNER RESET PASSWORD MODAL -->
   <div id="ownerResetPasswordModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
@@ -87,62 +49,6 @@
         </button>
         <button id="confirmOwnerResetBtn" onclick="confirmOwnerPasswordReset()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20">
           Confirm
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- TEAM MEMBER RESET PASSWORD MODAL -->
-  <div id="resetPasswordModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center space-x-3">
-        <div class="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-        </div>
-        <div>
-          <h3 class="text-base font-bold text-white font-heading">Reset Collaborator Password</h3>
-          <p class="text-xs text-slate-400">Send password recovery email to team member.</p>
-        </div>
-      </div>
-
-      <p class="text-xs text-slate-300">
-        Are you sure you want to reset the password for <strong id="resetTargetEmail" class="text-amber-400 font-mono"></strong>? A password reset link will be sent directly to their email.
-      </p>
-
-      <div class="flex space-x-3 pt-2">
-        <button onclick="closeResetPasswordModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2.5 rounded-xl border border-slate-700 transition">
-          Cancel
-        </button>
-        <button id="confirmResetBtn" onclick="confirmResetPassword()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20">
-          Confirm
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- DELETE MEMBER MODAL -->
-  <div id="deleteModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex items-center space-x-3">
-        <div class="h-10 w-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-        </div>
-        <div>
-          <h3 class="text-base font-bold text-white font-heading">Remove Collaborator</h3>
-          <p class="text-xs text-slate-400">Revoke team member access.</p>
-        </div>
-      </div>
-
-      <p class="text-xs text-slate-300">
-        Are you sure you want to remove <strong id="deleteTargetEmail" class="text-red-400 font-mono"></strong> from your team? They will immediately lose access to this workspace.
-      </p>
-
-      <div class="flex space-x-3 pt-2">
-        <button onclick="closeDeleteModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2.5 rounded-xl border border-slate-700 transition">
-          Cancel
-        </button>
-        <button id="confirmDeleteBtn" onclick="confirmDeleteMember()" class="flex-1 bg-red-500 hover:bg-red-400 text-white text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg shadow-red-500/20">
-          Remove User
         </button>
       </div>
     </div>
@@ -215,7 +121,7 @@
       
       <div>
         <h1 class="text-3xl font-extrabold text-white font-heading tracking-tight">Account Settings</h1>
-        <p class="text-xs text-slate-400 mt-1">Manage your profile details, resource limits, subscription, and team access.</p>
+        <p class="text-xs text-slate-400 mt-1">Manage your profile details, resource limits, and subscription.</p>
       </div>
 
       <!-- MONTHLY RESOURCE USAGE CARD -->
@@ -308,39 +214,9 @@
           <div class="flex items-center justify-between">
             <div>
               <h4 class="font-extrabold text-emerald-400 text-base font-heading">Professional Plan ($99/mo)</h4>
-              <p class="text-xs text-emerald-200/80 mt-0.5">Unlimited uploads, unlimited lines, and up to 5 team collaborator seats unlocked.</p>
+              <p class="text-xs text-emerald-200/80 mt-0.5">Unlimited uploads and unlimited lines unlocked.</p>
             </div>
             <span class="bg-emerald-500 text-slate-950 px-3 py-1 rounded-full text-xs font-extrabold shadow-md shadow-emerald-500/20">Active Plan</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- TEAM COLLABORATORS -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider">Team Collaborators</h3>
-            <p class="text-xs text-slate-400 mt-0.5">Invite up to 5 team members to access your uploads and dashboard.</p>
-          </div>
-          <span id="seatsBadge" class="text-xs font-bold text-slate-400 bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">0 / 5 Seats Used</span>
-        </div>
-
-        <!-- LOCKED STATE FOR STARTER TIER -->
-        <div id="teamLockedState" class="bg-slate-950/80 border border-slate-800/80 p-8 rounded-xl text-center space-y-2">
-          <svg class="w-8 h-8 text-amber-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 04-8 0v4h8z"/></svg>
-          <h4 class="text-sm font-bold text-white font-heading">Professional Feature</h4>
-          <p class="text-xs text-slate-400">Upgrade your account to the Professional Plan to add up to 5 colleagues and share your OpsReveal dashboard access.</p>
-        </div>
-
-        <!-- UNLOCKED STATE FOR PRO TIER -->
-        <div id="teamUnlockedState" class="hidden space-y-4">
-          <div class="flex gap-2">
-            <input type="email" id="inviteEmail" placeholder="colleague@company.com" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
-            <button onclick="promptTeamInvite()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Invite Member</button>
-          </div>
-          
-          <div id="teamList" class="text-xs text-slate-400 divide-y divide-slate-800 border-t border-slate-800/60 pt-2 space-y-2">
-            <p id="noTeamMsg" class="py-2 italic">No team members invited yet.</p>
           </div>
         </div>
       </div>
@@ -351,19 +227,14 @@
   <script type="module">
     import { auth, db, ensureUserProfile } from '/app/auth-guard.js';
     import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // CONFIGURATION
     const PADDLE_CLIENT_TOKEN = "live_3fa85341ad9e33a1d40b0049173"; 
     const PADDLE_PRO_PRICE_ID = "pri_01kz8vbb5st84h4x80r1521ecm"; 
     const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
-    const INVITE_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/invite";
 
     let currentUser = null;
-    let pendingInviteEmail = "";
-    let pendingResetEmail = "";
-    let pendingDeleteEmail = "";
-    let currentTeamMembers = [];
     let pollingInterval = null;
 
     // Initialize Paddle SDK
@@ -414,11 +285,6 @@
 
       const isPro = (profile?.plan || '').toLowerCase().includes('pro');
       updatePlanUI(isPro);
-
-      if (isPro) {
-        currentTeamMembers = profile?.teamMembers || [];
-        renderTeamList(currentTeamMembers);
-      }
 
       document.body.style.display = 'flex';
       fetchMonthlyUsage(user.uid, isPro);
@@ -520,12 +386,6 @@
 
         updatePlanUI(true);
         fetchMonthlyUsage(currentUser.uid, true);
-
-        const userDoc = await getDoc(userRef);
-        if (userDoc.exists()) {
-          currentTeamMembers = userDoc.data()?.teamMembers || [];
-          renderTeamList(currentTeamMembers);
-        }
       } catch (error) {
         console.error("Error updating profile post-payment:", error);
         showToast("Payment succeeded! Upgrading account...", "info");
@@ -541,9 +401,6 @@
         document.getElementById('paddleUpgradeContainer').classList.add('hidden');
         document.getElementById('proPlanBox').classList.remove('hidden');
         
-        document.getElementById('teamLockedState').classList.add('hidden');
-        document.getElementById('teamUnlockedState').classList.remove('hidden');
-
         document.getElementById('uploadsLimitLabel').textContent = 'Professional Limit: Unlimited uploads';
         document.getElementById('linesLimitLabel').textContent = 'Professional Limit: Unlimited lines';
       }
@@ -620,199 +477,6 @@
         btn.innerText = "Confirm";
       }
     };
-
-    // ================= TEAM MANAGEMENT & VERIFICATION FLOW =================
-
-    window.promptTeamInvite = function() {
-      const emailInput = document.getElementById('inviteEmail').value.trim().toLowerCase();
-      if (!emailInput || !emailInput.includes('@')) {
-        showToast("Please enter a valid email address.", "error");
-        return;
-      }
-
-      if (emailInput === currentUser.email.toLowerCase()) {
-        showToast("You cannot add yourself as a collaborator.", "error");
-        return;
-      }
-
-      const exists = currentTeamMembers.some(m => m.email.toLowerCase() === emailInput);
-      if (exists) {
-        showToast("This email has already been added to your team.", "error");
-        return;
-      }
-
-      if (currentTeamMembers.length >= 5) {
-        showToast("Maximum seat limit reached (5 seats max).", "error");
-        return;
-      }
-
-      pendingInviteEmail = emailInput;
-      document.getElementById('modalTargetEmail').innerText = pendingInviteEmail;
-      document.getElementById('inviteModal').classList.remove('hidden');
-    };
-
-    window.closeInviteModal = function() {
-      document.getElementById('inviteModal').classList.add('hidden');
-      pendingInviteEmail = "";
-    };
-
-    window.sendConfirmedInvite = async function() {
-      if (!pendingInviteEmail || !currentUser) return;
-
-      const btn = document.getElementById('confirmInviteBtn');
-      btn.disabled = true;
-      btn.innerText = "Dispatching via Resend...";
-
-      try {
-        // Fetch current owner profile to get custom company/workspace name
-        const userRef = doc(db, "users", currentUser.uid);
-        const userSnap = await getDoc(userRef);
-        const inviterCompany = userSnap.exists() && userSnap.data()?.company ? userSnap.data().company : "OpsReveal Workspace";
-
-        // Call backend API endpoint to send Resend invite email safely with headers inspection
-        const res = await fetch(INVITE_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            invitedBy: currentUser.uid,
-            invitedEmail: pendingInviteEmail,
-            inviterCompany: inviterCompany
-          })
-        });
-
-        const contentType = res.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          throw new Error(`Server returned status ${res.status} non-JSON response.`);
-        }
-
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data.error || "Failed to deliver invite email.");
-        }
-
-        // Clean UI update post-invite: Fetch freshly synced user document from Firestore
-        const updatedSnap = await getDoc(userRef);
-        if (updatedSnap.exists()) {
-          currentTeamMembers = updatedSnap.data()?.teamMembers || [];
-          renderTeamList(currentTeamMembers);
-        }
-
-        document.getElementById('inviteEmail').value = "";
-        showToast(`Invitation sent via email to ${pendingInviteEmail}`, "info");
-        closeInviteModal();
-      } catch (err) {
-        console.error("Invite Delivery Error:", err);
-        showToast(err.message || "Failed to send invitation email.", "error");
-      } finally {
-        btn.disabled = false;
-        btn.innerText = "Send Invitation Email";
-      }
-    };
-
-    // ================= TEAM RESET PASSWORD FLOW =================
-
-    window.promptResetPassword = function(email) {
-      pendingResetEmail = email;
-      document.getElementById('resetTargetEmail').innerText = email;
-      document.getElementById('resetPasswordModal').classList.remove('hidden');
-    };
-
-    window.closeResetPasswordModal = function() {
-      document.getElementById('resetPasswordModal').classList.add('hidden');
-      pendingResetEmail = "";
-    };
-
-    window.confirmResetPassword = async function() {
-      if (!pendingResetEmail) return;
-      const btn = document.getElementById('confirmResetBtn');
-      btn.disabled = true;
-      btn.innerText = "Sending...";
-
-      try {
-        await sendPasswordResetEmail(auth, pendingResetEmail);
-        showToast(`Password reset link sent to ${pendingResetEmail}`, "info");
-        closeResetPasswordModal();
-      } catch (err) {
-        console.error("Password Reset Error:", err);
-        showToast("Failed to send password reset email.", "error");
-      } finally {
-        btn.disabled = false;
-        btn.innerText = "Confirm";
-      }
-    };
-
-    // ================= DELETE MEMBER FLOW =================
-
-    window.promptDeleteMember = function(email) {
-      pendingDeleteEmail = email;
-      document.getElementById('deleteTargetEmail').innerText = email;
-      document.getElementById('deleteModal').classList.remove('hidden');
-    };
-
-    window.closeDeleteModal = function() {
-      document.getElementById('deleteModal').classList.add('hidden');
-      pendingDeleteEmail = "";
-    };
-
-    window.confirmDeleteMember = async function() {
-      if (!pendingDeleteEmail) return;
-      const btn = document.getElementById('confirmDeleteBtn');
-      btn.disabled = true;
-      btn.innerText = "Removing...";
-
-      try {
-        currentTeamMembers = currentTeamMembers.filter(m => m.email.toLowerCase() !== pendingDeleteEmail.toLowerCase());
-        
-        const userRef = doc(db, "users", currentUser.uid);
-        await updateDoc(userRef, {
-          teamMembers: currentTeamMembers
-        });
-
-        renderTeamList(currentTeamMembers);
-        showToast(`Removed ${pendingDeleteEmail} from team.`, "info");
-        closeDeleteModal();
-      } catch (err) {
-        console.error("Delete Member Error:", err);
-        showToast("Failed to remove team member.", "error");
-      } finally {
-        btn.disabled = false;
-        btn.innerText = "Remove User";
-      }
-    };
-
-    // ================= RENDER TEAM LIST =================
-
-    function renderTeamList(members) {
-      const listEl = document.getElementById('teamList');
-      const seatsBadge = document.getElementById('seatsBadge');
-      
-      seatsBadge.innerText = `${members.length} / 5 Seats Used`;
-
-      if (!members || members.length === 0) {
-        listEl.innerHTML = `<p class="py-2 italic">No team members invited yet.</p>`;
-        return;
-      }
-
-      listEl.innerHTML = members.map(m => `
-        <div class="py-3 flex items-center justify-between gap-4">
-          <div class="min-w-0 flex-1">
-            <span class="font-semibold text-slate-200 block truncate">${m.email}</span>
-            <span class="text-[10px] text-slate-500">Invited ${new Date(m.invitedAt || m.addedAt).toLocaleDateString()}</span>
-          </div>
-          <div class="flex items-center space-x-2 shrink-0">
-            <span class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              ${m.status || 'Verified'}
-            </span>
-            <button onclick="promptResetPassword('${m.email}')" title="Reset Password" class="px-2.5 py-1 text-[11px] font-semibold text-slate-300 hover:text-amber-400 bg-slate-950 hover:bg-slate-800 rounded-lg border border-slate-800 transition">
-              Reset Password
-            </button>
-            <button onclick="promptDeleteMember('${m.email}')" title="Delete Member" class="p-1.5 text-slate-400 hover:text-red-400 bg-slate-950 hover:bg-slate-800 rounded-lg border border-slate-800 transition">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-            </button>
-          </div>
-        </div>
-      `).join('');
-    }
   </script>
 </body>
 </html>
