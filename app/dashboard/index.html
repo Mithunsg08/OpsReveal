@@ -115,11 +115,16 @@
         </a>
       </div>
 
-      <!-- METRICS CARDS -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- METRICS CARDS (Updated Grid with Total Lines) -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
-          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Audited Reports</span>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Audited Reports</span>
           <span id="metricReports" class="text-2xl font-extrabold text-white font-heading mt-1 block">0</span>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Lines Analyzed</span>
+          <span id="metricTotalLines" class="text-2xl font-extrabold text-indigo-400 font-heading mt-1 block">0</span>
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
@@ -199,8 +204,9 @@
         const rawRole = String(profile.role || '').toLowerCase();
         const rawPlan = String(profile.plan || '').toLowerCase();
         
+        // Fixed Plan Checking Logic (Ensures plan: "starter" correctly evaluates as Starter)
         const isAdmin = rawRole === 'superadmin' || rawRole === 'admin' || rawPlan === 'admin' || user.email.toLowerCase() === 'mithun@preventloss.org';
-        const isPro = isAdmin || rawPlan.includes('pro') || rawPlan.includes('tier') || profile.status === 'active';
+        const isPro = !isAdmin && (rawPlan.includes('pro') || rawPlan.includes('professional') || rawPlan.includes('tier'));
 
         currentPlanState = { isPro, isAdmin };
 
@@ -236,7 +242,6 @@
 
     async function fetchDashboardData(userId, isPro, isAdmin) {
       try {
-        // Admin gets all telemetry records; regular users fetch only their own
         const endpoint = isAdmin ? CF_API_URL : `${CF_API_URL}?userId=${userId}`;
         const res = await fetch(endpoint);
         allRecords = await res.json();
@@ -291,27 +296,39 @@
       // Render Dashboard Metrics
       document.getElementById('metricReports').textContent = filtered.length;
       
+      let totalLinesAnalyzed = 0;
       let totalGrn = 0;
       let totalMargin = 0;
       let totalWriteoff = 0;
 
       filtered.forEach(r => {
-        const totalLeak = Number(r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? r.leakageAmount ?? 0);
-        
-        const grn = Number(r.receivingLeakage ?? r.grnLeakage ?? r.grn_leakage ?? 0);
-        const margin = Number(r.salesMarginErosion ?? r.marginErosion ?? r.margin_erosion ?? 0);
-        const writeoff = Number(r.writeOffInventoryLoss ?? r.inventoryLoss ?? r.inventory_loss ?? 0);
+        // Accumulate Total Lines
+        totalLinesAnalyzed += Number(r.linesProcessed || r.lines_processed || 0);
 
-        // Fallback: If categorical breakdown is missing, assign to Receiving Leakage
+        // Fetch Total Leakage from all possible Cloudflare payload variations
+        const totalLeak = Number(r.totalLeakages ?? r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? r.leakageAmount ?? 0);
+        
+        // Category Breakdown Extractors
+        const grn = Number(
+          r.receivingLeakage ?? 
+          r.grnLeakage ?? 
+          r.leakagesDetailed?.cpLeakageWhole?.leakageValue ?? 
+          r.leakagesDetailed?.cpLeakageSameDayMonth?.leakageValue ?? 0
+        );
+        const margin = Number(r.salesMarginErosion ?? r.marginErosion ?? r.leakagesDetailed?.marginLeakages?.leakageValue ?? 0);
+        const writeoff = Number(r.writeOffInventoryLoss ?? r.inventoryLoss ?? r.leakagesDetailed?.shelfLifeExceptions?.leakageValue ?? 0);
+
+        // Fallback Strategy: If detailed keys are not split out, treat total as GRN / Receiving Leakage
         if (grn === 0 && margin === 0 && writeoff === 0 && totalLeak > 0) {
           totalGrn += totalLeak;
         } else {
-          totalGrn += grn;
+          totalGrn += (grn > 0 ? grn : totalLeak);
           totalMargin += margin;
           totalWriteoff += writeoff;
         }
       });
       
+      document.getElementById('metricTotalLines').textContent = totalLinesAnalyzed.toLocaleString('en-US');
       document.getElementById('metricGrn').textContent = `$${totalGrn.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       document.getElementById('metricMargin').textContent = `$${totalMargin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       document.getElementById('metricWriteoff').textContent = `$${totalWriteoff.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -329,17 +346,19 @@
         const date = new Date(r.uploadedDate || r.uploaded_date || r.timestamp || Date.now()).toLocaleString();
         const fileName = r.fileName || r.filename || 'report.csv';
         const lines = Number(r.linesProcessed || r.lines_processed || 0).toLocaleString();
-        const exceptions = Number(r.exceptionsCount ?? r.exceptions ?? r.flagged_exceptions ?? r.exceptions_count ?? 0).toLocaleString();
-        const leakage = Number(r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? r.leakageAmount ?? 0);
         
+        // Exact property match for Cloudflare: `flaggedExceptionsCount`
+        const exceptions = Number(r.flaggedExceptionsCount ?? r.exceptionsCount ?? r.exceptions ?? r.flagged_exceptions ?? 0).toLocaleString();
+        
+        // Exact property match for Cloudflare: `totalLeakages`
+        const leakage = Number(r.totalLeakages ?? r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? 0);
+        const riskLevel = String(r.riskScore || r.riskAssessment || (leakage > 50000 ? "High" : leakage > 0 ? "Medium" : "Low")).toUpperCase();
+
         let riskClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-        let riskText = 'LOW';
-        if (leakage > 50000) {
+        if (riskLevel === 'HIGH') {
           riskClass = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-          riskText = 'HIGH';
-        } else if (leakage > 0) {
+        } else if (riskLevel === 'MEDIUM') {
           riskClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
-          riskText = 'MEDIUM';
         }
 
         return `
@@ -350,10 +369,10 @@
             <td class="py-3 px-4 font-mono text-amber-400">${exceptions}</td>
             <td class="py-3 px-4">
               <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${riskClass}">
-                ${riskText}
+                ${riskLevel}
               </span>
             </td>
-            <td class="py-3 px-4 font-mono font-bold text-right text-cyan-400">$${leakage.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+            <td class="py-3 px-4 font-mono font-bold text-right text-cyan-400">$${leakage.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
           </tr>
         `;
       }).join('');
