@@ -350,7 +350,12 @@
 
   <script type="module">
     import { auth, db, ensureUserProfile } from '/app/auth-guard.js';
-    import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { 
+      onAuthStateChanged, 
+      signOut, 
+      sendPasswordResetEmail, 
+      createUserWithEmailAndPassword 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { doc, updateDoc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // PADDLE CONFIGURATION
@@ -667,10 +672,23 @@
       btn.innerText = "Dispatching...";
 
       try {
-        await sendPasswordResetEmail(auth, pendingInviteEmail);
+        // 1. Provision Auth record with temporary credentials
+        const tempPassword = Math.random().toString(36).slice(-10) + "A1!";
+        let targetUid = null;
 
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, pendingInviteEmail, tempPassword);
+          targetUid = userCredential.user.uid;
+        } catch (authError) {
+          if (authError.code !== 'auth/email-already-in-use') {
+            throw authError;
+          }
+        }
+
+        // 2. Add member entry to Firestore
         const newMember = {
           email: pendingInviteEmail,
+          uid: targetUid,
           status: 'Pending Verification',
           invitedAt: new Date().toISOString()
         };
@@ -680,15 +698,18 @@
           teamMembers: arrayUnion(newMember)
         });
 
+        // 3. Dispatch setup link via email
+        await sendPasswordResetEmail(auth, pendingInviteEmail);
+
         currentTeamMembers.push(newMember);
         renderTeamList(currentTeamMembers);
 
         document.getElementById('inviteEmail').value = "";
-        showToast(`Verification & setup email sent to ${pendingInviteEmail}`, "info");
+        showToast(`Verification link sent to ${pendingInviteEmail}`, "info");
         closeInviteModal();
       } catch (err) {
         console.error("Invite Error:", err);
-        showToast("Failed to send verification email. Check domain configuration.", "error");
+        showToast("Failed to send verification link.", "error");
       } finally {
         btn.disabled = false;
         btn.innerText = "Send Verification Link";
