@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- Home Page -->
+  <url>
+    <loc>https://opsreveal.preventloss.org/</loc>
+    <priority>1.00</priority>
+    <changefreq>weekly</changefreq>
+  </url>
+
+  <!-- Login & Signup Pages -->
+  <url>
+    <loc>https://opsreveal.preventloss.org/login.html</loc>
+    <priority>0.80</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://opsreveal.preventloss.org/signup.html</loc>
+    <priority>0.80</priority>
+    <changefreq>monthly</changefreq>
+  </url>
+
+  <!-- Legal & Policy Pages -->
+  <url>
+    <loc>https://opsreveal.preventloss.org/privacy.html</loc>
+    <priority>0.30</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://opsreveal.preventloss.org/terms</loc>
+    <priority>0.30</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+
+  <url>
+    <loc>https://opsreveal.preventloss.org/refund-policy</loc>
+    <priority>0.30</priority>
+    <changefreq>yearly</changefreq>
+  </url>
+
+</urlset>
+
