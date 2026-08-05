@@ -75,7 +75,7 @@
       </div>
 
       <button type="submit" id="submitBtn" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition shadow-lg shadow-cyan-500/20 flex items-center justify-center">
-        <span id="btnText">Create Account & Accept Invite</span>
+        <span id="btnText">Create Account & Send Verification</span>
         <span id="btnSpinner" class="hidden">Processing...</span>
       </button>
     </form>
@@ -111,7 +111,9 @@
     import { 
       getFirestore, 
       doc, 
+      getDoc,
       setDoc, 
+      updateDoc,
       serverTimestamp 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -146,6 +148,7 @@
           }, { merge: true });
         }
 
+        // 1. Create or update user profile document
         const userRef = doc(db, "users", user.uid);
         await setDoc(userRef, {
           uid: user.uid,
@@ -156,14 +159,52 @@
           companyId: targetCompanyId,
           invitedBy: invitedBy || null,
           plan: "starter",
-          status: "active",
+          status: "Verified",
           onboardingCompleted: true,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp()
         }, { merge: true });
 
+        // 2. If invited, update the inviter's Firestore teamMembers array
+        if (invitedBy) {
+          const ownerRef = doc(db, "users", invitedBy);
+          const ownerSnap = await getDoc(ownerRef);
+
+          if (ownerSnap.exists()) {
+            const ownerData = ownerSnap.data();
+            let teamMembers = ownerData.teamMembers || [];
+
+            let updated = false;
+            teamMembers = teamMembers.map(member => {
+              if (member.email && member.email.toLowerCase() === user.email.toLowerCase()) {
+                updated = true;
+                return {
+                  ...member,
+                  status: "Verified",
+                  uid: user.uid,
+                  updatedAt: new Date().toISOString()
+                };
+              }
+              return member;
+            });
+
+            // If not found in the array, push a new entry
+            if (!updated) {
+              teamMembers.push({
+                email: user.email,
+                uid: user.uid,
+                status: "Verified",
+                invitedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              });
+            }
+
+            await updateDoc(ownerRef, { teamMembers });
+          }
+        }
+
       } catch (err) {
-        console.warn("Profile syncing warning:", err);
+        console.warn("Profile syncing notice:", err);
       }
     }
 
@@ -241,18 +282,28 @@
         setLoading(true);
 
         try {
+          // 1. Create User in Firebase Auth
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+          // 2. Sync profile and mark team member status as Verified in Firestore
           await syncMinimalUserProfile(userCredential.user, invitedBy);
 
-          if (invitedBy) {
-            window.location.href = '/app/dashboard';
-          } else {
-            await sendEmailVerification(userCredential.user);
-            window.location.href = '/verify-email.html';
-          }
+          // 3. Send Firebase Email Verification
+          await sendEmailVerification(userCredential.user);
+
+          // 4. Redirect to verify email page
+          window.location.href = '/verify-email.html';
+
         } catch (err) {
           setLoading(false);
-          showError(err.message.replace('Firebase: ', ''));
+          if (err.code === 'auth/email-already-in-use') {
+            showError("This email already has an account. Please sign in instead.");
+            setTimeout(() => {
+              window.location.href = `/login.html?email=${encodeURIComponent(email)}&invitedBy=${invitedBy || ''}`;
+            }, 2500);
+          } else {
+            showError(err.message.replace('Firebase: ', ''));
+          }
         }
       });
 
