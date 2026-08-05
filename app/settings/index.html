@@ -13,8 +13,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
-  <!-- PayPal JS SDK -->
-  <script src="https://www.paypal.com/sdk/js?client-id=AQJdsPXgrc6vkxHfX2WSJSroKw-GLCOCRuhBVjGpISGsmhEksKJf865-x2fGSKsVV2oYEodjLR-PTizO&currency=USD"></script>
+  <!-- Paddle Billing SDK (v2 JS) -->
+  <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 
   <style>
     body { font-family: 'Inter', sans-serif; }
@@ -25,6 +25,44 @@
 
   <!-- TOAST NOTIFICATION CONTAINER -->
   <div id="toastContainer" class="fixed top-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- CONFIRMATION MODAL FOR TEAM INVITES -->
+  <div id="inviteModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center space-x-3">
+        <div class="h-10 w-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white font-heading">Confirm Team Invitation</h3>
+          <p class="text-xs text-slate-400">Please review access privileges before sending.</p>
+        </div>
+      </div>
+
+      <div class="bg-amber-500/10 border border-amber-500/20 p-3.5 rounded-xl text-xs space-y-1.5">
+        <p class="font-bold text-amber-400 flex items-center space-x-1.5">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <span>Full Access Warning</span>
+        </p>
+        <p class="text-amber-200/80 leading-relaxed">
+          Invited team members will gain full access to view, upload, and manage all operational reports and features on this account.
+        </p>
+      </div>
+
+      <p class="text-xs text-slate-300">
+        An account setup email will be dispatched to <strong id="modalTargetEmail" class="text-cyan-400 font-mono"></strong> with a secure link to create their password and verify access.
+      </p>
+
+      <div class="flex space-x-3 pt-2">
+        <button onclick="closeInviteModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2.5 rounded-xl border border-slate-700 transition">
+          Cancel
+        </button>
+        <button id="confirmInviteBtn" onclick="sendConfirmedInvite()" class="flex-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg shadow-cyan-500/20">
+          Send Verification Link
+        </button>
+      </div>
+    </div>
+  </div>
 
   <!-- LEFT HAND SIDEBAR NAVIGATION -->
   <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 min-h-screen z-20">
@@ -153,7 +191,7 @@
         </form>
       </div>
 
-      <!-- SUBSCRIPTION PLAN & PAYPAL PAYMENTS -->
+      <!-- SUBSCRIPTION PLAN & PADDLE PAYMENTS -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
         <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider">Subscription Plan</h3>
         
@@ -166,10 +204,13 @@
             <span id="starterActiveBadge" class="bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-xs font-bold border border-slate-700">Active Plan</span>
           </div>
 
-          <div id="paypalUpgradeContainer" class="pt-4 border-t border-slate-800/80 space-y-3">
-            <p class="text-xs font-bold text-amber-400">Upgrade to Professional ($99/mo) with PayPal:</p>
-            <div class="max-w-md">
-              <div id="paypal-button-container"></div>
+          <div id="paddleUpgradeContainer" class="pt-4 border-t border-slate-800/80 space-y-3">
+            <p class="text-xs font-bold text-amber-400">Upgrade to Professional ($99/mo):</p>
+            <div>
+              <button onclick="openPaddleCheckout()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-extrabold px-6 py-3 rounded-xl text-xs transition shadow-lg shadow-cyan-500/20 flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>Upgrade to Pro ($99/mo)</span>
+              </button>
             </div>
           </div>
         </div>
@@ -195,19 +236,22 @@
           <span id="seatsBadge" class="text-xs font-bold text-slate-400 bg-slate-950 px-3 py-1 rounded-xl border border-slate-800">0 / 5 Seats Used</span>
         </div>
 
+        <!-- LOCKED STATE FOR STARTER TIER -->
         <div id="teamLockedState" class="bg-slate-950/80 border border-slate-800/80 p-8 rounded-xl text-center space-y-2">
           <svg class="w-8 h-8 text-amber-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
           <h4 class="text-sm font-bold text-white font-heading">Professional Feature</h4>
           <p class="text-xs text-slate-400">Upgrade your account to the Professional Plan to add up to 5 colleagues and share your OpsReveal dashboard access.</p>
         </div>
 
+        <!-- UNLOCKED STATE FOR PRO TIER -->
         <div id="teamUnlockedState" class="hidden space-y-4">
           <div class="flex gap-2">
             <input type="email" id="inviteEmail" placeholder="colleague@company.com" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-cyan-500">
-            <button onclick="inviteTeamMember()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Invite Member</button>
+            <button onclick="promptTeamInvite()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Invite Member</button>
           </div>
-          <div id="teamList" class="text-xs text-slate-400 divide-y divide-slate-800 border-t border-slate-800/60 pt-2">
-            <p class="py-2 italic">No team members invited yet.</p>
+          
+          <div id="teamList" class="text-xs text-slate-400 divide-y divide-slate-800 border-t border-slate-800/60 pt-2 space-y-2">
+            <p id="noTeamMsg" class="py-2 italic">No team members invited yet.</p>
           </div>
         </div>
       </div>
@@ -217,11 +261,33 @@
 
   <script type="module">
     import { auth, db, ensureUserProfile } from '/app/auth-guard.js';
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { doc, updateDoc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+    // PADDLE CONFIGURATION (Replace with your actual Paddle Client Token & Pro Price ID)
+    const PADDLE_CLIENT_TOKEN = "live_3fa85341ad9e33a1d40b0049173"; 
+    const PADDLE_PRO_PRICE_ID = "pro_01kz8qnsh8y2knc1qfpq2m0458"; // Your Pro Plan Price ID from Paddle Dashboard
     const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
+
     let currentUser = null;
+    let pendingInviteEmail = "";
+    let currentTeamMembers = [];
+
+    // Initialize Paddle SDK
+    if (window.Paddle) {
+      Paddle.Environment.set('sandbox'); // Change to 'live' for production
+      Paddle.Initialize({ 
+        token: PADDLE_CLIENT_TOKEN,
+        eventCallback: function(data) {
+          if (data.name === 'checkout.completed') {
+            handlePaddlePaymentSuccess(data);
+          } else if (data.name === 'checkout.closed') {
+            // Unsuccessful/abandoned checkout handling
+            showToast("Payment was not completed. Your account remains on the Starter Plan.", "error");
+          }
+        }
+      });
+    }
 
     // Toast Engine
     window.showToast = function(message, type = 'info') {
@@ -232,16 +298,14 @@
       toast.innerText = message;
       container.appendChild(toast);
       
-      setTimeout(() => {
-        toast.classList.remove('opacity-0', 'translate-y-2');
-      }, 10);
-
+      setTimeout(() => toast.classList.remove('opacity-0', 'translate-y-2'), 10);
       setTimeout(() => {
         toast.classList.add('opacity-0', 'translate-y-2');
         setTimeout(() => toast.remove(), 300);
       }, 4000);
     };
 
+    // Authentication Guard & Initialization
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.replace('/login.html');
@@ -253,7 +317,6 @@
 
       const profile = await ensureUserProfile(user);
       
-      // Populate Form Details
       document.getElementById('profName').value = profile?.name || '';
       document.getElementById('profCountry').value = profile?.country || '';
       document.getElementById('profCompany').value = profile?.company || '';
@@ -261,15 +324,13 @@
       const isPro = (profile?.plan || '').toLowerCase().includes('pro');
       updatePlanUI(isPro);
 
-      document.body.style.display = 'flex';
-
-      // Load Monthly Cloudflare Telemetry
-      fetchMonthlyUsage(user.uid, isPro);
-
-      // Initialize PayPal Buttons if on Starter plan
-      if (!isPro) {
-        initPayPalButton(user.uid);
+      if (isPro) {
+        currentTeamMembers = profile?.teamMembers || [];
+        renderTeamList(currentTeamMembers);
       }
+
+      document.body.style.display = 'flex';
+      fetchMonthlyUsage(user.uid, isPro);
     });
 
     // Profile updates handler
@@ -295,14 +356,46 @@
       signOut(auth).then(() => window.location.replace('/login.html'));
     };
 
+    // Paddle Checkout Trigger
+    window.openPaddleCheckout = function() {
+      if (!window.Paddle) {
+        showToast("Payment gateway unable to initialize. Reload page.", "error");
+        return;
+      }
+      Paddle.Checkout.open({
+        items: [{ priceId: PADDLE_PRO_PRICE_ID, quantity: 1 }],
+        customer: { email: currentUser.email },
+        customData: { userId: currentUser.uid }
+      });
+    };
+
+    // Process Successful Paddle Payment
+    async function handlePaddlePaymentSuccess(data) {
+      try {
+        const userRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userRef, {
+          plan: "Professional Tier",
+          status: "active",
+          paddleTransactionId: data.data.id,
+          upgradedAt: new Date().toISOString()
+        });
+
+        showToast("Payment successful! Account upgraded to Professional Tier.", "info");
+        setTimeout(() => window.location.reload(), 1500);
+      } catch (error) {
+        console.error("Error updating profile post-payment:", error);
+        showToast("Payment succeeded but profile update failed. Contact support.", "error");
+      }
+    }
+
+    // Dynamic UI Renderer
     function updatePlanUI(isPro) {
       if (isPro) {
         document.getElementById('planLabel').innerText = 'Professional Tier';
         document.getElementById('starterActiveBadge').classList.add('hidden');
-        document.getElementById('paypalUpgradeContainer').classList.add('hidden');
+        document.getElementById('paddleUpgradeContainer').classList.add('hidden');
         document.getElementById('proPlanBox').classList.remove('hidden');
         
-        // Unlock Team Section
         document.getElementById('teamLockedState').classList.add('hidden');
         document.getElementById('teamUnlockedState').classList.remove('hidden');
 
@@ -311,6 +404,7 @@
       }
     }
 
+    // Usage Metrics Fetcher
     async function fetchMonthlyUsage(userId, isPro) {
       try {
         const res = await fetch(`${CF_API_URL}?userId=${userId}`);
@@ -327,11 +421,9 @@
         const uploads = currentMonthRecords.length;
         const lines = currentMonthRecords.reduce((sum, r) => sum + Number(r.linesProcessed || r.lines_processed || 0), 0);
 
-        // Sidebar Meters
         document.getElementById('meterUploads').textContent = `${uploads} / ${isPro ? '∞' : '4'}`;
         document.getElementById('meterLines').textContent = `${lines.toLocaleString('en-US')} / ${isPro ? '∞' : '20k'}`;
 
-        // Settings Page Progress Bars
         document.getElementById('usageUploadsText').textContent = `${uploads} / ${isPro ? 'Unlimited' : '4'}`;
         document.getElementById('usageLinesText').textContent = `${lines.toLocaleString('en-US')} / ${isPro ? 'Unlimited' : '20,000'}`;
 
@@ -346,56 +438,91 @@
           document.getElementById('usageLinesBar').classList.replace('bg-cyan-500', 'bg-amber-500');
         }
       } catch (e) {
-        console.error("Failed to load Cloudflare usage stats:", e);
+        console.error("Failed to load usage stats:", e);
       }
     }
 
-    function initPayPalButton(userId) {
-      if (!window.paypal) return;
+    // ================= TEAM MANAGEMENT & VERIFICATION LINK FLOW =================
 
-      paypal.Buttons({
-        style: {
-          layout: 'vertical',
-          color:  'gold',
-          shape:  'rect',
-          label:  'paypal'
-        },
-        createOrder: function(data, actions) {
-          return actions.order.create({
-            purchase_units: [{
-              description: "OpsReveal Professional Plan Subscription",
-              amount: {
-                currency_code: "USD",
-                value: "99.00"
-              }
-            }]
-          });
-        },
-        onApprove: async function(data, actions) {
-          const details = await actions.order.capture();
-          
-          // Payment Successful: Upgrade Plan in Firestore
-          try {
-            const userRef = doc(db, "users", userId);
-            await updateDoc(userRef, {
-              plan: "Professional Tier",
-              status: "active",
-              paypalOrderId: details.id,
-              upgradedAt: new Date().toISOString()
-            });
+    window.promptTeamInvite = function() {
+      const emailInput = document.getElementById('inviteEmail').value.trim();
+      if (!emailInput || !emailInput.includes('@')) {
+        showToast("Please enter a valid email address.", "error");
+        return;
+      }
+      if (currentTeamMembers.length >= 5) {
+        showToast("Maximum seat limit reached (5 seats max).", "error");
+        return;
+      }
 
-            showToast("Payment successful! Account upgraded to Professional.", "info");
-            setTimeout(() => window.location.reload(), 1500);
-          } catch (error) {
-            console.error("Error updating profile after payment:", error);
-            showToast("Payment captured, but failed to update profile automatically. Please contact support.", "error");
-          }
-        },
-        onError: function(err) {
-          console.error("PayPal Error:", err);
-          showToast("Payment could not be completed. Please try again.", "error");
-        }
-      }).render('#paypal-button-container');
+      pendingInviteEmail = emailInput;
+      document.getElementById('modalTargetEmail').innerText = pendingInviteEmail;
+      document.getElementById('inviteModal').classList.remove('hidden');
+    };
+
+    window.closeInviteModal = function() {
+      document.getElementById('inviteModal').classList.add('hidden');
+      pendingInviteEmail = "";
+    };
+
+    window.sendConfirmedInvite = async function() {
+      const btn = document.getElementById('confirmInviteBtn');
+      btn.disabled = true;
+      btn.innerText = "Sending Link...";
+
+      try {
+        // Send Firebase verification/password setup email link
+        await sendPasswordResetEmail(auth, pendingInviteEmail);
+
+        // Update Account Team List
+        const newMember = {
+          email: pendingInviteEmail,
+          status: 'Pending Verification',
+          invitedAt: new Date().toISOString()
+        };
+
+        const userRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userRef, {
+          teamMembers: arrayUnion(newMember)
+        });
+
+        currentTeamMembers.push(newMember);
+        renderTeamList(currentTeamMembers);
+
+        document.getElementById('inviteEmail').value = "";
+        showToast(`Verification & setup email sent to ${pendingInviteEmail}`, "info");
+        closeInviteModal();
+      } catch (err) {
+        console.error("Invite Error:", err);
+        showToast("Failed to send verification email. Verify email address.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Send Verification Link";
+      }
+    };
+
+    function renderTeamList(members) {
+      const listEl = document.getElementById('teamList');
+      const seatsBadge = document.getElementById('seatsBadge');
+      
+      seatsBadge.innerText = `${members.length} / 5 Seats Used`;
+
+      if (members.length === 0) {
+        listEl.innerHTML = `<p class="py-2 italic">No team members invited yet.</p>`;
+        return;
+      }
+
+      listEl.innerHTML = members.map(m => `
+        <div class="py-3 flex items-center justify-between">
+          <div>
+            <span class="font-semibold text-slate-200 block">${m.email}</span>
+            <span class="text-[10px] text-slate-500">Invited ${new Date(m.invitedAt).toLocaleDateString()}</span>
+          </div>
+          <span class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            ${m.status || 'Pending Verification'}
+          </span>
+        </div>
+      `).join('');
     }
   </script>
 </body>
