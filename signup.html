@@ -1,35 +1,78 @@
 <!-- Firebase Auth Logic -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { 
-      getAuth, 
-      createUserWithEmailAndPassword, 
-      sendEmailVerification,
-      GoogleAuthProvider, 
-      signInWithPopup 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { 
-      getFirestore, 
-      doc, 
-      setDoc, 
-      serverTimestamp 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { 
+    getAuth, 
+    createUserWithEmailAndPassword, 
+    sendEmailVerification,
+    GoogleAuthProvider, 
+    signInWithPopup 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+  import { 
+    getFirestore, 
+    doc, 
+    setDoc, 
+    serverTimestamp 
+  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
-      authDomain: "opsreveal.firebaseapp.com",
-      projectId: "opsreveal",
-      storageBucket: "opsreveal.firebasestorage.app",
-      messagingSenderId: "890870101711",
-      appId: "1:890870101711:web:4266246996091ea56c69ba"
-    };
+  const firebaseConfig = {
+    apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
+    authDomain: "opsreveal.firebaseapp.com",
+    projectId: "opsreveal",
+    storageBucket: "opsreveal.firebasestorage.app",
+    messagingSenderId: "890870101711",
+    appId: "1:890870101711:web:4266246996091ea56c69ba"
+  };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-    const SUPER_ADMIN_EMAIL = "mithun@preventloss.org";
+  const SUPER_ADMIN_EMAIL = "mithun@preventloss.org";
 
+  // Safely provision User Profile + Workspace
+  async function syncMinimalUserProfile(user, invitedBy) {
+    try {
+      const isAdmin = user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+
+      // 1. If invited, attach to owner's companyId; otherwise create own workspace
+      const targetCompanyId = invitedBy ? invitedBy : user.uid;
+      const userRole = isAdmin ? "SuperAdmin" : (invitedBy ? "Collaborator" : "Owner");
+
+      if (!invitedBy) {
+        const companyRef = doc(db, "companies", user.uid);
+        await setDoc(companyRef, {
+          companyName: isAdmin ? "OpsReveal Admin Workspace" : `${user.displayName || 'User'}'s Workspace`,
+          domain: "",
+          ownerUid: user.uid,
+          createdAt: serverTimestamp()
+        }, { merge: true });
+      }
+
+      // 2. Create User Document
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, {
+        uid: user.uid,
+        email: user.email,
+        fullName: user.displayName || "OpsReveal User",
+        provider: user.providerData[0]?.providerId || 'password',
+        role: userRole,
+        companyId: targetCompanyId,
+        invitedBy: invitedBy || null,
+        plan: "starter",
+        status: "active",
+        onboardingCompleted: true,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+    } catch (err) {
+      console.warn("Profile pre-creation notice: auth-guard will complete profile setup on login.", err);
+    }
+  }
+
+  // Initialize UI & Event Listeners once DOM is ready
+  window.addEventListener('DOMContentLoaded', () => {
     // --- Check for Invitation Parameters ---
     const urlParams = new URLSearchParams(window.location.search);
     const invitedBy = urlParams.get('invitedBy');
@@ -47,141 +90,124 @@
     const btnSpinner = document.getElementById('btnSpinner');
 
     // Auto-fill and lock email if arriving via invitation link
-    if (invitedEmail) {
-      emailInput.value = invitedEmail;
+    if (invitedEmail && emailInput) {
+      emailInput.value = decodeURIComponent(invitedEmail);
       emailInput.readOnly = true;
       emailInput.classList.add('opacity-75', 'cursor-not-allowed');
     }
 
-    // Password Visibility Toggle Logic
-    document.getElementById('togglePasswordBtn').addEventListener('click', () => {
-      const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      passwordInput.setAttribute('type', type);
-    });
+    // Toggle Password Visibility
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    if (togglePasswordBtn && passwordInput) {
+      togglePasswordBtn.addEventListener('click', () => {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+      });
+    }
 
-    document.getElementById('toggleConfirmPasswordBtn').addEventListener('click', () => {
-      const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-      confirmPasswordInput.setAttribute('type', type);
-    });
+    // Toggle Confirm Password Visibility
+    const toggleConfirmPasswordBtn = document.getElementById('toggleConfirmPasswordBtn');
+    if (toggleConfirmPasswordBtn && confirmPasswordInput) {
+      toggleConfirmPasswordBtn.addEventListener('click', () => {
+        const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        confirmPasswordInput.setAttribute('type', type);
+      });
+    }
 
-    // Real-Time Password Condition Validation
-    passwordInput.addEventListener('input', () => {
-      const val = passwordInput.value;
-      
-      const isLength = val.length >= 8;
-      document.getElementById('condLength').className = `flex items-center space-x-1.5 ${isLength ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`;
+    // Real-Time Password Validation
+    if (passwordInput) {
+      passwordInput.addEventListener('input', () => {
+        const val = passwordInput.value;
+        
+        const condLength = document.getElementById('condLength');
+        if (condLength) {
+          condLength.className = `flex items-center space-x-1.5 ${val.length >= 8 ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`;
+        }
 
-      const isUpper = /[A-Z]/.test(val);
-      document.getElementById('condUpper').className = `flex items-center space-x-1.5 ${isUpper ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`;
+        const condUpper = document.getElementById('condUpper');
+        if (condUpper) {
+          condUpper.className = `flex items-center space-x-1.5 ${/[A-Z]/.test(val) ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`;
+        }
 
-      const isNumOrSpec = /[\d\W]/.test(val);
-      document.getElementById('condNumber').className = `flex items-center space-x-1.5 ${isNumOrSpec ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`;
-    });
+        const condNumber = document.getElementById('condNumber');
+        if (condNumber) {
+          condNumber.className = `flex items-center space-x-1.5 ${/[\d\W]/.test(val) ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`;
+        }
+      });
+    }
 
     function showError(msg) {
-      errorMessage.textContent = msg;
-      errorBanner.classList.remove('hidden');
+      if (errorMessage && errorBanner) {
+        errorMessage.textContent = msg;
+        errorBanner.classList.remove('hidden');
+      } else {
+        alert(msg);
+      }
     }
 
     function setLoading(isLoading) {
-      submitBtn.disabled = isLoading;
-      btnText.classList.toggle('hidden', isLoading);
-      btnSpinner.classList.toggle('hidden', !isLoading);
+      if (submitBtn) submitBtn.disabled = isLoading;
+      if (btnText) btnText.classList.toggle('hidden', isLoading);
+      if (btnSpinner) btnSpinner.classList.toggle('hidden', !isLoading);
     }
 
-    // Safely Provision User Profile + Workspace with fallback handling
-    async function syncMinimalUserProfile(user) {
-      try {
-        const isAdmin = user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    // Form Submission Handler
+    if (signupForm) {
+      signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (errorBanner) errorBanner.classList.add('hidden');
 
-        // 1. If invited, attach to owner's companyId; otherwise create own workspace
-        const targetCompanyId = invitedBy ? invitedBy : user.uid;
-        const userRole = isAdmin ? "SuperAdmin" : (invitedBy ? "Collaborator" : "Owner");
+        const email = emailInput?.value?.trim() || '';
+        const password = passwordInput?.value || '';
+        const confirmPassword = confirmPasswordInput?.value || '';
 
-        if (!invitedBy) {
-          const companyRef = doc(db, "companies", user.uid);
-          await setDoc(companyRef, {
-            companyName: isAdmin ? "OpsReveal Admin Workspace" : `${user.displayName || 'User'}'s Workspace`,
-            domain: "",
-            ownerUid: user.uid,
-            createdAt: serverTimestamp()
-          }, { merge: true });
+        if (password.length < 8 || !/[A-Z]/.test(password) || !/[\d\W]/.test(password)) {
+          showError("Please satisfy all password conditions (8+ chars, 1 uppercase, 1 number/symbol).");
+          return;
         }
 
-        // 2. Create User Document
-        const userRef = doc(db, "users", user.uid);
-        await setDoc(userRef, {
-          uid: user.uid,
-          email: user.email,
-          fullName: user.displayName || "OpsReveal User",
-          provider: user.providerData[0]?.providerId || 'password',
-          role: userRole,
-          companyId: targetCompanyId,
-          invitedBy: invitedBy || null,
-          plan: "starter",
-          status: "active",
-          onboardingCompleted: true,
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp()
-        }, { merge: true });
+        if (password !== confirmPassword) {
+          showError("Passwords do not match.");
+          return;
+        }
 
-      } catch (err) {
-        console.warn("Profile pre-creation notice: auth-guard will complete profile setup on login.", err);
-      }
+        setLoading(true);
+
+        try {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          const user = userCredential.user;
+
+          await syncMinimalUserProfile(user, invitedBy);
+
+          // Bypass email verification if accepting an invite
+          if (invitedBy) {
+            window.location.href = '/app/dashboard';
+          } else {
+            await sendEmailVerification(user);
+            window.location.href = '/verify-email.html';
+          }
+
+        } catch (err) {
+          setLoading(false);
+          showError(err.message.replace('Firebase: ', ''));
+        }
+      });
     }
-
-    // Form Submission
-    signupForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      errorBanner.classList.add('hidden');
-
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      const confirmPassword = confirmPasswordInput.value;
-
-      if (password.length < 8 || !/[A-Z]/.test(password) || !/[\d\W]/.test(password)) {
-        showError("Please satisfy all password conditions (8+ chars, 1 uppercase, 1 number/symbol).");
-        return;
-      }
-
-      if (password !== confirmPassword) {
-        showError("Passwords do not match.");
-        return;
-      }
-
-      setLoading(true);
-
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-
-        await syncMinimalUserProfile(user);
-
-        // If invited, bypass verification redirect and send straight to dashboard
-        if (invitedBy) {
-          window.location.href = '/app/dashboard';
-        } else {
-          await sendEmailVerification(user);
-          window.location.href = '/verify-email.html';
-        }
-
-      } catch (err) {
-        setLoading(false);
-        showError(err.message.replace('Firebase: ', ''));
-      }
-    });
 
     // Google Sign-Up Handler
-    googleAuthBtn.addEventListener('click', async () => {
-      errorBanner.classList.add('hidden');
-      const provider = new GoogleAuthProvider();
+    if (googleAuthBtn) {
+      googleAuthBtn.addEventListener('click', async () => {
+        if (errorBanner) errorBanner.classList.add('hidden');
+        const provider = new GoogleAuthProvider();
 
-      try {
-        const result = await signInWithPopup(auth, provider);
-        await syncMinimalUserProfile(result.user);
-        window.location.href = '/app/dashboard';
-      } catch (err) {
-        showError(err.message.replace('Firebase: ', ''));
-      }
-    });
-  </script>
+        try {
+          const result = await signInWithPopup(auth, provider);
+          await syncMinimalUserProfile(result.user, invitedBy);
+          window.location.href = '/app/dashboard';
+        } catch (err) {
+          showError(err.message.replace('Firebase: ', ''));
+        }
+      });
+    }
+  });
+</script>
