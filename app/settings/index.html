@@ -50,7 +50,7 @@
       </div>
 
       <p class="text-xs text-slate-300">
-        An invitation email will be dispatched to <strong id="modalTargetEmail" class="text-cyan-400 font-mono"></strong> with a sign-up link to join your workspace.
+        An invitation email will be dispatched to <strong id="modalTargetEmail" class="text-cyan-400 font-mono"></strong> via Resend with a secure workspace access link.
       </p>
 
       <div class="flex space-x-3 pt-2">
@@ -58,7 +58,7 @@
           Cancel
         </button>
         <button id="confirmInviteBtn" onclick="sendConfirmedInvite()" class="flex-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg shadow-cyan-500/20">
-          Send Invite Link
+          Send Invitation Email
         </button>
       </div>
     </div>
@@ -351,13 +351,13 @@
   <script type="module">
     import { auth, db, ensureUserProfile } from '/app/auth-guard.js';
     import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { doc, updateDoc, getDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { doc, updateDoc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // CONFIGURATION
     const PADDLE_CLIENT_TOKEN = "live_3fa85341ad9e33a1d40b0049173"; 
     const PADDLE_PRO_PRICE_ID = "pri_01kz8vbb5st84h4x80r1521ecm"; 
     const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
-    const INVITE_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/send-invite";
+    const INVITE_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/invite";
 
     let currentUser = null;
     let pendingInviteEmail = "";
@@ -621,7 +621,7 @@
       }
     };
 
-    // ================= TEAM MANAGEMENT & INVITATION FLOW =================
+    // ================= TEAM MANAGEMENT & VERIFICATION FLOW =================
 
     window.promptTeamInvite = function() {
       const emailInput = document.getElementById('inviteEmail').value.trim().toLowerCase();
@@ -656,27 +656,33 @@
       pendingInviteEmail = "";
     };
 
-    // Updated: Dispatches team invitation email via Cloudflare Worker backend and saves user association
     window.sendConfirmedInvite = async function() {
-      if (!pendingInviteEmail) return;
+      if (!pendingInviteEmail || !currentUser) return;
 
       const btn = document.getElementById('confirmInviteBtn');
       btn.disabled = true;
-      btn.innerText = "Dispatching...";
+      btn.innerText = "Dispatching via Resend...";
 
       try {
-        const response = await fetch(INVITE_API_URL, {
+        // Fetch current owner profile to get custom company/workspace name
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        const inviterCompany = userSnap.exists() && userSnap.data()?.company ? userSnap.data().company : "OpsReveal Workspace";
+
+        // Call backend API endpoint to send Resend invite email
+        const res = await fetch(INVITE_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            inviterEmail: currentUser.email,
-            inviterUid: currentUser.uid,
-            inviteeEmail: pendingInviteEmail
+            invitedBy: currentUser.uid,
+            invitedEmail: pendingInviteEmail,
+            inviterCompany: inviterCompany
           })
         });
 
-        if (!response.ok) {
-          throw new Error('Server failed to send email');
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.error || "Failed to deliver invite email.");
         }
 
         const newMember = {
@@ -685,7 +691,6 @@
           invitedAt: new Date().toISOString()
         };
 
-        const userRef = doc(db, "users", currentUser.uid);
         await updateDoc(userRef, {
           teamMembers: arrayUnion(newMember)
         });
@@ -694,14 +699,14 @@
         renderTeamList(currentTeamMembers);
 
         document.getElementById('inviteEmail').value = "";
-        showToast(`Invitation sent to ${pendingInviteEmail}`, "info");
+        showToast(`Invitation sent via email to ${pendingInviteEmail}`, "info");
         closeInviteModal();
       } catch (err) {
-        console.error("Invite Error:", err);
-        showToast("Failed to send invitation email.", "error");
+        console.error("Invite Delivery Error:", err);
+        showToast(err.message || "Failed to send invitation email.", "error");
       } finally {
         btn.disabled = false;
-        btn.innerText = "Send Invite Link";
+        btn.innerText = "Send Invitation Email";
       }
     };
 
