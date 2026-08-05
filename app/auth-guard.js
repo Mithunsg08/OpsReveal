@@ -43,17 +43,20 @@ export function initAuthGuard() {
         return;
       }
 
+      // Check profile & enforce status first so we know if they are an invited collaborator
+      const profile = await ensureUserProfile(user);
+
       const isGoogleUser = user.providerData?.some(p => p.providerId === 'google.com');
-      const isVerified = user.emailVerified || isGoogleUser;
+      
+      // Invited collaborators bypass email verification since they authenticated via secure invite token link
+      const isCollaborator = profile && (profile.role === "Collaborator" || Boolean(profile.invitedBy));
+      const isVerified = user.emailVerified || isGoogleUser || isCollaborator;
 
       if (!isVerified) {
         alert("Please verify your email address before continuing.");
         window.location.replace('/login.html');
         return;
       }
-
-      // Check profile & enforce status
-      const profile = await ensureUserProfile(user);
       
       // If profile exists and status is NOT active, block access and log out
       if (profile && profile.status !== "active") {
