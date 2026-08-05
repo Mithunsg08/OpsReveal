@@ -408,6 +408,32 @@
               return;
             }
 
+            const totalLines = Math.max(0, rawData.length - 1); // Exclude header row
+const userPlan = (currentUserProfile?.plan || 'starter').toLowerCase();
+
+if (userPlan === 'starter' && totalLines > 20000) {
+  // 1. Build the updated error message with the upgrade text and button
+  const upgradeMessageHTML = `
+    <div>
+      <p>We can't process this report because it has <strong>${totalLines.toLocaleString()}</strong> lines to analyze. Your current Starter plan is limited to 20,000 lines maximum per upload.</p>
+      <p class="mt-1">To analyze this and more than 20K rows, <strong>Upgrade to Professional for $99/mo</strong> with unlimited uploads, unlimited lines, and up to 5 additional team seats.</p>
+      <a href="/app/settings" class="inline-block mt-3 px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-xs transition">
+        Upgrade to Professional
+      </a>
+    </div>
+  `;
+
+  // 2. Insert into error banner & make visible
+  const errorMsgEl = document.getElementById('errorMessage');
+  errorMsgEl.innerHTML = upgradeMessageHTML;
+  document.getElementById('errorBanner').classList.remove('hidden');
+
+  // 3. Show Toast Notification & Hide Modal
+  showToast(`Upload blocked: File exceeds 20,000 lines Starter limit.`, "error");
+  hideModal();
+  return;
+}
+
             const fileHeaders = rawData[0].map(h => String(h || '').trim().toLowerCase());
             const isValid = requiredHeaders.every((reqHeader, index) => fileHeaders[index] === reqHeader);
             
