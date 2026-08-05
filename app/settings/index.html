@@ -64,6 +64,62 @@
     </div>
   </div>
 
+  <!-- RESET PASSWORD MODAL -->
+  <div id="resetPasswordModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center space-x-3">
+        <div class="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white font-heading">Reset Password</h3>
+          <p class="text-xs text-slate-400">Send password recovery email to team member.</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-300">
+        Are you sure you want to reset the password for <strong id="resetTargetEmail" class="text-amber-400 font-mono"></strong>? A password reset link will be sent directly to their email.
+      </p>
+
+      <div class="flex space-x-3 pt-2">
+        <button onclick="closeResetPasswordModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2.5 rounded-xl border border-slate-700 transition">
+          Cancel
+        </button>
+        <button id="confirmResetBtn" onclick="confirmResetPassword()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DELETE MEMBER MODAL -->
+  <div id="deleteModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center space-x-3">
+        <div class="h-10 w-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white font-heading">Remove Collaborator</h3>
+          <p class="text-xs text-slate-400">Revoke team member access.</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-300">
+        Are you sure you want to remove <strong id="deleteTargetEmail" class="text-red-400 font-mono"></strong> from your team? They will immediately lose access to this workspace.
+      </p>
+
+      <div class="flex space-x-3 pt-2">
+        <button onclick="closeDeleteModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2.5 rounded-xl border border-slate-700 transition">
+          Cancel
+        </button>
+        <button id="confirmDeleteBtn" onclick="confirmDeleteMember()" class="flex-1 bg-red-500 hover:bg-red-400 text-white text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg shadow-red-500/20">
+          Remove User
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- LEFT HAND SIDEBAR NAVIGATION -->
   <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 min-h-screen z-20">
     <div>
@@ -264,25 +320,26 @@
     import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { doc, updateDoc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // PADDLE CONFIGURATION (Replace with your actual Paddle Client Token & Pro Price ID)
+    // PADDLE CONFIGURATION
     const PADDLE_CLIENT_TOKEN = "live_3fa85341ad9e33a1d40b0049173"; 
-    const PADDLE_PRO_PRICE_ID = "pro_01kz8qnsh8y2knc1qfpq2m0458"; // Your Pro Plan Price ID from Paddle Dashboard
+    const PADDLE_PRO_PRICE_ID = "pro_01kz8qnsh8y2knc1qfpq2m0458"; 
     const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
 
     let currentUser = null;
     let pendingInviteEmail = "";
+    let pendingResetEmail = "";
+    let pendingDeleteEmail = "";
     let currentTeamMembers = [];
 
     // Initialize Paddle SDK
     if (window.Paddle) {
-      Paddle.Environment.set('sandbox'); // Change to 'live' for production
+      Paddle.Environment.set('sandbox');
       Paddle.Initialize({ 
         token: PADDLE_CLIENT_TOKEN,
         eventCallback: function(data) {
           if (data.name === 'checkout.completed') {
             handlePaddlePaymentSuccess(data);
           } else if (data.name === 'checkout.closed') {
-            // Unsuccessful/abandoned checkout handling
             showToast("Payment was not completed. Your account remains on the Starter Plan.", "error");
           }
         }
@@ -442,14 +499,28 @@
       }
     }
 
-    // ================= TEAM MANAGEMENT & VERIFICATION LINK FLOW =================
+    // ================= TEAM MANAGEMENT & VERIFICATION FLOW =================
 
     window.promptTeamInvite = function() {
-      const emailInput = document.getElementById('inviteEmail').value.trim();
+      const emailInput = document.getElementById('inviteEmail').value.trim().toLowerCase();
       if (!emailInput || !emailInput.includes('@')) {
         showToast("Please enter a valid email address.", "error");
         return;
       }
+
+      if (emailInput === currentUser.email.toLowerCase()) {
+        showToast("You cannot add yourself as a collaborator.", "error");
+        return;
+      }
+
+      // Check for duplicate team member
+      const exists = currentTeamMembers.some(m => m.email.toLowerCase() === emailInput);
+      if (exists) {
+        showToast("This email has already been added to your team.", "error");
+        return;
+      }
+
+      // Enforce strict limit of 5 seats
       if (currentTeamMembers.length >= 5) {
         showToast("Maximum seat limit reached (5 seats max).", "error");
         return;
@@ -471,10 +542,8 @@
       btn.innerText = "Sending Link...";
 
       try {
-        // Send Firebase verification/password setup email link
         await sendPasswordResetEmail(auth, pendingInviteEmail);
 
-        // Update Account Team List
         const newMember = {
           email: pendingInviteEmail,
           status: 'Pending Verification',
@@ -494,12 +563,85 @@
         closeInviteModal();
       } catch (err) {
         console.error("Invite Error:", err);
-        showToast("Failed to send verification email. Verify email address.", "error");
+        showToast("Failed to send verification email. Check domain configuration.", "error");
       } finally {
         btn.disabled = false;
         btn.innerText = "Send Verification Link";
       }
     };
+
+    // ================= RESET PASSWORD FLOW =================
+
+    window.promptResetPassword = function(email) {
+      pendingResetEmail = email;
+      document.getElementById('resetTargetEmail').innerText = email;
+      document.getElementById('resetPasswordModal').classList.remove('hidden');
+    };
+
+    window.closeResetPasswordModal = function() {
+      document.getElementById('resetPasswordModal').classList.add('hidden');
+      pendingResetEmail = "";
+    };
+
+    window.confirmResetPassword = async function() {
+      if (!pendingResetEmail) return;
+      const btn = document.getElementById('confirmResetBtn');
+      btn.disabled = true;
+      btn.innerText = "Sending...";
+
+      try {
+        await sendPasswordResetEmail(auth, pendingResetEmail);
+        showToast(`Password reset link sent to ${pendingResetEmail}`, "info");
+        closeResetPasswordModal();
+      } catch (err) {
+        console.error("Password Reset Error:", err);
+        showToast("Failed to send password reset email.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Confirm";
+      }
+    };
+
+    // ================= DELETE MEMBER FLOW =================
+
+    window.promptDeleteMember = function(email) {
+      pendingDeleteEmail = email;
+      document.getElementById('deleteTargetEmail').innerText = email;
+      document.getElementById('deleteModal').classList.remove('hidden');
+    };
+
+    window.closeDeleteModal = function() {
+      document.getElementById('deleteModal').classList.add('hidden');
+      pendingDeleteEmail = "";
+    };
+
+    window.confirmDeleteMember = async function() {
+      if (!pendingDeleteEmail) return;
+      const btn = document.getElementById('confirmDeleteBtn');
+      btn.disabled = true;
+      btn.innerText = "Removing...";
+
+      try {
+        currentTeamMembers = currentTeamMembers.filter(m => m.email.toLowerCase() !== pendingDeleteEmail.toLowerCase());
+        
+        const userRef = doc(db, "users", currentUser.uid);
+        await updateDoc(userRef, {
+          teamMembers: currentTeamMembers
+        });
+
+        renderTeamList(currentTeamMembers);
+        showToast(`Removed ${pendingDeleteEmail} from team.`, "info");
+        closeDeleteModal();
+      } catch (err) {
+        console.error("Delete Member Error:", err);
+        showToast("Failed to remove team member.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Remove User";
+      }
+    };
+
+    // ================= RENDER TEAM LIST =================
 
     function renderTeamList(members) {
       const listEl = document.getElementById('teamList');
@@ -513,14 +655,22 @@
       }
 
       listEl.innerHTML = members.map(m => `
-        <div class="py-3 flex items-center justify-between">
-          <div>
-            <span class="font-semibold text-slate-200 block">${m.email}</span>
+        <div class="py-3 flex items-center justify-between gap-4">
+          <div class="min-w-0 flex-1">
+            <span class="font-semibold text-slate-200 block truncate">${m.email}</span>
             <span class="text-[10px] text-slate-500">Invited ${new Date(m.invitedAt).toLocaleDateString()}</span>
           </div>
-          <span class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-            ${m.status || 'Pending Verification'}
-          </span>
+          <div class="flex items-center space-x-2 shrink-0">
+            <span class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              ${m.status || 'Pending Verification'}
+            </span>
+            <button onclick="promptResetPassword('${m.email}')" title="Reset Password" class="px-2.5 py-1 text-[11px] font-semibold text-slate-300 hover:text-amber-400 bg-slate-950 hover:bg-slate-800 rounded-lg border border-slate-800 transition">
+              Reset Password
+            </button>
+            <button onclick="promptDeleteMember('${m.email}')" title="Delete Member" class="p-1.5 text-slate-400 hover:text-red-400 bg-slate-950 hover:bg-slate-800 rounded-lg border border-slate-800 transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
         </div>
       `).join('');
     }
