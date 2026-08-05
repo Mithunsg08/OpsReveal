@@ -112,9 +112,7 @@
     import { 
       getFirestore, 
       doc, 
-      getDoc,
       setDoc, 
-      updateDoc,
       serverTimestamp 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
@@ -126,6 +124,9 @@
       messagingSenderId: "890870101711",
       appId: "1:890870101711:web:4266246996091ea56c69ba"
     };
+
+    // Update this URL if your Worker runs on a different domain
+    const WORKER_API_BASE = "https://opsreveal-backend.mithun-gs.workers.dev";
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -139,7 +140,7 @@
       const userRole = isAdmin ? "SuperAdmin" : (invitedBy ? "Collaborator" : "Owner");
       const isInvited = Boolean(invitedBy);
 
-      // 1. Create the user profile with status "Verified" if invited
+      // 1. Write ONLY to the current user's own document (Permitted by Security Rules)
       const newUserRef = doc(db, "users", user.uid);
       await setDoc(newUserRef, {
         uid: user.uid,
@@ -150,13 +151,13 @@
         companyId: targetCompanyId,
         invitedBy: invitedBy || null,
         plan: "starter",
-        status: isInvited ? "Verified" : "Pending", // Direct Verified status
+        status: "Verified",
         onboardingCompleted: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       }, { merge: true });
 
-      // 2. If NOT invited, create independent workspace
+      // 2. If NOT invited, create independent company workspace
       if (!isInvited) {
         const companyRef = doc(db, "companies", user.uid);
         await setDoc(companyRef, {
@@ -167,40 +168,19 @@
         }, { merge: true });
       }
 
-      // 3. If invited, update the owner's teamMembers array to mark as "Verified"
+      // 3. If invited, trigger backend Cloudflare Worker to safely update owner's team array
       if (isInvited) {
-        const ownerRef = doc(db, "users", invitedBy);
-        const ownerSnap = await getDoc(ownerRef);
-
-        if (ownerSnap.exists()) {
-          const ownerData = ownerSnap.data();
-          let teamMembers = ownerData.teamMembers || [];
-
-          let updated = false;
-          teamMembers = teamMembers.map(member => {
-            if (member.email && member.email.toLowerCase() === user.email.toLowerCase()) {
-              updated = true;
-              return {
-                ...member,
-                uid: user.uid,        // Map newly created user UID
-                status: "Verified",   // Ensure status is Verified in Firestore
-                updatedAt: new Date().toISOString()
-              };
-            }
-            return member;
+        try {
+          await fetch(`${WORKER_API_BASE}/api/invite`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              invitedEmail: user.email.toLowerCase(),
+              invitedBy: invitedBy
+            })
           });
-
-          if (!updated) {
-            teamMembers.push({
-              email: user.email.toLowerCase(),
-              uid: user.uid,
-              status: "Verified",
-              invitedAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            });
-          }
-
-          await updateDoc(ownerRef, { teamMembers });
+        } catch (apiErr) {
+          console.warn("Backend team linking sync non-critical warning:", apiErr);
         }
       }
     }
@@ -292,10 +272,10 @@
           // 1. Create account in Firebase Auth
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-          // 2. Sync profile to Firestore with "Verified" status
+          // 2. Sync profile securely to Firestore
           await syncUserProfile(userCredential.user, invitedBy);
 
-          // 3. Directly enter dashboard for invited users without requesting email verification
+          // 3. Redirect user directly to dashboard if invited
           if (invitedBy) {
             window.location.href = '/app/dashboard';
           } else {
