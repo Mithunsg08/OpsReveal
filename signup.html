@@ -41,7 +41,7 @@
       <!-- Privacy Assurance Banner -->
       <div class="mb-6 bg-slate-950/80 border border-cyan-500/30 rounded-xl p-3.5 text-slate-300 text-xs flex items-center space-x-3">
         <svg class="w-5 h-5 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 002-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
         </svg>
         <p class="leading-relaxed">
           <strong class="text-cyan-400">We value your privacy.</strong> We don't collect your name, location, or personal details—just your email to secure your account.
@@ -161,6 +161,8 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    const SUPER_ADMIN_EMAIL = "mithun@preventloss.org";
+
     const signupForm = document.getElementById('signupForm');
     const passwordInput = document.getElementById('password');
     const confirmPasswordInput = document.getElementById('confirmPassword');
@@ -210,12 +212,31 @@
       btnSpinner.classList.toggle('hidden', !isLoading);
     }
 
-    // Sync Minimal User Profile to Firestore
+    // Provision User Profile + Workspace in Firestore
     async function syncMinimalUserProfile(user) {
-      await setDoc(doc(db, "users", user.uid), {
+      const isAdmin = user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+
+      // 1. Create Workspace Document
+      const companyRef = doc(db, "companies", user.uid);
+      await setDoc(companyRef, {
+        companyName: isAdmin ? "OpsReveal Admin Workspace" : `${user.displayName || 'User'}'s Workspace`,
+        domain: "",
+        ownerUid: user.uid,
+        createdAt: serverTimestamp()
+      }, { merge: true });
+
+      // 2. Create User Document with Default Plan and Active Status
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, {
         uid: user.uid,
         email: user.email,
+        fullName: user.displayName || "OpsReveal User",
         provider: user.providerData[0]?.providerId || 'password',
+        role: isAdmin ? "SuperAdmin" : "Owner",
+        companyId: user.uid,
+        plan: "starter",       // Default plan written directly to Firestore
+        status: "active",      // Default status written directly to Firestore
+        onboardingCompleted: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       }, { merge: true });
@@ -248,11 +269,11 @@
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
+        // Sync default profile with 'starter' plan & 'active' status
+        await syncMinimalUserProfile(user);
+
         // Send Email Verification Link
         await sendEmailVerification(user);
-
-        // Sync basic doc to Firestore
-        await syncMinimalUserProfile(user);
 
         // Redirect to Email Verification Pending Page
         window.location.href = '/verify-email.html';
@@ -269,10 +290,12 @@
 
       try {
         const result = await signInWithPopup(auth, provider);
+        
+        // Sync default profile with 'starter' plan & 'active' status
         await syncMinimalUserProfile(result.user);
 
-        // Google users are automatically email-verified
-        window.location.href = '/dashboard.html';
+        // Google users skip email-verification requirement
+        window.location.href = '/app/dashboard';
       } catch (err) {
         showError(err.message.replace('Firebase: ', ''));
       }
