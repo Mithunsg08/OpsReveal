@@ -64,7 +64,35 @@
     </div>
   </div>
 
-  <!-- RESET PASSWORD MODAL -->
+  <!-- OWNER RESET PASSWORD MODAL -->
+  <div id="ownerResetPasswordModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center space-x-3">
+        <div class="h-10 w-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white font-heading">Reset Your Password</h3>
+          <p class="text-xs text-slate-400">Account Owner Password Reset.</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-300">
+        Are you sure you want to reset your password? A password reset link will be sent to <strong id="ownerResetEmailDisplay" class="text-amber-400 font-mono"></strong>.
+      </p>
+
+      <div class="flex space-x-3 pt-2">
+        <button onclick="closeOwnerResetModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2.5 rounded-xl border border-slate-700 transition">
+          Cancel
+        </button>
+        <button id="confirmOwnerResetBtn" onclick="confirmOwnerPasswordReset()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg shadow-amber-500/20">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEAM MEMBER RESET PASSWORD MODAL -->
   <div id="resetPasswordModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
       <div class="flex items-center space-x-3">
@@ -72,7 +100,7 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
         </div>
         <div>
-          <h3 class="text-base font-bold text-white font-heading">Reset Password</h3>
+          <h3 class="text-base font-bold text-white font-heading">Reset Collaborator Password</h3>
           <p class="text-xs text-slate-400">Send password recovery email to team member.</p>
         </div>
       </div>
@@ -230,7 +258,12 @@
             <input type="text" id="profName" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-500">
           </div>
           <div>
-            <label class="block text-xs text-slate-400 font-semibold mb-1">Email Address</label>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs text-slate-400 font-semibold">Email Address</label>
+              <button type="button" onclick="promptOwnerResetPassword()" class="text-[11px] font-semibold text-amber-400 hover:text-amber-300 transition focus:outline-none">
+                Reset Password
+              </button>
+            </div>
             <input type="email" id="profEmail" disabled class="w-full bg-slate-950/50 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-500 cursor-not-allowed">
           </div>
           <div>
@@ -499,6 +532,37 @@
       }
     }
 
+    // ================= OWNER RESET PASSWORD FLOW =================
+
+    window.promptOwnerResetPassword = function() {
+      if (!currentUser || !currentUser.email) return;
+      document.getElementById('ownerResetEmailDisplay').innerText = currentUser.email;
+      document.getElementById('ownerResetPasswordModal').classList.remove('hidden');
+    };
+
+    window.closeOwnerResetModal = function() {
+      document.getElementById('ownerResetPasswordModal').classList.add('hidden');
+    };
+
+    window.confirmOwnerPasswordReset = async function() {
+      if (!currentUser || !currentUser.email) return;
+      const btn = document.getElementById('confirmOwnerResetBtn');
+      btn.disabled = true;
+      btn.innerText = "Sending...";
+
+      try {
+        await sendPasswordResetEmail(auth, currentUser.email);
+        showToast(`Password reset link sent to ${currentUser.email}`, "info");
+        closeOwnerResetModal();
+      } catch (err) {
+        console.error("Owner Password Reset Error:", err);
+        showToast("Failed to send password reset email.", "error");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Confirm";
+      }
+    };
+
     // ================= TEAM MANAGEMENT & VERIFICATION FLOW =================
 
     window.promptTeamInvite = function() {
@@ -513,14 +577,12 @@
         return;
       }
 
-      // Check for duplicate team member
       const exists = currentTeamMembers.some(m => m.email.toLowerCase() === emailInput);
       if (exists) {
         showToast("This email has already been added to your team.", "error");
         return;
       }
 
-      // Enforce strict limit of 5 seats
       if (currentTeamMembers.length >= 5) {
         showToast("Maximum seat limit reached (5 seats max).", "error");
         return;
@@ -570,7 +632,7 @@
       }
     };
 
-    // ================= RESET PASSWORD FLOW =================
+    // ================= TEAM RESET PASSWORD FLOW =================
 
     window.promptResetPassword = function(email) {
       pendingResetEmail = email;
