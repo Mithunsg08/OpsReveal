@@ -348,14 +348,15 @@
     </div>
   </main>
 
-  <script type="module">
+ <script type="module">
     import { auth, db, ensureUserProfile } from '/app/auth-guard.js';
     import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { doc, updateDoc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // PADDLE CONFIGURATION
     const PADDLE_CLIENT_TOKEN = "live_3fa85341ad9e33a1d40b0049173"; 
-    const PADDLE_PRO_PRICE_ID = "pro_01kz8qnsh8y2knc1qfpq2m0458"; 
+    // FIXED: Changed "pro_..." to standard Paddle Price ID format "pri_..."
+    const PADDLE_PRO_PRICE_ID = "pri_01kz8qnsh8y2knc1qfpq2m0458"; 
     const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
 
     let currentUser = null;
@@ -366,7 +367,8 @@
 
     // Initialize Paddle SDK
     if (window.Paddle) {
-      Paddle.Environment.set('sandbox');
+      // FIXED: Removed Paddle.Environment.set('sandbox'); because you are using a live token!
+      
       Paddle.Initialize({ 
         token: PADDLE_CLIENT_TOKEN,
         eventCallback: function(data) {
