@@ -351,7 +351,7 @@
   <script type="module">
     import { auth, db, ensureUserProfile } from '/app/auth-guard.js';
     import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { doc, updateDoc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // CONFIGURATION
     const PADDLE_CLIENT_TOKEN = "live_3fa85341ad9e33a1d40b0049173"; 
@@ -690,18 +690,12 @@
           throw new Error(data.error || "Failed to deliver invite email.");
         }
 
-        const newMember = {
-          email: pendingInviteEmail,
-          status: 'Pending Verification',
-          invitedAt: new Date().toISOString()
-        };
-
-        await updateDoc(userRef, {
-          teamMembers: arrayUnion(newMember)
-        });
-
-        currentTeamMembers.push(newMember);
-        renderTeamList(currentTeamMembers);
+        // Clean UI update post-invite: Fetch freshly synced user document from Firestore
+        const updatedSnap = await getDoc(userRef);
+        if (updatedSnap.exists()) {
+          currentTeamMembers = updatedSnap.data()?.teamMembers || [];
+          renderTeamList(currentTeamMembers);
+        }
 
         document.getElementById('inviteEmail').value = "";
         showToast(`Invitation sent via email to ${pendingInviteEmail}`, "info");
@@ -807,7 +801,7 @@
           </div>
           <div class="flex items-center space-x-2 shrink-0">
             <span class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-              ${m.status || 'Pending Verification'}
+              ${m.status || 'Verified'}
             </span>
             <button onclick="promptResetPassword('${m.email}')" title="Reset Password" class="px-2.5 py-1 text-[11px] font-semibold text-slate-300 hover:text-amber-400 bg-slate-950 hover:bg-slate-800 rounded-lg border border-slate-800 transition">
               Reset Password
