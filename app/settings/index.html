@@ -50,7 +50,7 @@
       </div>
 
       <p class="text-xs text-slate-300">
-        An account setup email will be dispatched to <strong id="modalTargetEmail" class="text-cyan-400 font-mono"></strong> with a secure link to create their password and verify access.
+        An invitation email will be dispatched to <strong id="modalTargetEmail" class="text-cyan-400 font-mono"></strong> with a sign-up link to join your workspace.
       </p>
 
       <div class="flex space-x-3 pt-2">
@@ -58,7 +58,7 @@
           Cancel
         </button>
         <button id="confirmInviteBtn" onclick="sendConfirmedInvite()" class="flex-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg shadow-cyan-500/20">
-          Send Verification Link
+          Send Invite Link
         </button>
       </div>
     </div>
@@ -350,18 +350,14 @@
 
   <script type="module">
     import { auth, db, ensureUserProfile } from '/app/auth-guard.js';
-    import { 
-      onAuthStateChanged, 
-      signOut, 
-      sendPasswordResetEmail, 
-      createUserWithEmailAndPassword 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { doc, updateDoc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { doc, updateDoc, getDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // PADDLE CONFIGURATION
+    // CONFIGURATION
     const PADDLE_CLIENT_TOKEN = "live_3fa85341ad9e33a1d40b0049173"; 
     const PADDLE_PRO_PRICE_ID = "pri_01kz8vbb5st84h4x80r1521ecm"; 
     const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
+    const INVITE_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/send-invite";
 
     let currentUser = null;
     let pendingInviteEmail = "";
@@ -464,11 +460,9 @@
         customData: { userId: currentUser.uid }
       });
 
-      // Start automatic status polling in case of redirect overlay stall
       startPaymentStatusPolling();
     };
 
-    // Auto-polling function to check if the user upgraded via backend webhook or manual completion
     function startPaymentStatusPolling() {
       if (pollingInterval) clearInterval(pollingInterval);
       
@@ -518,14 +512,12 @@
           upgradedAt: new Date().toISOString()
         });
 
-        // Close Paddle overlay modal automatically
         if (window.Paddle && Paddle.Checkout) {
           try { Paddle.Checkout.close(); } catch(e){}
         }
 
         showToast("Payment successful! Account upgraded to Professional Tier.", "info");
 
-        // Immediately update UI live without hard refresh
         updatePlanUI(true);
         fetchMonthlyUsage(currentUser.uid, true);
 
@@ -629,7 +621,7 @@
       }
     };
 
-    // ================= TEAM MANAGEMENT & VERIFICATION FLOW =================
+    // ================= TEAM MANAGEMENT & INVITATION FLOW =================
 
     window.promptTeamInvite = function() {
       const emailInput = document.getElementById('inviteEmail').value.trim().toLowerCase();
@@ -664,6 +656,7 @@
       pendingInviteEmail = "";
     };
 
+    // Updated: Dispatches team invitation email via Cloudflare Worker backend and saves user association
     window.sendConfirmedInvite = async function() {
       if (!pendingInviteEmail) return;
 
@@ -672,23 +665,22 @@
       btn.innerText = "Dispatching...";
 
       try {
-        // 1. Provision Auth record with temporary credentials
-        const tempPassword = Math.random().toString(36).slice(-10) + "A1!";
-        let targetUid = null;
+        const response = await fetch(INVITE_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            inviterEmail: currentUser.email,
+            inviterUid: currentUser.uid,
+            inviteeEmail: pendingInviteEmail
+          })
+        });
 
-        try {
-          const userCredential = await createUserWithEmailAndPassword(auth, pendingInviteEmail, tempPassword);
-          targetUid = userCredential.user.uid;
-        } catch (authError) {
-          if (authError.code !== 'auth/email-already-in-use') {
-            throw authError;
-          }
+        if (!response.ok) {
+          throw new Error('Server failed to send email');
         }
 
-        // 2. Add member entry to Firestore
         const newMember = {
           email: pendingInviteEmail,
-          uid: targetUid,
           status: 'Pending Verification',
           invitedAt: new Date().toISOString()
         };
@@ -698,21 +690,18 @@
           teamMembers: arrayUnion(newMember)
         });
 
-        // 3. Dispatch setup link via email
-        await sendPasswordResetEmail(auth, pendingInviteEmail);
-
         currentTeamMembers.push(newMember);
         renderTeamList(currentTeamMembers);
 
         document.getElementById('inviteEmail').value = "";
-        showToast(`Verification link sent to ${pendingInviteEmail}`, "info");
+        showToast(`Invitation sent to ${pendingInviteEmail}`, "info");
         closeInviteModal();
       } catch (err) {
         console.error("Invite Error:", err);
-        showToast("Failed to send verification link.", "error");
+        showToast("Failed to send invitation email.", "error");
       } finally {
         btn.disabled = false;
-        btn.innerText = "Send Verification Link";
+        btn.innerText = "Send Invite Link";
       }
     };
 
