@@ -327,7 +327,7 @@
 
         <!-- LOCKED STATE FOR STARTER TIER -->
         <div id="teamLockedState" class="bg-slate-950/80 border border-slate-800/80 p-8 rounded-xl text-center space-y-2">
-          <svg class="w-8 h-8 text-amber-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          <svg class="w-8 h-8 text-amber-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 04-8 0v4h8z"/></svg>
           <h4 class="text-sm font-bold text-white font-heading">Professional Feature</h4>
           <p class="text-xs text-slate-400">Upgrade your account to the Professional Plan to add up to 5 colleagues and share your OpsReveal dashboard access.</p>
         </div>
@@ -348,14 +348,13 @@
     </div>
   </main>
 
- <script type="module">
+  <script type="module">
     import { auth, db, ensureUserProfile } from '/app/auth-guard.js';
     import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { doc, updateDoc, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // PADDLE CONFIGURATION
     const PADDLE_CLIENT_TOKEN = "live_3fa85341ad9e33a1d40b0049173"; 
-    // FIXED: Changed "pro_..." to standard Paddle Price ID format "pri_..."
     const PADDLE_PRO_PRICE_ID = "pri_01kz8vbb5st84h4x80r1521ecm"; 
     const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
 
@@ -367,8 +366,6 @@
 
     // Initialize Paddle SDK
     if (window.Paddle) {
-      // FIXED: Removed Paddle.Environment.set('sandbox'); because you are using a live token!
-      
       Paddle.Initialize({ 
         token: PADDLE_CLIENT_TOKEN,
         eventCallback: function(data) {
@@ -464,16 +461,27 @@
     // Process Successful Paddle Payment
     async function handlePaddlePaymentSuccess(data) {
       try {
+        const transactionId = data.data?.id || data.data?.transaction_id || "completed";
         const userRef = doc(db, "users", currentUser.uid);
+        
         await updateDoc(userRef, {
           plan: "Professional Tier",
           status: "active",
-          paddleTransactionId: data.data.id,
+          paddleTransactionId: transactionId,
           upgradedAt: new Date().toISOString()
         });
 
         showToast("Payment successful! Account upgraded to Professional Tier.", "info");
-        setTimeout(() => window.location.reload(), 1500);
+
+        // Immediately update UI live without hard refresh
+        updatePlanUI(true);
+        fetchMonthlyUsage(currentUser.uid, true);
+
+        const userDoc = await getDoc(userRef);
+        if (userDoc.exists()) {
+          currentTeamMembers = userDoc.data()?.teamMembers || [];
+          renderTeamList(currentTeamMembers);
+        }
       } catch (error) {
         console.error("Error updating profile post-payment:", error);
         showToast("Payment succeeded but profile update failed. Contact support.", "error");
@@ -528,6 +536,9 @@
         if (!isPro && (uploads >= 4 || lines >= 20000)) {
           document.getElementById('usageUploadsBar').classList.replace('bg-cyan-500', 'bg-amber-500');
           document.getElementById('usageLinesBar').classList.replace('bg-cyan-500', 'bg-amber-500');
+        } else {
+          document.getElementById('usageUploadsBar').classList.replace('bg-amber-500', 'bg-cyan-500');
+          document.getElementById('usageLinesBar').classList.replace('bg-amber-500', 'bg-cyan-500');
         }
       } catch (e) {
         console.error("Failed to load usage stats:", e);
@@ -601,9 +612,11 @@
     };
 
     window.sendConfirmedInvite = async function() {
+      if (!pendingInviteEmail) return;
+
       const btn = document.getElementById('confirmInviteBtn');
       btn.disabled = true;
-      btn.innerText = "Sending Link...";
+      btn.innerText = "Dispatching...";
 
       try {
         await sendPasswordResetEmail(auth, pendingInviteEmail);
@@ -713,7 +726,7 @@
       
       seatsBadge.innerText = `${members.length} / 5 Seats Used`;
 
-      if (members.length === 0) {
+      if (!members || members.length === 0) {
         listEl.innerHTML = `<p class="py-2 italic">No team members invited yet.</p>`;
         return;
       }
@@ -722,7 +735,7 @@
         <div class="py-3 flex items-center justify-between gap-4">
           <div class="min-w-0 flex-1">
             <span class="font-semibold text-slate-200 block truncate">${m.email}</span>
-            <span class="text-[10px] text-slate-500">Invited ${new Date(m.invitedAt).toLocaleDateString()}</span>
+            <span class="text-[10px] text-slate-500">Invited ${new Date(m.invitedAt || m.addedAt).toLocaleDateString()}</span>
           </div>
           <div class="flex items-center space-x-2 shrink-0">
             <span class="px-2.5 py-1 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
