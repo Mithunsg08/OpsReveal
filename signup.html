@@ -139,7 +139,7 @@
       const userRole = isAdmin ? "SuperAdmin" : (invitedBy ? "Collaborator" : "Owner");
       const isInvited = Boolean(invitedBy);
 
-      // 1. Create the NEW user profile using the new user's Auth UID
+      // 1. Create the user profile with status "Verified" if invited
       const newUserRef = doc(db, "users", user.uid);
       await setDoc(newUserRef, {
         uid: user.uid,
@@ -150,13 +150,13 @@
         companyId: targetCompanyId,
         invitedBy: invitedBy || null,
         plan: "starter",
-        status: isInvited ? "Verified" : "Pending",
+        status: isInvited ? "Verified" : "Pending", // Direct Verified status
         onboardingCompleted: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp()
       }, { merge: true });
 
-      // 2. If NOT invited, create an independent workspace
+      // 2. If NOT invited, create independent workspace
       if (!isInvited) {
         const companyRef = doc(db, "companies", user.uid);
         await setDoc(companyRef, {
@@ -167,7 +167,7 @@
         }, { merge: true });
       }
 
-      // 3. If invited, replace the pending record in the owner's teamMembers array
+      // 3. If invited, update the owner's teamMembers array to mark as "Verified"
       if (isInvited) {
         const ownerRef = doc(db, "users", invitedBy);
         const ownerSnap = await getDoc(ownerRef);
@@ -182,8 +182,8 @@
               updated = true;
               return {
                 ...member,
-                uid: user.uid,           // Assign the NEW user's UID correctly
-                status: "Verified",      // Mark as Verified immediately
+                uid: user.uid,        // Map newly created user UID
+                status: "Verified",   // Ensure status is Verified in Firestore
                 updatedAt: new Date().toISOString()
               };
             }
@@ -206,7 +206,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
-      // Clear existing session to prevent cached auth issues
+      // Clear active sessions
       await signOut(auth);
 
       const urlParams = new URLSearchParams(window.location.search);
@@ -228,8 +228,8 @@
 
       if (invitedBy && formHeading && formSubheading) {
         formHeading.textContent = "Accept Workspace Invitation";
-        formSubheading.textContent = "Create your password to complete setup and join your team.";
-        if (btnText) btnText.textContent = "Complete Registration";
+        formSubheading.textContent = "Set your password to join the workspace.";
+        if (btnText) btnText.textContent = "Complete Sign Up";
       }
 
       if (invitedEmail && emailInput) {
@@ -289,18 +289,16 @@
         setLoading(true);
 
         try {
-          // 1. Create user in Firebase Auth
+          // 1. Create account in Firebase Auth
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
-          // 2. Sync profile and map to inviter's workspace
+          // 2. Sync profile to Firestore with "Verified" status
           await syncUserProfile(userCredential.user, invitedBy);
 
-          // 3. Routing
+          // 3. Directly enter dashboard for invited users without requesting email verification
           if (invitedBy) {
-            // Direct entrance to app dashboard without verification prompt
             window.location.href = '/app/dashboard';
           } else {
-            // Uninvited standard sign-ups require verification
             await sendEmailVerification(userCredential.user);
             window.location.href = '/verify-email.html';
           }
