@@ -669,7 +669,7 @@
         const userSnap = await getDoc(userRef);
         const inviterCompany = userSnap.exists() && userSnap.data()?.company ? userSnap.data().company : "OpsReveal Workspace";
 
-        // Call backend API endpoint to send Resend invite email
+        // Call backend API endpoint to send Resend invite email safely with headers inspection
         const res = await fetch(INVITE_API_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -679,6 +679,11 @@
             inviterCompany: inviterCompany
           })
         });
+
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error(`Server returned status ${res.status} non-JSON response.`);
+        }
 
         const data = await res.json();
         if (!res.ok || !data.success) {
