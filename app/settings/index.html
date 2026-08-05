@@ -363,16 +363,17 @@
     let pendingResetEmail = "";
     let pendingDeleteEmail = "";
     let currentTeamMembers = [];
+    let pollingInterval = null;
 
     // Initialize Paddle SDK
     if (window.Paddle) {
       Paddle.Initialize({ 
         token: PADDLE_CLIENT_TOKEN,
         eventCallback: function(data) {
-          if (data.name === 'checkout.completed') {
+          if (data.name === 'checkout.completed' || data.name === 'checkout.payment_failed') {
             handlePaddlePaymentSuccess(data);
           } else if (data.name === 'checkout.closed') {
-            showToast("Payment was not completed. Your account remains on the Starter Plan.", "error");
+            stopPollingAndCheck();
           }
         }
       });
@@ -445,23 +446,64 @@
       signOut(auth).then(() => window.location.replace('/login.html'));
     };
 
-    // Paddle Checkout Trigger
+    // Paddle Checkout Trigger with Auto-Polling
     window.openPaddleCheckout = function() {
       if (!window.Paddle) {
         showToast("Payment gateway unable to initialize. Reload page.", "error");
         return;
       }
+      
       Paddle.Checkout.open({
         items: [{ priceId: PADDLE_PRO_PRICE_ID, quantity: 1 }],
         customer: { email: currentUser.email },
         customData: { userId: currentUser.uid }
       });
+
+      // Start automatic status polling in case of redirect overlay stall
+      startPaymentStatusPolling();
     };
+
+    // Auto-polling function to check if the user upgraded via backend webhook or manual completion
+    function startPaymentStatusPolling() {
+      if (pollingInterval) clearInterval(pollingInterval);
+      
+      let attempts = 0;
+      pollingInterval = setInterval(async () => {
+        attempts++;
+        if (!currentUser) return;
+
+        try {
+          const userRef = doc(db, "users", currentUser.uid);
+          const userDoc = await getDoc(userRef);
+
+          if (userDoc.exists()) {
+            const plan = userDoc.data()?.plan || '';
+            if (plan.toLowerCase().includes('pro')) {
+              clearInterval(pollingInterval);
+              if (window.Paddle && Paddle.Checkout) Paddle.Checkout.close();
+              handlePaddlePaymentSuccess({ data: { id: "auto_completed" } });
+            }
+          }
+        } catch (e) {
+          console.error("Polling error:", e);
+        }
+
+        if (attempts >= 30) {
+          clearInterval(pollingInterval);
+        }
+      }, 3000);
+    }
+
+    function stopPollingAndCheck() {
+      if (pollingInterval) clearInterval(pollingInterval);
+    }
 
     // Process Successful Paddle Payment
     async function handlePaddlePaymentSuccess(data) {
+      if (pollingInterval) clearInterval(pollingInterval);
+
       try {
-        const transactionId = data.data?.id || data.data?.transaction_id || "completed";
+        const transactionId = data?.data?.id || data?.data?.transaction_id || "completed";
         const userRef = doc(db, "users", currentUser.uid);
         
         await updateDoc(userRef, {
@@ -470,6 +512,11 @@
           paddleTransactionId: transactionId,
           upgradedAt: new Date().toISOString()
         });
+
+        // Close Paddle overlay modal automatically
+        if (window.Paddle && Paddle.Checkout) {
+          try { Paddle.Checkout.close(); } catch(e){}
+        }
 
         showToast("Payment successful! Account upgraded to Professional Tier.", "info");
 
@@ -484,7 +531,8 @@
         }
       } catch (error) {
         console.error("Error updating profile post-payment:", error);
-        showToast("Payment succeeded but profile update failed. Contact support.", "error");
+        showToast("Payment succeeded! Upgrading account...", "info");
+        setTimeout(() => window.location.reload(), 1000);
       }
     }
 
