@@ -1,168 +1,235 @@
-<!-- Firebase Auth Logic -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { 
-    getAuth, 
-    createUserWithEmailAndPassword, 
-    sendEmailVerification,
-    GoogleAuthProvider, 
-    signInWithPopup 
-  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-  import { 
-    getFirestore, 
-    doc, 
-    setDoc, 
-    serverTimestamp 
-  } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpsReveal - Sign Up</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
-    authDomain: "opsreveal.firebaseapp.com",
-    projectId: "opsreveal",
-    storageBucket: "opsreveal.firebasestorage.app",
-    messagingSenderId: "890870101711",
-    appId: "1:890870101711:web:4266246996091ea56c69ba"
-  };
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, h4, .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4 antialiased">
 
-  const SUPER_ADMIN_EMAIL = "mithun@preventloss.org";
+  <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-8 shadow-2xl space-y-6">
+    
+    <!-- BRANDING -->
+    <div class="flex items-center space-x-3">
+      <div class="h-10 w-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-xl text-slate-950 shadow-md shadow-cyan-500/20">
+        O
+      </div>
+      <div>
+        <h1 class="font-heading font-extrabold text-2xl text-white tracking-tight">OpsReveal</h1>
+        <p class="text-xs text-slate-400">Prevent Capital Loss</p>
+      </div>
+    </div>
 
-  // Safely provision User Profile + Workspace
-  async function syncMinimalUserProfile(user, invitedBy) {
-    try {
-      const isAdmin = user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+    <!-- ERROR BANNER -->
+    <div id="errorBanner" class="hidden bg-red-500/10 border border-red-500/30 p-3 rounded-xl text-xs text-red-400">
+      <span id="errorMessage"></span>
+    </div>
 
-      // 1. If invited, attach to owner's companyId; otherwise create own workspace
-      const targetCompanyId = invitedBy ? invitedBy : user.uid;
-      const userRole = isAdmin ? "SuperAdmin" : (invitedBy ? "Collaborator" : "Owner");
+    <!-- HEADER -->
+    <div>
+      <h2 class="text-xl font-bold text-white font-heading">Create your account</h2>
+      <p class="text-xs text-slate-400 mt-1">Get started with your OpsReveal operational analytics workspace.</p>
+    </div>
 
-      if (!invitedBy) {
-        const companyRef = doc(db, "companies", user.uid);
-        await setDoc(companyRef, {
-          companyName: isAdmin ? "OpsReveal Admin Workspace" : `${user.displayName || 'User'}'s Workspace`,
-          domain: "",
-          ownerUid: user.uid,
-          createdAt: serverTimestamp()
+    <!-- SIGNUP FORM -->
+    <form id="signupForm" class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1.5" for="email">Email Address</label>
+        <input type="email" id="email" required placeholder="you@company.com" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition">
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1.5" for="password">Password</label>
+        <div class="relative">
+          <input type="password" id="password" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition">
+          <button type="button" id="togglePasswordBtn" class="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-white">Show</button>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 mb-1.5" for="confirmPassword">Confirm Password</label>
+        <div class="relative">
+          <input type="password" id="confirmPassword" required placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition">
+          <button type="button" id="toggleConfirmPasswordBtn" class="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-white">Show</button>
+        </div>
+      </div>
+
+      <!-- Password Requirements Indicator -->
+      <div class="text-[11px] space-y-1 text-slate-500 pt-1">
+        <div id="condLength" class="flex items-center space-x-1.5">• 8+ characters</div>
+        <div id="condUpper" class="flex items-center space-x-1.5">• At least 1 uppercase letter</div>
+        <div id="condNumber" class="flex items-center space-x-1.5">• At least 1 number or special symbol</div>
+      </div>
+
+      <button type="submit" id="submitBtn" class="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold py-3 rounded-xl text-xs transition shadow-lg shadow-cyan-500/20 flex items-center justify-center">
+        <span id="btnText">Create Account & Accept Invite</span>
+        <span id="btnSpinner" class="hidden">Processing...</span>
+      </button>
+    </form>
+
+    <div class="relative flex py-2 items-center">
+      <div class="flex-grow border-t border-slate-800"></div>
+      <span class="flex-shrink mx-4 text-[10px] text-slate-500 uppercase tracking-wider">Or</span>
+      <div class="flex-grow border-t border-slate-800"></div>
+    </div>
+
+    <button type="button" id="googleAuthBtn" class="w-full bg-slate-950 hover:bg-slate-800 text-slate-200 border border-slate-800 font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center space-x-2">
+      <span>Sign up with Google</span>
+    </button>
+
+    <div class="text-center pt-2">
+      <p class="text-xs text-slate-400">
+        Already have an account? <a href="/login.html" class="text-cyan-400 hover:underline font-semibold">Sign in</a>
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Firebase App & Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword, 
+      sendEmailVerification,
+      GoogleAuthProvider, 
+      signInWithPopup 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { 
+      getFirestore, 
+      doc, 
+      setDoc, 
+      serverTimestamp 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
+      authDomain: "opsreveal.firebaseapp.com",
+      projectId: "opsreveal",
+      storageBucket: "opsreveal.firebasestorage.app",
+      messagingSenderId: "890870101711",
+      appId: "1:890870101711:web:4266246996091ea56c69ba"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const SUPER_ADMIN_EMAIL = "mithun@preventloss.org";
+
+    async function syncMinimalUserProfile(user, invitedBy) {
+      try {
+        const isAdmin = user.email && user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+        const targetCompanyId = invitedBy ? invitedBy : user.uid;
+        const userRole = isAdmin ? "SuperAdmin" : (invitedBy ? "Collaborator" : "Owner");
+
+        if (!invitedBy) {
+          const companyRef = doc(db, "companies", user.uid);
+          await setDoc(companyRef, {
+            companyName: isAdmin ? "OpsReveal Admin Workspace" : `${user.displayName || 'User'}'s Workspace`,
+            domain: "",
+            ownerUid: user.uid,
+            createdAt: serverTimestamp()
+          }, { merge: true });
+        }
+
+        const userRef = doc(db, "users", user.uid);
+        await setDoc(userRef, {
+          uid: user.uid,
+          email: user.email,
+          fullName: user.displayName || "OpsReveal User",
+          provider: user.providerData[0]?.providerId || 'password',
+          role: userRole,
+          companyId: targetCompanyId,
+          invitedBy: invitedBy || null,
+          plan: "starter",
+          status: "active",
+          onboardingCompleted: true,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
         }, { merge: true });
+
+      } catch (err) {
+        console.warn("Profile syncing warning:", err);
+      }
+    }
+
+    // Execute setup after DOM loads
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const invitedBy = urlParams.get('invitedBy');
+      const invitedEmail = urlParams.get('email');
+
+      const emailInput = document.getElementById('email');
+      const signupForm = document.getElementById('signupForm');
+      const passwordInput = document.getElementById('password');
+      const confirmPasswordInput = document.getElementById('confirmPassword');
+      const googleAuthBtn = document.getElementById('googleAuthBtn');
+      const errorBanner = document.getElementById('errorBanner');
+      const errorMessage = document.getElementById('errorMessage');
+      const submitBtn = document.getElementById('submitBtn');
+      const btnText = document.getElementById('btnText');
+      const btnSpinner = document.getElementById('btnSpinner');
+
+      if (invitedEmail && emailInput) {
+        emailInput.value = decodeURIComponent(invitedEmail);
+        emailInput.readOnly = true;
+        emailInput.classList.add('opacity-75', 'cursor-not-allowed');
       }
 
-      // 2. Create User Document
-      const userRef = doc(db, "users", user.uid);
-      await setDoc(userRef, {
-        uid: user.uid,
-        email: user.email,
-        fullName: user.displayName || "OpsReveal User",
-        provider: user.providerData[0]?.providerId || 'password',
-        role: userRole,
-        companyId: targetCompanyId,
-        invitedBy: invitedBy || null,
-        plan: "starter",
-        status: "active",
-        onboardingCompleted: true,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      }, { merge: true });
-
-    } catch (err) {
-      console.warn("Profile pre-creation notice: auth-guard will complete profile setup on login.", err);
-    }
-  }
-
-  // Initialize UI & Event Listeners once DOM is ready
-  window.addEventListener('DOMContentLoaded', () => {
-    // --- Check for Invitation Parameters ---
-    const urlParams = new URLSearchParams(window.location.search);
-    const invitedBy = urlParams.get('invitedBy');
-    const invitedEmail = urlParams.get('email');
-
-    const emailInput = document.getElementById('email');
-    const signupForm = document.getElementById('signupForm');
-    const passwordInput = document.getElementById('password');
-    const confirmPasswordInput = document.getElementById('confirmPassword');
-    const googleAuthBtn = document.getElementById('googleAuthBtn');
-    const errorBanner = document.getElementById('errorBanner');
-    const errorMessage = document.getElementById('errorMessage');
-    const submitBtn = document.getElementById('submitBtn');
-    const btnText = document.getElementById('btnText');
-    const btnSpinner = document.getElementById('btnSpinner');
-
-    // Auto-fill and lock email if arriving via invitation link
-    if (invitedEmail && emailInput) {
-      emailInput.value = decodeURIComponent(invitedEmail);
-      emailInput.readOnly = true;
-      emailInput.classList.add('opacity-75', 'cursor-not-allowed');
-    }
-
-    // Toggle Password Visibility
-    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
-    if (togglePasswordBtn && passwordInput) {
-      togglePasswordBtn.addEventListener('click', () => {
+      document.getElementById('togglePasswordBtn')?.addEventListener('click', () => {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
         passwordInput.setAttribute('type', type);
       });
-    }
 
-    // Toggle Confirm Password Visibility
-    const toggleConfirmPasswordBtn = document.getElementById('toggleConfirmPasswordBtn');
-    if (toggleConfirmPasswordBtn && confirmPasswordInput) {
-      toggleConfirmPasswordBtn.addEventListener('click', () => {
+      document.getElementById('toggleConfirmPasswordBtn')?.addEventListener('click', () => {
         const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
         confirmPasswordInput.setAttribute('type', type);
       });
-    }
 
-    // Real-Time Password Validation
-    if (passwordInput) {
-      passwordInput.addEventListener('input', () => {
+      passwordInput?.addEventListener('input', () => {
         const val = passwordInput.value;
-        
-        const condLength = document.getElementById('condLength');
-        if (condLength) {
-          condLength.className = `flex items-center space-x-1.5 ${val.length >= 8 ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`;
-        }
-
-        const condUpper = document.getElementById('condUpper');
-        if (condUpper) {
-          condUpper.className = `flex items-center space-x-1.5 ${/[A-Z]/.test(val) ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`;
-        }
-
-        const condNumber = document.getElementById('condNumber');
-        if (condNumber) {
-          condNumber.className = `flex items-center space-x-1.5 ${/[\d\W]/.test(val) ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`;
-        }
+        document.getElementById('condLength').className = `flex items-center space-x-1.5 ${val.length >= 8 ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`;
+        document.getElementById('condUpper').className = `flex items-center space-x-1.5 ${/[A-Z]/.test(val) ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`;
+        document.getElementById('condNumber').className = `flex items-center space-x-1.5 ${/[\d\W]/.test(val) ? 'text-emerald-400 font-semibold' : 'text-slate-500'}`;
       });
-    }
 
-    function showError(msg) {
-      if (errorMessage && errorBanner) {
-        errorMessage.textContent = msg;
-        errorBanner.classList.remove('hidden');
-      } else {
-        alert(msg);
+      function showError(msg) {
+        if (errorMessage && errorBanner) {
+          errorMessage.textContent = msg;
+          errorBanner.classList.remove('hidden');
+        }
       }
-    }
 
-    function setLoading(isLoading) {
-      if (submitBtn) submitBtn.disabled = isLoading;
-      if (btnText) btnText.classList.toggle('hidden', isLoading);
-      if (btnSpinner) btnSpinner.classList.toggle('hidden', !isLoading);
-    }
+      function setLoading(isLoading) {
+        if (submitBtn) submitBtn.disabled = isLoading;
+        if (btnText) btnText.classList.toggle('hidden', isLoading);
+        if (btnSpinner) btnSpinner.classList.toggle('hidden', !isLoading);
+      }
 
-    // Form Submission Handler
-    if (signupForm) {
-      signupForm.addEventListener('submit', async (e) => {
+      signupForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (errorBanner) errorBanner.classList.add('hidden');
 
-        const email = emailInput?.value?.trim() || '';
-        const password = passwordInput?.value || '';
-        const confirmPassword = confirmPasswordInput?.value || '';
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
 
         if (password.length < 8 || !/[A-Z]/.test(password) || !/[\d\W]/.test(password)) {
-          showError("Please satisfy all password conditions (8+ chars, 1 uppercase, 1 number/symbol).");
+          showError("Please satisfy all password conditions.");
           return;
         }
 
@@ -175,28 +242,21 @@
 
         try {
           const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          const user = userCredential.user;
+          await syncMinimalUserProfile(userCredential.user, invitedBy);
 
-          await syncMinimalUserProfile(user, invitedBy);
-
-          // Bypass email verification if accepting an invite
           if (invitedBy) {
             window.location.href = '/app/dashboard';
           } else {
-            await sendEmailVerification(user);
+            await sendEmailVerification(userCredential.user);
             window.location.href = '/verify-email.html';
           }
-
         } catch (err) {
           setLoading(false);
           showError(err.message.replace('Firebase: ', ''));
         }
       });
-    }
 
-    // Google Sign-Up Handler
-    if (googleAuthBtn) {
-      googleAuthBtn.addEventListener('click', async () => {
+      googleAuthBtn?.addEventListener('click', async () => {
         if (errorBanner) errorBanner.classList.add('hidden');
         const provider = new GoogleAuthProvider();
 
@@ -208,6 +268,7 @@
           showError(err.message.replace('Firebase: ', ''));
         }
       });
-    }
-  });
-</script>
+    });
+  </script>
+</body>
+</html>
