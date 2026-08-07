@@ -54,6 +54,43 @@
     </div>
   </div>
 
+  <!-- DELETE ACCOUNT CONFIRMATION MODAL -->
+  <div id="deleteAccountModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-red-900/50 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex items-center space-x-3">
+        <div class="h-10 w-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white font-heading">Delete Account</h3>
+          <p class="text-xs text-red-400 font-semibold">Warning: This action is permanent!</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-300 leading-relaxed">
+        If you close your account, it will be <strong class="text-red-400">permanently deleted</strong>. You will immediately lose all access, report history, and subscription data. This action cannot be undone.
+      </p>
+
+      <div class="space-y-1.5 pt-1">
+        <label class="block text-[11px] font-semibold text-slate-400">
+          To confirm, type <span class="text-red-400 font-mono font-bold">Delete</span> below:
+        </label>
+        <input type="text" id="deleteConfirmInput" placeholder='Type "Delete"' class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-red-500 font-mono">
+      </div>
+
+      <div class="flex space-x-3 pt-2">
+        <button onclick="closeDeleteAccountModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold py-2.5 rounded-xl border border-slate-700 transition">
+          Cancel
+        </button>
+        <button id="confirmDeleteAccountBtn" disabled onclick="executeAccountDeletion()" class="flex-1 bg-red-600/50 text-slate-400 cursor-not-allowed text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg">
+          Permanently Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- LEFT HAND SIDEBAR NAVIGATION -->
   <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 min-h-screen z-20">
     <div>
@@ -221,13 +258,31 @@
         </div>
       </div>
 
+      <!-- DANGER ZONE: CLOSE ACCOUNT -->
+      <div class="bg-slate-900 border border-red-900/40 rounded-2xl p-6 shadow-xl space-y-4">
+        <h3 class="text-sm font-bold text-red-400 uppercase tracking-wider flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          Danger Zone
+        </h3>
+        
+        <div class="bg-slate-950/60 border border-red-900/30 p-5 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h4 class="font-bold text-white text-sm">Close This Account</h4>
+            <p class="text-xs text-slate-400 mt-0.5">Permanently delete your profile and all associated data from OpsReveal.</p>
+          </div>
+          <button onclick="promptDeleteAccount()" class="bg-red-600/10 hover:bg-red-600/20 text-red-400 border border-red-500/30 font-bold px-4 py-2.5 rounded-xl text-xs transition shrink-0">
+            Close Account
+          </button>
+        </div>
+      </div>
+
     </div>
   </main>
 
   <script type="module">
     import { auth, db, ensureUserProfile } from '/app/auth-guard.js';
-    import { onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { doc, updateDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { onAuthStateChanged, signOut, sendPasswordResetEmail, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { doc, updateDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // CONFIGURATION
     const PADDLE_CLIENT_TOKEN = "live_3fa85341ad9e33a1d40b0049173"; 
@@ -475,6 +530,67 @@
       } finally {
         btn.disabled = false;
         btn.innerText = "Confirm";
+      }
+    };
+
+    // ================= DELETE ACCOUNT FLOW =================
+
+    window.promptDeleteAccount = function() {
+      const input = document.getElementById('deleteConfirmInput');
+      const btn = document.getElementById('confirmDeleteAccountBtn');
+      
+      input.value = '';
+      btn.disabled = true;
+      btn.className = "flex-1 bg-red-600/50 text-slate-400 cursor-not-allowed text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg";
+
+      document.getElementById('deleteAccountModal').classList.remove('hidden');
+    };
+
+    window.closeDeleteAccountModal = function() {
+      document.getElementById('deleteAccountModal').classList.add('hidden');
+    };
+
+    // Enable/disable the delete confirmation button based on typing "Delete"
+    document.getElementById('deleteConfirmInput').addEventListener('input', (e) => {
+      const btn = document.getElementById('confirmDeleteAccountBtn');
+      if (e.target.value === 'Delete') {
+        btn.disabled = false;
+        btn.className = "flex-1 bg-red-600 hover:bg-red-500 text-white cursor-pointer text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg shadow-red-600/30";
+      } else {
+        btn.disabled = true;
+        btn.className = "flex-1 bg-red-600/50 text-slate-400 cursor-not-allowed text-xs font-extrabold py-2.5 rounded-xl transition shadow-lg";
+      }
+    });
+
+    window.executeAccountDeletion = async function() {
+      if (!currentUser) return;
+
+      const btn = document.getElementById('confirmDeleteAccountBtn');
+      btn.disabled = true;
+      btn.innerText = "Deleting...";
+
+      try {
+        // 1. Delete user record from Firestore
+        const userRef = doc(db, "users", currentUser.uid);
+        await deleteDoc(userRef);
+
+        // 2. Delete user from Firebase Auth
+        await deleteUser(currentUser);
+
+        showToast("Account successfully closed.", "info");
+        setTimeout(() => {
+          window.location.replace('/login.html');
+        }, 1000);
+
+      } catch (err) {
+        console.error("Account Deletion Error:", err);
+        if (err.code === 'auth/requires-recent-login') {
+          showToast("Security notice: Please log out and log back in to delete your account.", "error");
+        } else {
+          showToast("Failed to delete account. Please contact support.", "error");
+        }
+        btn.disabled = false;
+        btn.innerText = "Permanently Delete";
       }
     };
   </script>
