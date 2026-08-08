@@ -164,7 +164,7 @@
         <p class="text-sm font-bold text-slate-200">
           <span class="text-cyan-400 hover:underline">Select CSV or Excel File</span> or drag and drop
         </p>
-        <p class="text-xs text-slate-500 mt-1">Must strictly match the designated header schema.</p>
+        <p class="text-xs text-slate-500 mt-1">Must strictly match the 10 header columns format.</p>
         <input id="fileInput" type="file" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileSelect(event)">
       </div>
     </div>
@@ -350,7 +350,6 @@
         document.getElementById('planLabel').innerText = profile?.plan || 'Starter Tier';
       }
 
-      // Check Quota on Initial Load
       const allowed = await checkAndEnforceQuota(user, profile);
       if (!allowed) return;
 
@@ -362,20 +361,27 @@
       signOut(auth).then(() => window.location.replace('/login.html'));
     };
 
-    const SCHEMAS = {
+    // ONLY STRICT 10 INPUT HEADERS EXPECTED IN FILE UPLOAD
+    const INPUT_SCHEMAS = {
       grn: [
-        "receiving_grn_date/Month", "supplier_name", "product_sku", "product_name", 
-        "category", "receiving_cp", "receiving_mrp", "received_qty", 
-        "manufacturing_date", "expiry_date", "Total GRN Value", "Shelf Life %", 
-        "Shelf Life Exception", "Margin %", "Margin % Exception", "Min margin", 
-        "Diff margin", "Margin Exception", " Margin Leakage Value ", "Min CP(whole data)", 
-        "MRP for Min CP (Whole date)", " CP Leakage (whole data) ", "CP Exception (whole data)", 
-        "Min CP(Same day/Same month)", "MRP for Min CP (Same day/Same month)", 
-        " CP Leakage (Same day/Same month) ", "CP Exception (Same day/Same month)"
+        "receiving_grn_date/Month", 
+        "supplier_name", 
+        "product_sku", 
+        "product_name", 
+        "category", 
+        "receiving_cp", 
+        "receiving_mrp", 
+        "received_qty", 
+        "manufacturing_date", 
+        "expiry_date"
       ],
       sales: [
-        "sales_date", "product_sku", "product_name", 
-        "sold_qty", "cp", "total_sales_price"
+        "sales_date", 
+        "product_sku", 
+        "product_name", 
+        "sold_qty", 
+        "cp", 
+        "total_sales_price"
       ]
     };
 
@@ -395,7 +401,7 @@
 
     window.downloadTemplate = function() {
       const type = document.getElementById('uploadTypeSelect').value;
-      const headers = SCHEMAS[type];
+      const headers = INPUT_SCHEMAS[type];
       
       const ws = XLSX.utils.aoa_to_sheet([headers]);
       const wb = XLSX.utils.book_new();
@@ -414,7 +420,6 @@
 
       setTimeout(() => {
         const type = document.getElementById('uploadTypeSelect').value;
-        const requiredHeaders = SCHEMAS[type];
 
         const reader = new FileReader();
         reader.onload = function(evt) {
@@ -431,7 +436,7 @@
               return;
             }
 
-            const totalLines = Math.max(0, rawData.length - 1); // Exclude header row
+            const totalLines = Math.max(0, rawData.length - 1);
             const userPlan = (currentUserProfile?.plan || 'starter').toLowerCase();
 
             if (userPlan === 'starter' && totalLines > 20000) {
@@ -455,13 +460,13 @@
             }
 
             const fileHeaders = rawData[0].map(h => String(h || '').trim().toLowerCase());
-            
-            // Check base 10 input columns minimum for GRN processing validation
-            const baseGRNHeaders = SCHEMAS.grn.slice(0, 10).map(h => h.toLowerCase());
-            const isValid = baseGRNHeaders.every((reqHeader, index) => fileHeaders[index] === reqHeader);
+            const requiredHeaders = INPUT_SCHEMAS[type].map(h => h.toLowerCase());
+
+            // Strict 10-column validation
+            const isValid = requiredHeaders.every((reqHeader, index) => fileHeaders[index] === reqHeader);
 
             if (!isValid && type === 'grn') {
-              showError(`Invalid format. The file columns must strictly start with: ${baseGRNHeaders.join(', ')}`);
+              showError(`Invalid format. File must strictly match these 10 header columns: ${INPUT_SCHEMAS.grn.join(', ')}`);
               hideModal();
               return;
             }
@@ -499,7 +504,7 @@
     }
 
     // -------------------------------------------------------------
-    // GRN REPORT PROCESSING ENGINE
+    // GRN REPORT PROCESSING ENGINE (10 INPUT COLS -> 27 OUTPUT COLS)
     // -------------------------------------------------------------
     function processGRNReport(rows, fileName) {
       const targetShelfLifePct = parseFloat(document.getElementById('targetShelfLifeInput').value || 60) / 100;
@@ -512,7 +517,9 @@
       const minCPSameDaySKU = {};
       const mrpForMinCPSameDaySKU = {};
 
-      // First Pass: Precalculate Whole Data & Same Day/Month metrics
+      let totalGRNValue = 0;
+
+      // Pass 1: Aggregate minimum margins and minimum cost prices across dataset
       rows.forEach(row => {
         if (!row || row.length === 0) return;
         const recDateFormatted = formatDateFormatted(row[0]);
@@ -522,12 +529,10 @@
 
         const margin = mrp > 0 ? (mrp - cp) / mrp : 0;
 
-        // Whole Data Min Margin
         if (minMarginBySKU[sku] === undefined || margin < minMarginBySKU[sku]) {
           minMarginBySKU[sku] = margin;
         }
 
-        // Whole Data Min CP & Max MRP for Min CP
         if (minCPBySKU[sku] === undefined || cp < minCPBySKU[sku]) {
           minCPBySKU[sku] = cp;
           mrpForMinCPWholeSKU[sku] = mrp;
@@ -537,7 +542,6 @@
           }
         }
 
-        // Same Day/Month Min CP & Max MRP for Same Day Min CP
         const sameDayKey = `${recDateFormatted}_${sku}`;
         if (minCPSameDaySKU[sameDayKey] === undefined || cp < minCPSameDaySKU[sameDayKey]) {
           minCPSameDaySKU[sameDayKey] = cp;
@@ -565,6 +569,7 @@
       const sheetCPWhole = [];
       const sheetCPSameDayMonth = [];
 
+      // Pass 2: Generate full 27 calculated audit output metrics
       rows.forEach((row) => {
         if (!row || row.length === 0) return;
 
@@ -582,11 +587,9 @@
         const mfgDateStr = formatDateFormatted(mfgDateStrRaw);
         const expDateStr = formatDateFormatted(expDateStrRaw);
 
-        // Column Calculations matching business rules
-        // Total GRN Value = =H2*F2
         const totalGRNVal = qty * cp;
+        totalGRNValue += totalGRNVal;
 
-        // Shelf Life % = =IF(J2="","Dates Not Provided",IF(J2<=A2,"Expired before receving",IF(I2="","Dates Not Provided",IF(J2<I2,"Data is wrong",IFERROR((J2-A2)/(J2-I2),"")))))
         let shelfLifePctVal = "Dates Not Provided";
         let shelfLifeExceptionVal = "Dates Not Provided";
         
@@ -611,7 +614,6 @@
           }
         }
 
-        // Shelf Life Exception = =IF(L2="Dates Not Provided","Dates Not Provided",IF(L2="Data is wrong","Data is wrong",IF(L2="Expired before receving","Expired before receving",IF(L2<=0,"Expired before receving",IF(L2<0.6,"Low Shelf life","Ok")))))
         if (shelfLifePctVal === "Dates Not Provided") {
           shelfLifeExceptionVal = "Dates Not Provided";
         } else if (shelfLifePctVal === "Data is wrong") {
@@ -622,47 +624,23 @@
           shelfLifeExceptionVal = shelfLifePctVal < targetShelfLifePct ? "Low Shelf life" : "Ok";
         }
 
-        // Margin % = =(G2-F2)/G2
         const marginPctVal = mrp > 0 ? (mrp - cp) / mrp : 0;
-
-        // Margin % Exception = =IF(N2<=20%,"Less than average Margin","Ok")
         const marginPctExceptionVal = marginPctVal <= targetMarginPct ? "Less than average Margin" : "Ok";
 
-        // Min margin = =MINIFS(N:N,C:C,C2)
         const minMarginVal = minMarginBySKU[sku] !== undefined ? minMarginBySKU[sku] : marginPctVal;
-
-        // Diff margin = =P2-N2
         const diffMarginVal = minMarginVal - marginPctVal;
-
-        // Margin Exception = =IF(Q2>=0,"No Exception","There is an Margin decrease")
         const marginExceptionVal = diffMarginVal >= 0 ? "No Exception" : "There is an Margin decrease";
-
-        // Margin Leakage Value = =IF(R2="There is an Margin decrease",Q2*K2,"Ok")
         const marginLeakageVal = marginExceptionVal === "There is an Margin decrease" ? (diffMarginVal * totalGRNVal) : "Ok";
 
-        // Min CP(whole data) = =MINIFS(F:F,C:C,C2)
         const minCPWholeVal = minCPBySKU[sku] !== undefined ? minCPBySKU[sku] : cp;
-
-        // MRP for Min CP (Whole date) = =MAXIFS(G:G,C:C,C2,F:F,T2)
         const mrpForMinCPWholeVal = mrpForMinCPWholeSKU[sku] !== undefined ? mrpForMinCPWholeSKU[sku] : mrp;
-
-        // CP Leakage (whole data) = =IF(U2=G2,T2-F2,0)*H2
         const cpLeakageWholeVal = (mrpForMinCPWholeVal === mrp ? (minCPWholeVal - cp) : 0) * qty;
-
-        // CP Exception (whole data) = =IF(V2<0,"You Got Charged More","No Exception")
         const cpExceptionWholeVal = cpLeakageWholeVal < 0 ? "You Got Charged More" : "No Exception";
 
-        // Min CP(Same day/Same month) = =MINIFS(F:F,A:A,A2,C:C,C2)
         const sameDayKey = `${dateVal}_${sku}`;
         const minCPSameDayVal = minCPSameDaySKU[sameDayKey] !== undefined ? minCPSameDaySKU[sameDayKey] : cp;
-
-        // MRP for Min CP (Same day/Same month) = =MAXIFS(G:G,A:A,A2,C:C,C2,F:F,X2)
         const mrpForMinCPSameDayVal = mrpForMinCPSameDaySKU[sameDayKey] !== undefined ? mrpForMinCPSameDaySKU[sameDayKey] : mrp;
-
-        // CP Leakage (Same day/Same month) = =IF(Y2=G2,X2-F2,0)*H2
         const cpLeakageSameDayVal = (mrpForMinCPSameDayVal === mrp ? (minCPSameDayVal - cp) : 0) * qty;
-
-        // CP Exception (Same day/Same month) = =IF(Z2<0,"You Got Charged More On Same Day","No Exception")
         const cpExceptionSameDayVal = cpLeakageSameDayVal < 0 ? "You Got Charged More On Same Day" : "No Exception";
 
         let isFlagged = false;
@@ -720,7 +698,7 @@
 
         if (isFlagged) flaggedExceptionsCount++;
 
-        // Format outputs strictly matching requested header list
+        // Append 27 audit output columns
         outputData.push({
           "receiving_grn_date/Month": dateVal,
           "supplier_name": supplier,
@@ -770,6 +748,7 @@
         reportType: "GRN",
         fileName: sanitizeDataString(fileName),
         linesProcessed: rows.length,
+        totalGRNValue: totalGRNValue,
         totalLeakages: totalLeakages,
         flaggedExceptionsCount: flaggedExceptionsCount,
         leakageBreakdown: leakageBreakdown
@@ -781,6 +760,7 @@
     // -------------------------------------------------------------
     function processSalesReport(rows, fileName) {
       const outputData = [];
+      let totalSalesValue = 0;
       let totalLeakages = 0;
       let flaggedExceptionsCount = 0;
 
@@ -799,6 +779,8 @@
         const qty = parseFloat(row[3] || 0);
         const cp = parseFloat(row[4] || 0);
         const salesPrice = parseFloat(row[5] || 0);
+
+        totalSalesValue += (salesPrice * qty);
 
         const salesLeakageVal = (salesPrice - cp) * qty;
         const salesExceptionVal = salesLeakageVal >= 0 ? "No Exception" : "Sold in Negative margin";
@@ -846,6 +828,7 @@
         reportType: "Sales",
         fileName: sanitizeDataString(fileName),
         linesProcessed: rows.length,
+        totalGRNValue: totalSalesValue,
         totalLeakages: totalLeakages,
         flaggedExceptionsCount: flaggedExceptionsCount,
         leakageBreakdown: leakageBreakdown
@@ -874,12 +857,18 @@
     }
 
     // -------------------------------------------------------------
-    // CLOUDFLARE BACKEND STORAGE
+    // CLOUDFLARE BACKEND STORAGE DISPATCHER
     // -------------------------------------------------------------
     async function saveDetailedSummaryToCloudflare(auditDetails) {
       if (!currentUser) return;
 
-      const risk = auditDetails.flaggedExceptionsCount === 0 ? "None" : auditDetails.flaggedExceptionsCount < 10 ? "Low" : auditDetails.flaggedExceptionsCount < 50 ? "Medium" : "High";
+      const risk = auditDetails.flaggedExceptionsCount === 0 
+        ? "None" 
+        : auditDetails.flaggedExceptionsCount < 10 
+        ? "Low" 
+        : auditDetails.flaggedExceptionsCount < 50 
+        ? "Medium" 
+        : "High";
 
       const payload = {
         userId: currentUser.uid,
@@ -888,10 +877,11 @@
         fileName: auditDetails.fileName,
         reportType: auditDetails.reportType,
         linesProcessed: auditDetails.linesProcessed,
+        totalGRNValue: auditDetails.totalGRNValue || 0,
         flaggedExceptionsCount: auditDetails.flaggedExceptionsCount,
         totalLeakages: auditDetails.totalLeakages,
         riskScore: risk,
-        leakagesDetailed: auditDetails.leakageBreakdown
+        leakageBreakdown: auditDetails.leakageBreakdown
       };
 
       try {
