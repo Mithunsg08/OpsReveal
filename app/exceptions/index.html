@@ -1,100 +1,134 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-slate-950 dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OpsReveal - Exceptions</title>
+  
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- html2canvas for exporting cards -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+
   <style>
-    body {
-      background-color: #0b0f19;
-      color: #f3f4f6;
-    }
+    body { font-family: 'Inter', sans-serif; }
+    h1, h2, h3, h4, .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
   </style>
 </head>
-<body class="font-sans antialiased flex h-screen overflow-hidden">
+<body style="display: none;" class="min-h-screen bg-slate-950 text-slate-100 flex antialiased relative">
 
-  <!-- Left Sidebar Navigation -->
-  <aside class="w-64 bg-[#0d1322] border-r border-gray-800 flex flex-col justify-between p-4 flex-shrink-0">
+  <!-- LEFT HAND SIDEBAR NAVIGATION -->
+  <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 min-h-screen z-20">
     <div>
-      <!-- Brand Logo Header -->
-      <div class="flex items-center gap-3 px-2 py-3 mb-6">
-        <div class="w-9 h-9 rounded-lg bg-cyan-500 flex items-center justify-center font-bold text-slate-950 text-xl shadow-lg shadow-cyan-500/20">
+      <div class="h-16 flex items-center px-6 border-b border-slate-800/80 space-x-3">
+        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-lg text-slate-950 shadow-md shadow-cyan-500/20">
           O
         </div>
         <div>
-          <h1 class="font-bold text-white text-lg leading-tight tracking-tight">OpsReveal</h1>
-          <p class="text-[10px] text-gray-400 font-medium tracking-wide">Prevent Capital Loss</p>
+          <span class="font-heading font-extrabold text-xl text-white tracking-tight block">OpsReveal</span>
+          <span class="text-[10px] text-slate-500 block -mt-1 font-medium">Prevent Capital Loss</span>
         </div>
       </div>
 
-      <!-- Navigation Links -->
-      <nav class="space-y-1.5 text-sm font-medium">
-        <a href="/app/dashboard/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition">
-          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 001 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-          Dashboard
-        </a>
-        <a href="/app/upload/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition">
-          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-          Upload Reports
-        </a>
-        
-        <!-- Active Exceptions Tab -->
-        <a href="/app/exceptions/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-cyan-400 bg-cyan-950/40 border border-cyan-800/50 font-semibold transition">
-          <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-          Exceptions
+      <nav class="p-4 space-y-1.5">
+        <a href="/app/dashboard/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          <span>Dashboard</span>
         </a>
 
-        <a href="/app/settings/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition">
-          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-          Settings
+        <a href="/app/upload/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          <span>Upload Reports</span>
+        </a>
+
+        <a href="/app/exceptions/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm transition">
+          <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          <span>Exceptions</span>
+        </a>
+
+        <a href="/app/settings/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          <span>Settings</span>
         </a>
       </nav>
     </div>
 
-    <!-- Active Plan & User Footer Box -->
-    <div class="space-y-4">
-      <div class="bg-[#111827] border border-gray-800 rounded-xl p-3.5 text-xs space-y-2">
-        <div class="text-[10px] text-gray-400 font-bold tracking-wider uppercase">Active Plan</div>
-        <div class="text-emerald-400 font-bold text-sm">Professional Tier</div>
-        <div class="space-y-1 text-gray-400 pt-1 border-t border-gray-800/80">
-          <div class="flex justify-between"><span>Monthly Uploads:</span> <span class="text-white font-mono">Unlimited</span></div>
-          <div class="flex justify-between"><span>Monthly Lines:</span> <span class="text-white font-mono">Unlimited</span></div>
+    <div class="p-4 border-t border-slate-800 space-y-3">
+      <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800/80 text-xs space-y-2">
+        <div>
+          <span class="text-[10px] text-slate-500 block font-semibold uppercase">Active Plan</span>
+          <span id="planLabel" class="font-bold text-cyan-400">Loading...</span>
         </div>
-        <div class="flex items-center gap-1.5 pt-1 text-[11px] text-gray-300">
-          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-          <span id="user-email-display" class="truncate">Authenticating...</span>
+        
+        <div id="usageMeters" class="pt-2 border-t border-slate-800/60 space-y-1.5">
+          <div class="flex justify-between text-[11px]">
+            <span class="text-slate-400">Monthly Uploads:</span>
+            <span id="meterUploads" class="font-mono font-semibold text-slate-200">0 / 4</span>
+          </div>
+          <div class="flex justify-between text-[11px]">
+            <span class="text-slate-400">Monthly Lines:</span>
+            <span id="meterLines" class="font-mono font-semibold text-slate-200">0 / 20k</span>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 pt-2 border-t border-slate-800/60">
+          <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+          <span id="userEmailDisplay" class="text-xs font-medium text-slate-300 truncate">loading...</span>
         </div>
       </div>
 
-      <button id="signOutBtn" class="w-full py-2 bg-[#111827] border border-gray-800 hover:bg-gray-800 text-gray-300 text-xs font-semibold rounded-lg transition">
+      <button id="signOutBtn" class="w-full bg-slate-950 hover:bg-slate-800 text-xs text-slate-400 py-2 rounded-xl border border-slate-800 font-semibold transition">
         Sign Out
       </button>
     </div>
   </aside>
 
-  <!-- Main Content Area -->
-  <main class="flex-1 overflow-y-auto p-8 space-y-6">
-    <header class="flex justify-between items-center">
-      <div>
-        <h1 class="text-3xl font-extrabold text-white tracking-tight">Audit Exceptions</h1>
-        <p class="text-xs text-gray-400 mt-1">Detailed root cause diagnostics and line-item loss breakdown.</p>
-      </div>
-    </header>
+  <!-- MAIN EXCEPTIONS CONTENT -->
+  <main class="flex-1 min-w-0 overflow-y-auto px-8 py-8">
+    <div class="max-w-7xl mx-auto space-y-8">
+      
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-extrabold text-white font-heading tracking-tight">Audit Exceptions</h1>
+          <p class="text-xs text-slate-400 mt-1">Detailed root cause diagnostics and line-item loss breakdown.</p>
+        </div>
 
-    <!-- Exceptions Feed Container -->
-    <div id="cards-container" class="space-y-6">
-      <div class="text-center py-16 text-gray-500 bg-[#111827] border border-gray-800 rounded-xl">
-        Authenticating session...
+        <a href="/app/upload/" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-md shadow-cyan-500/10">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <span>New Audit</span>
+        </a>
       </div>
+
+      <!-- EXCEEDED BANNER -->
+      <div id="upgradeBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between">
+        <div>
+          <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Free Starter Usage Limit Exceeded</h4>
+          <p class="text-xs text-amber-200/80 mt-0.5">Your free usage is over (4 uploads or 20,000 lines this month). Upgrade to Professional for $99/mo with unlimited uploads, unlimited lines, and up to 5 additional team seats.</p>
+        </div>
+        <a href="/app/settings/" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl shrink-0 transition">
+          Upgrade for $99
+        </a>
+      </div>
+
+      <!-- CARDS CONTAINER -->
+      <div id="cards-container" class="space-y-6">
+        <div class="text-center py-16 text-slate-500 bg-slate-900 border border-slate-800 rounded-2xl">
+          Authenticating session...
+        </div>
+      </div>
+
     </div>
   </main>
 
-  <!-- Firebase Authentication & Application Logic Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
@@ -107,12 +141,13 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const BACKEND_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
+    const db = getFirestore(app);
 
+    const BACKEND_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
     let loadedRecords = [];
     let currentUserId = null;
 
-    // Attach Sign Out handler
+    // Sign out event listener
     document.getElementById("signOutBtn").addEventListener("click", async () => {
       await signOut(auth);
       localStorage.clear();
@@ -120,81 +155,126 @@
       window.location.replace('/login.html');
     });
 
-    // SOLUTION 1 IMPLEMENTATION: Wait for Firebase Auth state to resolve before loading or redirecting
+    // Auth State Listener
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // User session confirmed by Firebase
         currentUserId = user.uid;
         const token = await user.getIdToken();
 
-        // Update local session caches
         localStorage.setItem("userId", user.uid);
         localStorage.setItem("userEmail", user.email);
         localStorage.setItem("authToken", token);
 
-        // Update sidebar email display
-        const emailDisplay = document.getElementById("user-email-display");
-        if (emailDisplay) {
-          emailDisplay.textContent = user.email;
-        }
+        document.getElementById("userEmailDisplay").textContent = user.email;
+        document.body.style.display = 'flex';
 
-        // Fetch data for the authenticated user
-        fetchExceptions(user.uid);
+        // Listen for User Plan state real-time
+        onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+          const profile = docSnap.data() || {};
+          const rawRole = String(profile.role || '').toLowerCase();
+          const rawPlan = String(profile.plan || '').toLowerCase();
+
+          const isAdmin = rawRole === 'superadmin' || rawRole === 'admin' || rawPlan === 'admin' || user.email.toLowerCase() === 'mithun@preventloss.org';
+          const isPro = !isAdmin && (rawPlan.includes('pro') || rawPlan.includes('professional') || rawPlan.includes('tier'));
+
+          updatePlanUI(isPro, isAdmin);
+          fetchExceptions(user.uid, isPro, isAdmin);
+        }, (error) => {
+          console.warn("Firestore snapshot listener failed, applying fallback:", error);
+          fetchExceptions(user.uid, false, false);
+        });
+
       } else {
-        // Check local storage as a secondary fallback before forcing login
         const cachedUserId = localStorage.getItem("userId");
         if (!cachedUserId) {
-          // No user session found -> Redirect to login page
           window.location.replace("/login.html");
         } else {
-          // Temporary network delay fallback using local storage
-          currentUserId = cachedUserId;
-          const cachedEmail = localStorage.getItem("userEmail") || "Authenticated User";
-          document.getElementById("user-email-display").textContent = cachedEmail;
-          fetchExceptions(cachedUserId);
+          document.body.style.display = 'flex';
+          document.getElementById("userEmailDisplay").textContent = localStorage.getItem("userEmail") || "Authenticated";
+          fetchExceptions(cachedUserId, false, false);
         }
       }
     });
 
-    async function fetchExceptions(userId) {
+    function updatePlanUI(isPro, isAdmin) {
+      const planLabel = document.getElementById('planLabel');
+      
+      if (isAdmin) {
+        planLabel.innerText = 'Admin Console';
+        planLabel.className = 'font-bold text-cyan-400';
+      } else if (isPro) {
+        planLabel.innerText = 'Professional Tier';
+        planLabel.className = 'font-bold text-emerald-400';
+      } else {
+        planLabel.innerText = 'Starter Tier';
+        planLabel.className = 'font-bold text-amber-400';
+      }
+    }
+
+    async function fetchExceptions(userId, isPro, isAdmin) {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/upload-history?userId=${encodeURIComponent(userId)}`);
-        if (!response.ok) {
-          throw new Error(`HTTP Error: ${response.status}`);
-        }
+        const endpoint = isAdmin ? `${BACKEND_URL}/api/upload-history` : `${BACKEND_URL}/api/upload-history?userId=${encodeURIComponent(userId)}`;
+        const response = await fetch(endpoint);
+        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+        
         loadedRecords = await response.json();
+        if (!Array.isArray(loadedRecords)) loadedRecords = [];
+
+        calculateMeters(loadedRecords, isPro, isAdmin);
         renderCards(loadedRecords);
       } catch (err) {
         console.error("Fetch Exceptions Error:", err);
         document.getElementById("cards-container").innerHTML = `
-          <div class="p-4 bg-red-950/40 border border-red-800/50 text-red-300 rounded-xl text-sm">
+          <div class="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs">
             Failed to load exception history (${escapeHtml(err.message)}). Please verify backend status or re-login.
           </div>
         `;
       }
     }
 
+    function calculateMeters(records, isPro, isAdmin) {
+      const now = new Date();
+      const monthRecords = records.filter(r => {
+        const dateStr = r.uploadedDate || r.uploaded_date || r.createdAt || r.timestamp;
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+
+      const monthUploads = monthRecords.length;
+      const monthLines = monthRecords.reduce((acc, r) => acc + Number(r.linesProcessed || r.lines_processed || 0), 0);
+
+      const isUnlimited = isPro || isAdmin;
+      document.getElementById('meterUploads').textContent = isUnlimited ? 'Unlimited' : `${monthUploads} / 4`;
+      document.getElementById('meterLines').textContent = isUnlimited ? `${monthLines.toLocaleString('en-US')} (Unlimited)` : `${monthLines.toLocaleString('en-US')} / 20k`;
+
+      const banner = document.getElementById('upgradeBanner');
+      if (!isUnlimited && (monthUploads >= 4 || monthLines >= 20000)) {
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
     function renderCards(records) {
       const container = document.getElementById("cards-container");
 
-      if (!records || !Array.isArray(records) || records.length === 0) {
-        container.innerHTML = `<div class="text-center py-12 text-gray-500 bg-[#111827] border border-gray-800 rounded-xl">No exception reports found for this account.</div>`;
+      if (!records || records.length === 0) {
+        container.innerHTML = `<div class="text-center py-16 text-slate-500 bg-slate-900 border border-slate-800 rounded-2xl">No exception reports found for this account.</div>`;
         return;
       }
 
-      let cardsBuffer = "";
-
-      records.forEach((record, index) => {
+      container.innerHTML = records.map((record, index) => {
         const totalGRN = Number(record.totalGRNValue || record.totalVolume || 0);
-        const totalLeak = Number(record.totalLeakages || record.financialLeakage || 0);
-        const linesProc = Number(record.linesProcessed || record.linesAnalyzed || 0);
+        const totalLeak = Number(record.totalLeakages || record.totalLeakage || record.financial_leakage || record.financialLeakage || 0);
+        const linesProc = Number(record.linesProcessed || record.lines_processed || 0);
         const exceptionsCount = Number(record.flaggedExceptionsCount || record.flaggedExceptions || 0);
 
-        const breakdown = record.leakageBreakdown || {};
-        const marginVal = Number(breakdown.marginLeakages?.leakageValue || breakdown.marginLoss || 0);
-        const cpWholeVal = Number(breakdown.cpLeakageWhole?.leakageValue || breakdown.cpOvercharge || 0);
-        const cpSameDayVal = Number(breakdown.cpLeakageSameDayMonth?.leakageValue || 0);
-        const shelfLifeVal = Number(breakdown.shelfLifeExceptions?.leakageValue || breakdown.shelfLife || 0);
+        const detailed = record.leakagesDetailed || record.leakageBreakdown || {};
+        const marginVal = Number(record.salesMarginErosion || detailed.marginLeakages?.leakageValue || 0);
+        const cpWholeVal = Number(record.receivingLeakage || detailed.cpLeakageWhole?.leakageValue || 0);
+        const cpSameDayVal = Number(detailed.cpLeakageSameDayMonth?.leakageValue || 0);
+        const shelfLifeVal = Number(record.writeOffInventoryLoss || detailed.shelfLifeExceptions?.leakageValue || 0);
 
         const totalLeakagePct = totalGRN > 0 ? ((totalLeak / totalGRN) * 100).toFixed(2) : "0.00";
         const marginPct = totalLeak > 0 ? ((marginVal / totalLeak) * 100).toFixed(2) : "0.00";
@@ -202,89 +282,94 @@
         const cpSameDayPct = totalLeak > 0 ? ((cpSameDayVal / totalLeak) * 100).toFixed(2) : "0.00";
         const shelfLifePct = totalLeak > 0 ? ((shelfLifeVal / totalLeak) * 100).toFixed(2) : "0.00";
 
-        const fileName = record.fileName || record.reportName || 'Audit Report';
-        const uploadedDate = record.uploadedDate || record.timestamp || new Date().toISOString();
-        const riskScore = record.riskScore || record.riskAssessment || 'HIGH';
+        const fileName = record.fileName || record.filename || 'Audit Report';
+        const uploadedDate = record.uploadedDate || record.uploaded_date || record.timestamp || new Date().toISOString();
+        const riskScore = String(record.riskScore || record.riskAssessment || (totalLeak > 50000 ? 'HIGH' : 'MEDIUM')).toUpperCase();
 
-        cardsBuffer += `
-          <div id="card-${index}" class="bg-[#111827] border border-gray-800 rounded-xl p-6 shadow-xl space-y-5 relative overflow-hidden">
-            <div class="flex justify-between items-center border-b border-gray-800/80 pb-4">
+        let riskBadgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+        if (riskScore === 'HIGH') {
+          riskBadgeClass = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+        } else if (riskScore === 'MEDIUM') {
+          riskBadgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+        }
+
+        return `
+          <div id="card-${index}" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5 relative overflow-hidden">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
               <div>
-                <h2 class="text-lg font-bold text-white tracking-wide">${escapeHtml(fileName)}</h2>
-                <span class="text-xs text-gray-400">Processed: ${new Date(uploadedDate).toLocaleString()} | Type: ${escapeHtml(record.reportType || 'GRN')}</span>
+                <h2 class="text-lg font-bold text-white font-heading tracking-wide">${escapeHtml(fileName)}</h2>
+                <span class="text-xs text-slate-400">Processed: ${new Date(uploadedDate).toLocaleString()} | Type: ${escapeHtml(record.reportType || 'GRN')}</span>
               </div>
               <div class="flex items-center gap-3">
-                <span class="px-3 py-1 text-xs font-bold rounded-full ${String(riskScore).toUpperCase() === 'HIGH' ? 'bg-red-950/80 border border-red-800 text-red-400' : 'bg-amber-950/80 border border-amber-800 text-amber-400'}">
-                  ${escapeHtml(String(riskScore).toUpperCase())} RISK
+                <span class="px-3 py-1 text-xs font-extrabold rounded-full border ${riskBadgeClass}">
+                  ${escapeHtml(riskScore)} RISK
                 </span>
-                <button onclick="window.downloadCard('card-${index}', '${escapeHtml(fileName)}')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg transition border border-gray-700 flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <button onclick="window.downloadCard('card-${index}', '${escapeHtml(fileName)}')" class="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl transition border border-slate-800 flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                   Export Card
                 </button>
               </div>
             </div>
 
             <!-- Key Summary Telemetry -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-[#0b0f19] p-4 rounded-xl border border-gray-800/60 text-sm">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 text-sm">
               <div>
-                <div class="text-gray-400 text-xs font-medium">Total Volume Reviewed</div>
-                <div class="font-bold text-white text-base mt-0.5">$${totalGRN.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                <div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Total Volume Reviewed</div>
+                <div class="font-extrabold text-white text-base mt-0.5 font-heading">$${totalGRN.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
               </div>
               <div>
-                <div class="text-gray-400 text-xs font-medium">Financial Leakage</div>
-                <div class="font-bold text-cyan-400 text-base mt-0.5">$${totalLeak.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span class="text-xs text-cyan-500 font-normal">(${totalLeakagePct}%)</span></div>
+                <div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Financial Leakage</div>
+                <div class="font-extrabold text-cyan-400 text-base mt-0.5 font-heading">$${totalLeak.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span class="text-xs text-cyan-500 font-normal">(${totalLeakagePct}%)</span></div>
               </div>
               <div>
-                <div class="text-gray-400 text-xs font-medium">Processed Lines</div>
-                <div class="font-bold text-white text-base mt-0.5">${linesProc.toLocaleString()}</div>
+                <div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Processed Lines</div>
+                <div class="font-extrabold text-white text-base mt-0.5 font-mono">${linesProc.toLocaleString('en-US')}</div>
               </div>
               <div>
-                <div class="text-gray-400 text-xs font-medium">Flagged Exceptions</div>
-                <div class="font-bold text-amber-400 text-base mt-0.5">${exceptionsCount.toLocaleString()}</div>
+                <div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Flagged Exceptions</div>
+                <div class="font-extrabold text-amber-400 text-base mt-0.5 font-mono">${exceptionsCount.toLocaleString('en-US')}</div>
               </div>
             </div>
 
-            <!-- Leakage Breakdown Cards -->
+            <!-- Leakage Breakdown -->
             <div>
-              <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Loss Breakdown (% of Total Leakage)</div>
+              <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Loss Breakdown (% of Total Leakage)</div>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <div class="p-3.5 border border-gray-800 rounded-lg bg-[#0d1322]">
-                  <span class="text-gray-400 block font-medium">Margin Loss</span>
-                  <span class="font-bold text-white text-base block mt-1">${marginPct}%</span>
-                  <span class="text-gray-400 block text-[11px]">$${marginVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                <div class="p-3.5 border border-slate-800/80 rounded-xl bg-slate-950/40">
+                  <span class="text-slate-400 block font-medium">Margin Loss</span>
+                  <span class="font-bold text-white text-base block mt-1 font-heading">${marginPct}%</span>
+                  <span class="text-slate-500 block text-[11px] font-mono mt-0.5">$${marginVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
-                <div class="p-3.5 border border-gray-800 rounded-lg bg-[#0d1322]">
-                  <span class="text-gray-400 block font-medium">CP Overcharge (Overall)</span>
-                  <span class="font-bold text-white text-base block mt-1">${cpWholePct}%</span>
-                  <span class="text-gray-400 block text-[11px]">$${cpWholeVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                <div class="p-3.5 border border-slate-800/80 rounded-xl bg-slate-950/40">
+                  <span class="text-slate-400 block font-medium">CP Overcharge (Overall)</span>
+                  <span class="font-bold text-white text-base block mt-1 font-heading">${cpWholePct}%</span>
+                  <span class="text-slate-500 block text-[11px] font-mono mt-0.5">$${cpWholeVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
-                <div class="p-3.5 border border-gray-800 rounded-lg bg-[#0d1322]">
-                  <span class="text-gray-400 block font-medium">CP Overcharge (Same Day)</span>
-                  <span class="font-bold text-white text-base block mt-1">${cpSameDayPct}%</span>
-                  <span class="text-gray-400 block text-[11px]">$${cpSameDayVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                <div class="p-3.5 border border-slate-800/80 rounded-xl bg-slate-950/40">
+                  <span class="text-slate-400 block font-medium">CP Overcharge (Same Day)</span>
+                  <span class="font-bold text-white text-base block mt-1 font-heading">${cpSameDayPct}%</span>
+                  <span class="text-slate-500 block text-[11px] font-mono mt-0.5">$${cpSameDayVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
-                <div class="p-3.5 border border-gray-800 rounded-lg bg-[#0d1322]">
-                  <span class="text-gray-400 block font-medium">Short Shelf Life</span>
-                  <span class="font-bold text-white text-base block mt-1">${shelfLifePct}%</span>
-                  <span class="text-gray-400 block text-[11px]">$${shelfLifeVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                <div class="p-3.5 border border-slate-800/80 rounded-xl bg-slate-950/40">
+                  <span class="text-slate-400 block font-medium">Short Shelf Life</span>
+                  <span class="font-bold text-white text-base block mt-1 font-heading">${shelfLifePct}%</span>
+                  <span class="text-slate-500 block text-[11px] font-mono mt-0.5">$${shelfLifeVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
               </div>
             </div>
 
             <!-- AI Trigger Button Slot -->
-            <div id="ai-section-${index}" class="border-t border-gray-800/80 pt-3">
-              <button onclick="window.triggerAIAnalysis(${index})" class="w-full py-2.5 bg-cyan-950/40 border border-cyan-800/60 text-cyan-300 hover:bg-cyan-900/40 font-semibold text-xs rounded-lg transition flex items-center justify-center gap-2">
+            <div id="ai-section-${index}" class="border-t border-slate-800 pt-3">
+              <button onclick="window.triggerAIAnalysis(${index})" class="w-full py-2.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 font-semibold text-xs rounded-xl transition flex items-center justify-center gap-2 shadow-sm">
                 <span>⚡</span> Run AI Root-Cause Analysis & Action Plan
               </button>
             </div>
           </div>
         `;
-      });
-
-      container.innerHTML = cardsBuffer;
+      }).join('');
     }
 
-    // Expose functions globally for inline onclick attributes
+    // AI Analysis Dispatcher
     window.triggerAIAnalysis = function(recordIndex) {
       const record = loadedRecords[recordIndex];
       if (record) {
@@ -294,7 +379,7 @@
 
     async function generateAIAnalysis(record, containerId) {
       const container = document.getElementById(containerId);
-      container.innerHTML = `<div class="text-xs text-cyan-400 animate-pulse font-medium py-3 text-center bg-[#0d1322] rounded-lg border border-cyan-900/40">Querying Gemini AI Model for Root-Cause Diagnostics...</div>`;
+      container.innerHTML = `<div class="text-xs text-cyan-400 animate-pulse font-medium py-3 text-center bg-slate-950 rounded-xl border border-cyan-500/20">Querying Gemini AI Model for Root-Cause Diagnostics...</div>`;
 
       try {
         const response = await fetch(`${BACKEND_URL}/api/genkit/rca`, {
@@ -310,29 +395,29 @@
         const rawInsights = data.categoryInsights || data.insights || [];
 
         let insightsHtml = rawInsights.map(item => `
-          <div class="bg-[#0b0f19] p-3.5 rounded-lg border border-gray-800 mt-2 space-y-1.5 text-xs">
-            <div class="font-bold text-cyan-400 uppercase">${escapeHtml(item.categoryName || item.category || 'Insight')}</div>
-            <div class="text-gray-300"><strong class="text-gray-400">RCA:</strong> ${escapeHtml(item.rootCauseAnalysis || item.rootCause || 'N/A')}</div>
-            <div class="text-emerald-400"><strong class="text-gray-400">Action:</strong> ${escapeHtml(item.actionableRemediation || item.action || 'N/A')}</div>
+          <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 mt-2 space-y-1.5 text-xs">
+            <div class="font-bold text-cyan-400 uppercase font-heading">${escapeHtml(item.categoryName || item.category || 'Insight')}</div>
+            <div class="text-slate-300"><strong class="text-slate-400">RCA:</strong> ${escapeHtml(item.rootCauseAnalysis || item.rootCause || 'N/A')}</div>
+            <div class="text-emerald-400"><strong class="text-slate-400">Action:</strong> ${escapeHtml(item.actionableRemediation || item.action || 'N/A')}</div>
           </div>
         `).join('');
 
         container.innerHTML = `
-          <div class="bg-[#0d1322] border border-cyan-900/50 rounded-xl p-4 space-y-3 text-xs">
-            <h4 class="font-bold text-cyan-300 text-sm flex items-center gap-2">⚡ AI Diagnostic Summary</h4>
-            <p class="text-gray-300 leading-relaxed">${escapeHtml(summaryText)}</p>
+          <div class="bg-slate-950 border border-cyan-500/20 rounded-xl p-4 space-y-3 text-xs shadow-inner">
+            <h4 class="font-bold text-cyan-400 text-sm flex items-center gap-2 font-heading">⚡ AI Diagnostic Summary</h4>
+            <p class="text-slate-300 leading-relaxed">${escapeHtml(summaryText)}</p>
             ${insightsHtml}
           </div>
         `;
       } catch (err) {
         console.error("AI Generation Error:", err);
-        container.innerHTML = `<div class="p-3 bg-red-950/40 border border-red-800/50 text-red-300 rounded-lg text-xs">Unable to generate AI analysis. Please try again.</div>`;
+        container.innerHTML = `<div class="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs">Unable to generate AI analysis. Please try again.</div>`;
       }
     }
 
     window.downloadCard = function(cardId, fileName) {
       const element = document.getElementById(cardId);
-      html2canvas(element, { backgroundColor: "#111827", scale: 2, useCORS: true }).then(canvas => {
+      html2canvas(element, { backgroundColor: "#0f172a", scale: 2, useCORS: true }).then(canvas => {
         const link = document.createElement("a");
         link.download = `OpsReveal_Exception_${fileName.replace(/[^a-z0-9]/gi, '_')}.png`;
         link.href = canvas.toDataURL("image/png");
