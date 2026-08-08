@@ -3,36 +3,107 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exceptions & Loss Analysis</title>
+  <title>OpsReveal - Exceptions</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <style>
+    body {
+      background-color: #0b0f19;
+      color: #f3f4f6;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans p-6">
-  <div class="max-w-5xl mx-auto space-y-6">
-    
-    <!-- Header -->
-    <header class="bg-white p-6 rounded-xl shadow-sm border flex justify-between items-center">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-800">Audit Exceptions</h1>
-        <p class="text-sm text-gray-500">Live summaries and Root Cause Analysis from Cloudflare</p>
+<body class="font-sans antialiased flex h-screen overflow-hidden">
+
+  <!-- Left Sidebar Navigation -->
+  <aside class="w-64 bg-[#0d1322] border-r border-gray-800 flex flex-col justify-between p-4 flex-shrink-0">
+    <div>
+      <!-- Brand Logo Header -->
+      <div class="flex items-center gap-3 px-2 py-3 mb-6">
+        <div class="w-9 h-9 rounded-lg bg-cyan-500 flex items-center justify-center font-bold text-slate-950 text-xl shadow-lg shadow-cyan-500/20">
+          O
+        </div>
+        <div>
+          <h1 class="font-bold text-white text-lg leading-tight tracking-tight">OpsReveal</h1>
+          <p class="text-[10px] text-gray-400 font-medium tracking-wide">Prevent Capital Loss</p>
+        </div>
       </div>
-      <div id="user-display" class="text-xs bg-gray-100 px-3 py-1.5 rounded font-mono text-gray-600">
-        Loading user...
+
+      <!-- Navigation Links -->
+      <nav class="space-y-1.5 text-sm font-medium">
+        <a href="/app/dashboard/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition">
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+          Dashboard
+        </a>
+        <a href="/app/upload/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition">
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          Upload Reports
+        </a>
+        
+        <!-- Exceptions Tab (Active State) -->
+        <a href="/app/exceptions/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-cyan-400 bg-cyan-950/40 border border-cyan-800/50 font-semibold transition">
+          <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          Exceptions
+        </a>
+
+        <a href="/app/settings/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/50 transition">
+          <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          Settings
+        </a>
+      </nav>
+    </div>
+
+    <!-- Active Plan Footer Box -->
+    <div class="space-y-4">
+      <div class="bg-[#111827] border border-gray-800 rounded-xl p-3.5 text-xs space-y-2">
+        <div class="text-[10px] text-gray-400 font-bold tracking-wider uppercase">Active Plan</div>
+        <div class="text-emerald-400 font-bold text-sm">Professional Tier</div>
+        <div class="space-y-1 text-gray-400 pt-1 border-t border-gray-800/80">
+          <div class="flex justify-between"><span>Monthly Uploads:</span> <span class="text-white font-mono">Unlimited</span></div>
+          <div class="flex justify-between"><span>Monthly Lines:</span> <span class="text-white font-mono">Unlimited</span></div>
+        </div>
+        <div class="flex items-center gap-1.5 pt-1 text-[11px] text-gray-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+          <span id="user-email-display" class="truncate">sgmithun24@gmail.com</span>
+        </div>
+      </div>
+
+      <button onclick="window.location.href='/login.html'" class="w-full py-2 bg-[#111827] border border-gray-800 hover:bg-gray-800 text-gray-300 text-xs font-semibold rounded-lg transition">
+        Sign Out
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 overflow-y-auto p-8 space-y-6">
+    
+    <!-- Top Header -->
+    <header class="flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-extrabold text-white tracking-tight">Audit Exceptions</h1>
+        <p class="text-xs text-gray-400 mt-1">Detailed root cause diagnostics and line-item loss breakdown.</p>
+      </div>
+      <div class="flex gap-3 items-center">
+        <span id="user-id-badge" class="px-3 py-1.5 bg-[#111827] border border-gray-800 text-xs text-gray-400 font-mono rounded-lg">
+          Loading...
+        </span>
       </div>
     </header>
 
-    <!-- Exceptions Feed -->
+    <!-- Exceptions Feed Container -->
     <div id="cards-container" class="space-y-6">
-      <div class="text-center py-12 text-gray-500">Loading Cloudflare records...</div>
+      <div class="text-center py-16 text-gray-500 bg-[#111827] border border-gray-800 rounded-xl">
+        Loading Cloudflare audit records...
+      </div>
     </div>
 
-  </div>
+  </main>
 
   <script>
     const USER_ID = "B0cjYjtrYMRy5eBVGcptatKBGAC3"; 
     const BACKEND_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
 
-    document.getElementById("user-display").innerText = `User ID: ${USER_ID}`;
+    document.getElementById("user-id-badge").innerText = `User ID: ${USER_ID}`;
 
     async function fetchExceptions() {
       try {
@@ -41,7 +112,7 @@
         renderCards(records);
       } catch (err) {
         document.getElementById("cards-container").innerHTML = `
-          <div class="p-4 bg-red-50 text-red-700 rounded-lg">Failed to load exception history.</div>
+          <div class="p-4 bg-red-950/40 border border-red-800/50 text-red-300 rounded-xl text-sm">Failed to load exception history. Please check backend response.</div>
         `;
       }
     }
@@ -51,87 +122,87 @@
       container.innerHTML = "";
 
       if (!records || records.length === 0) {
-        container.innerHTML = `<div class="text-center py-8 text-gray-500">No exception reports found.</div>`;
+        container.innerHTML = `<div class="text-center py-12 text-gray-500 bg-[#111827] border border-gray-800 rounded-xl">No exception reports found for this account.</div>`;
         return;
       }
 
       records.forEach((record, index) => {
-        // Dynamic Mathematical Calculations
-        const totalLeakagePct = ((record.totalLeakages / record.totalGRNValue) * 100).toFixed(2);
-        const marginPct = ((record.leakageBreakdown.marginLeakages.leakageValue / record.totalLeakages) * 100).toFixed(2);
-        const cpWholePct = ((record.leakageBreakdown.cpLeakageWhole.leakageValue / record.totalLeakages) * 100).toFixed(2);
-        const cpSameDayPct = ((record.leakageBreakdown.cpLeakageSameDayMonth.leakageValue / record.totalLeakages) * 100).toFixed(2);
-        const shelfLifePct = ((record.leakageBreakdown.shelfLifeExceptions.leakageValue / record.totalLeakages) * 100).toFixed(2);
+        // Dynamic Loss Calculations
+        const totalLeakagePct = record.totalGRNValue ? ((record.totalLeakages / record.totalGRNValue) * 100).toFixed(2) : "0.00";
+        const marginPct = record.totalLeakages ? ((record.leakageBreakdown.marginLeakages.leakageValue / record.totalLeakages) * 100).toFixed(2) : "0.00";
+        const cpWholePct = record.totalLeakages ? ((record.leakageBreakdown.cpLeakageWhole.leakageValue / record.totalLeakages) * 100).toFixed(2) : "0.00";
+        const cpSameDayPct = record.totalLeakages ? ((record.leakageBreakdown.cpLeakageSameDayMonth.leakageValue / record.totalLeakages) * 100).toFixed(2) : "0.00";
+        const shelfLifePct = record.totalLeakages ? ((record.leakageBreakdown.shelfLifeExceptions.leakageValue / record.totalLeakages) * 100).toFixed(2) : "0.00";
 
         const cardHtml = `
-          <div id="card-${index}" class="bg-white border rounded-xl p-6 shadow-sm space-y-4">
+          <div id="card-${index}" class="bg-[#111827] border border-gray-800 rounded-xl p-6 shadow-xl space-y-5">
             
-            <div class="flex justify-between items-center border-b pb-3">
+            <div class="flex justify-between items-center border-b border-gray-800/80 pb-4">
               <div>
-                <h2 class="text-lg font-bold text-gray-800">${record.fileName}</h2>
-                <span class="text-xs text-gray-400">Processed: ${new Date(record.uploadedDate).toLocaleString()} | Type: ${record.reportType}</span>
+                <h2 class="text-lg font-bold text-white tracking-wide">${record.fileName || 'Audit Report'}</h2>
+                <span class="text-xs text-gray-400">Processed: ${new Date(record.uploadedDate).toLocaleString()} | Type: ${record.reportType || 'GRN Audit'}</span>
               </div>
               <div class="flex items-center gap-3">
-                <span class="px-3 py-1 text-xs font-semibold rounded-full ${record.riskScore === 'High' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}">
-                  ${record.riskScore} Risk
+                <span class="px-3 py-1 text-xs font-bold rounded-full ${record.riskScore === 'High' ? 'bg-red-950/80 border border-red-800 text-red-400' : 'bg-amber-950/80 border border-amber-800 text-amber-400'}">
+                  ${record.riskScore || 'HIGH'} RISK
                 </span>
-                <button onclick="downloadCard('card-${index}', '${record.fileName}')" class="px-3 py-1.5 bg-gray-800 text-white text-xs font-medium rounded hover:bg-gray-700">
-                  Download Card
+                <button onclick="downloadCard('card-${index}', '${record.fileName}')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg transition border border-gray-700">
+                  Export Card
                 </button>
               </div>
             </div>
 
-            <!-- Core Metrics -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg text-sm">
+            <!-- Key Summary Telemetry -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-[#0b0f19] p-4 rounded-xl border border-gray-800/60 text-sm">
               <div>
-                <div class="text-gray-500 text-xs">Total Volume Reviewed</div>
-                <div class="font-bold text-gray-800">$${record.totalGRNValue.toLocaleString()}</div>
+                <div class="text-gray-400 text-xs font-medium">Total Volume Reviewed</div>
+                <div class="font-bold text-white text-base mt-0.5">$${(record.totalGRNValue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
               </div>
               <div>
-                <div class="text-gray-500 text-xs">Total Leakage</div>
-                <div class="font-bold text-red-600">$${record.totalLeakages.toLocaleString()} (${totalLeakagePct}%)</div>
+                <div class="text-gray-400 text-xs font-medium">Financial Leakage</div>
+                <div class="font-bold text-cyan-400 text-base mt-0.5">$${(record.totalLeakages || 0).toLocaleString(undefined, {minimumFractionDigits: 2})} <span class="text-xs text-cyan-500 font-normal">(${totalLeakagePct}%)</span></div>
               </div>
               <div>
-                <div class="text-gray-500 text-xs">Processed Lines</div>
-                <div class="font-bold text-gray-800">${record.linesProcessed.toLocaleString()}</div>
+                <div class="text-gray-400 text-xs font-medium">Processed Lines</div>
+                <div class="font-bold text-white text-base mt-0.5">${(record.linesProcessed || 0).toLocaleString()}</div>
               </div>
               <div>
-                <div class="text-gray-500 text-xs">Exceptions Flagged</div>
-                <div class="font-bold text-gray-800">${record.flaggedExceptionsCount.toLocaleString()}</div>
+                <div class="text-gray-400 text-xs font-medium">Flagged Exceptions</div>
+                <div class="font-bold text-amber-400 text-base mt-0.5">${(record.flaggedExceptionsCount || 0).toLocaleString()}</div>
               </div>
             </div>
 
-            <!-- Percentage Breakdown -->
+            <!-- Leakage Breakdown Cards -->
             <div>
-              <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Leakage Distribution (% of Total Loss)</div>
+              <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Loss Breakdown (% of Total Leakage)</div>
               <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <div class="p-3 border rounded bg-white">
-                  <span class="text-gray-500 block">Margin Loss</span>
-                  <span class="font-bold text-gray-800 text-sm">${marginPct}%</span>
-                  <span class="text-gray-400 block">$${record.leakageBreakdown.marginLeakages.leakageValue.toLocaleString()}</span>
+                <div class="p-3.5 border border-gray-800 rounded-lg bg-[#0d1322]">
+                  <span class="text-gray-400 block font-medium">Margin Loss</span>
+                  <span class="font-bold text-white text-base block mt-1">${marginPct}%</span>
+                  <span class="text-gray-400 block text-[11px]">$${(record.leakageBreakdown?.marginLeakages?.leakageValue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
                 </div>
-                <div class="p-3 border rounded bg-white">
-                  <span class="text-gray-500 block">CP Overcharge (Overall)</span>
-                  <span class="font-bold text-gray-800 text-sm">${cpWholePct}%</span>
-                  <span class="text-gray-400 block">$${record.leakageBreakdown.cpLeakageWhole.leakageValue.toLocaleString()}</span>
+                <div class="p-3.5 border border-gray-800 rounded-lg bg-[#0d1322]">
+                  <span class="text-gray-400 block font-medium">CP Overcharge (Overall)</span>
+                  <span class="font-bold text-white text-base block mt-1">${cpWholePct}%</span>
+                  <span class="text-gray-400 block text-[11px]">$${(record.leakageBreakdown?.cpLeakageWhole?.leakageValue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
                 </div>
-                <div class="p-3 border rounded bg-white">
-                  <span class="text-gray-500 block">CP Overcharge (Same Day)</span>
-                  <span class="font-bold text-gray-800 text-sm">${cpSameDayPct}%</span>
-                  <span class="text-gray-400 block">$${record.leakageBreakdown.cpLeakageSameDayMonth.leakageValue.toLocaleString()}</span>
+                <div class="p-3.5 border border-gray-800 rounded-lg bg-[#0d1322]">
+                  <span class="text-gray-400 block font-medium">CP Overcharge (Same Day)</span>
+                  <span class="font-bold text-white text-base block mt-1">${cpSameDayPct}%</span>
+                  <span class="text-gray-400 block text-[11px]">$${(record.leakageBreakdown?.cpLeakageSameDayMonth?.leakageValue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
                 </div>
-                <div class="p-3 border rounded bg-white">
-                  <span class="text-gray-500 block">Short Shelf Life</span>
-                  <span class="font-bold text-gray-800 text-sm">${shelfLifePct}%</span>
-                  <span class="text-gray-400 block">$${record.leakageBreakdown.shelfLifeExceptions.leakageValue.toLocaleString()}</span>
+                <div class="p-3.5 border border-gray-800 rounded-lg bg-[#0d1322]">
+                  <span class="text-gray-400 block font-medium">Short Shelf Life</span>
+                  <span class="font-bold text-white text-base block mt-1">${shelfLifePct}%</span>
+                  <span class="text-gray-400 block text-[11px]">$${(record.leakageBreakdown?.shelfLifeExceptions?.leakageValue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
                 </div>
               </div>
             </div>
 
-            <!-- AI Action Slot -->
-            <div id="ai-section-${index}" class="border-t pt-3">
-              <button onclick='generateAIAnalysis(${JSON.stringify(record)}, "ai-section-${index}")' class="w-full py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-semibold text-xs rounded hover:bg-indigo-100 transition">
-                ⚡ Generate AI Root-Cause Analysis & Action Plan
+            <!-- AI Trigger Button Slot -->
+            <div id="ai-section-${index}" class="border-t border-gray-800/80 pt-3">
+              <button onclick='generateAIAnalysis(${JSON.stringify(record)}, "ai-section-${index}")' class="w-full py-2.5 bg-cyan-950/40 border border-cyan-800/60 text-cyan-300 hover:bg-cyan-900/40 font-semibold text-xs rounded-lg transition flex items-center justify-center gap-2">
+                <span>⚡</span> Run AI Root-Cause Analysis & Action Plan
               </button>
             </div>
 
@@ -143,7 +214,7 @@
 
     async function generateAIAnalysis(record, containerId) {
       const container = document.getElementById(containerId);
-      container.innerHTML = `<div class="text-xs text-indigo-600 animate-pulse font-medium">Generating AI Analysis...</div>`;
+      container.innerHTML = `<div class="text-xs text-cyan-400 animate-pulse font-medium py-3 text-center bg-[#0d1322] rounded-lg border border-cyan-900/40">Querying Gemini AI Model for Root-Cause Diagnostics...</div>`;
 
       try {
         const response = await fetch(`${BACKEND_URL}/api/genkit/rca`, {
@@ -154,31 +225,33 @@
 
         const data = await response.json();
 
-        let insightsHtml = data.categoryInsights.map(item => `
-          <div class="bg-white p-3 rounded border border-indigo-100 mt-2">
-            <div class="font-bold text-gray-800">${item.categoryName}</div>
-            <div class="text-gray-600 mt-1"><strong>RCA:</strong> ${item.rootCauseAnalysis}</div>
-            <div class="text-indigo-800 mt-1"><strong>Action:</strong> ${item.actionableRemediation}</div>
+        let insightsHtml = (data.categoryInsights || []).map(item => `
+          <div class="bg-[#0b0f19] p-3.5 rounded-lg border border-gray-800 mt-2 space-y-1">
+            <div class="font-bold text-cyan-400">${item.categoryName}</div>
+            <div class="text-gray-300"><strong class="text-gray-400">RCA:</strong> ${item.rootCauseAnalysis}</div>
+            <div class="text-emerald-400"><strong class="text-gray-400">Action:</strong> ${item.actionableRemediation}</div>
           </div>
         `).join("");
 
         container.innerHTML = `
-          <div class="bg-indigo-50/50 border border-indigo-100 rounded-lg p-4 text-xs space-y-2">
-            <h4 class="font-bold text-indigo-900 text-sm">AI Diagnostic Report</h4>
-            <p class="text-gray-700">${data.executiveSummary}</p>
+          <div class="bg-[#0d1322] border border-cyan-900/50 rounded-xl p-4 text-xs space-y-3">
+            <h4 class="font-bold text-cyan-300 text-sm flex items-center gap-2">
+              <span>⚡</span> AI Diagnostic Summary
+            </h4>
+            <p class="text-gray-300 leading-relaxed">${data.executiveSummary || 'Analysis generated successfully.'}</p>
             ${insightsHtml}
           </div>
         `;
       } catch (err) {
-        container.innerHTML = `<div class="text-xs text-red-600">Failed to generate AI analysis.</div>`;
+        container.innerHTML = `<div class="text-xs text-red-400 p-3 bg-red-950/40 border border-red-800/50 rounded-lg">Failed to generate AI analysis. Please check your Gemini API key.</div>`;
       }
     }
 
     function downloadCard(cardId, fileName) {
       const element = document.getElementById(cardId);
-      html2canvas(element).then(canvas => {
+      html2canvas(element, { backgroundColor: "#111827" }).then(canvas => {
         const link = document.createElement("a");
-        link.download = `Audit_Summary_${fileName}.png`;
+        link.download = `Exceptions_Summary_${fileName}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
       });
