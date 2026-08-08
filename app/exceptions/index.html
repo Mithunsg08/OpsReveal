@@ -12,20 +12,6 @@
       color: #f3f4f6;
     }
   </style>
-
-  <!-- AUTHENTICATION GUARD (Executes before rendering the UI) -->
-  <script>
-    (function checkAuthentication() {
-      // Check for user session tokens stored during login
-      const userId = localStorage.getItem("userId") || sessionStorage.getItem("userId");
-      const authToken = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
-
-      // If user is not logged in, immediately redirect to login page
-      if (!userId && !authToken) {
-        window.location.replace("/login.html");
-      }
-    })();
-  </script>
 </head>
 <body class="font-sans antialiased flex h-screen overflow-hidden">
 
@@ -78,11 +64,11 @@
         </div>
         <div class="flex items-center gap-1.5 pt-1 text-[11px] text-gray-300">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-          <span id="user-email-display" class="truncate">Loading...</span>
+          <span id="user-email-display" class="truncate">Authenticating...</span>
         </div>
       </div>
 
-      <button onclick="handleSignOut()" class="w-full py-2 bg-[#111827] border border-gray-800 hover:bg-gray-800 text-gray-300 text-xs font-semibold rounded-lg transition">
+      <button id="signOutBtn" class="w-full py-2 bg-[#111827] border border-gray-800 hover:bg-gray-800 text-gray-300 text-xs font-semibold rounded-lg transition">
         Sign Out
       </button>
     </div>
@@ -100,33 +86,79 @@
     <!-- Exceptions Feed Container -->
     <div id="cards-container" class="space-y-6">
       <div class="text-center py-16 text-gray-500 bg-[#111827] border border-gray-800 rounded-xl">
-        Loading audit records...
+        Authenticating session...
       </div>
     </div>
   </main>
 
-  <script>
-    // Dynamically retrieve authenticated user details
-    const USER_ID = localStorage.getItem("userId") || sessionStorage.getItem("userId"); 
-    const USER_EMAIL = localStorage.getItem("userEmail") || sessionStorage.getItem("userEmail") || "Authenticated User";
+  <!-- Firebase Authentication & Application Logic Script -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
+      authDomain: "opsreveal.firebaseapp.com",
+      projectId: "opsreveal",
+      storageBucket: "opsreveal.firebasestorage.app",
+      messagingSenderId: "890870101711",
+      appId: "1:890870101711:web:4266246996091ea56c69ba"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const BACKEND_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
 
     let loadedRecords = [];
+    let currentUserId = null;
 
-    document.addEventListener("DOMContentLoaded", () => {
-      // Ensure user ID exists before proceeding
-      if (!USER_ID) {
-        window.location.replace("/login.html");
-        return;
-      }
-
-      document.getElementById("user-email-display").textContent = USER_EMAIL;
-      fetchExceptions();
+    // Attach Sign Out handler
+    document.getElementById("signOutBtn").addEventListener("click", async () => {
+      await signOut(auth);
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.replace('/login.html');
     });
 
-    async function fetchExceptions() {
+    // SOLUTION 1 IMPLEMENTATION: Wait for Firebase Auth state to resolve before loading or redirecting
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        // User session confirmed by Firebase
+        currentUserId = user.uid;
+        const token = await user.getIdToken();
+
+        // Update local session caches
+        localStorage.setItem("userId", user.uid);
+        localStorage.setItem("userEmail", user.email);
+        localStorage.setItem("authToken", token);
+
+        // Update sidebar email display
+        const emailDisplay = document.getElementById("user-email-display");
+        if (emailDisplay) {
+          emailDisplay.textContent = user.email;
+        }
+
+        // Fetch data for the authenticated user
+        fetchExceptions(user.uid);
+      } else {
+        // Check local storage as a secondary fallback before forcing login
+        const cachedUserId = localStorage.getItem("userId");
+        if (!cachedUserId) {
+          // No user session found -> Redirect to login page
+          window.location.replace("/login.html");
+        } else {
+          // Temporary network delay fallback using local storage
+          currentUserId = cachedUserId;
+          const cachedEmail = localStorage.getItem("userEmail") || "Authenticated User";
+          document.getElementById("user-email-display").textContent = cachedEmail;
+          fetchExceptions(cachedUserId);
+        }
+      }
+    });
+
+    async function fetchExceptions(userId) {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/upload-history?userId=${encodeURIComponent(USER_ID)}`);
+        const response = await fetch(`${BACKEND_URL}/api/upload-history?userId=${encodeURIComponent(userId)}`);
         if (!response.ok) {
           throw new Error(`HTTP Error: ${response.status}`);
         }
@@ -185,7 +217,7 @@
                 <span class="px-3 py-1 text-xs font-bold rounded-full ${String(riskScore).toUpperCase() === 'HIGH' ? 'bg-red-950/80 border border-red-800 text-red-400' : 'bg-amber-950/80 border border-amber-800 text-amber-400'}">
                   ${escapeHtml(String(riskScore).toUpperCase())} RISK
                 </span>
-                <button onclick="downloadCard('card-${index}', '${escapeHtml(fileName)}')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg transition border border-gray-700 flex items-center gap-1.5">
+                <button onclick="window.downloadCard('card-${index}', '${escapeHtml(fileName)}')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg transition border border-gray-700 flex items-center gap-1.5">
                   <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                   Export Card
                 </button>
@@ -241,7 +273,7 @@
 
             <!-- AI Trigger Button Slot -->
             <div id="ai-section-${index}" class="border-t border-gray-800/80 pt-3">
-              <button onclick="triggerAIAnalysis(${index})" class="w-full py-2.5 bg-cyan-950/40 border border-cyan-800/60 text-cyan-300 hover:bg-cyan-900/40 font-semibold text-xs rounded-lg transition flex items-center justify-center gap-2">
+              <button onclick="window.triggerAIAnalysis(${index})" class="w-full py-2.5 bg-cyan-950/40 border border-cyan-800/60 text-cyan-300 hover:bg-cyan-900/40 font-semibold text-xs rounded-lg transition flex items-center justify-center gap-2">
                 <span>⚡</span> Run AI Root-Cause Analysis & Action Plan
               </button>
             </div>
@@ -252,12 +284,13 @@
       container.innerHTML = cardsBuffer;
     }
 
-    function triggerAIAnalysis(recordIndex) {
+    // Expose functions globally for inline onclick attributes
+    window.triggerAIAnalysis = function(recordIndex) {
       const record = loadedRecords[recordIndex];
       if (record) {
         generateAIAnalysis(record, `ai-section-${recordIndex}`);
       }
-    }
+    };
 
     async function generateAIAnalysis(record, containerId) {
       const container = document.getElementById(containerId);
@@ -297,7 +330,7 @@
       }
     }
 
-    function downloadCard(cardId, fileName) {
+    window.downloadCard = function(cardId, fileName) {
       const element = document.getElementById(cardId);
       html2canvas(element, { backgroundColor: "#111827", scale: 2, useCORS: true }).then(canvas => {
         const link = document.createElement("a");
@@ -305,13 +338,7 @@
         link.href = canvas.toDataURL("image/png");
         link.click();
       });
-    }
-
-    function handleSignOut() {
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.replace('/login.html');
-    }
+    };
 
     function escapeHtml(str) {
       return String(str)
