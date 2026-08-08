@@ -145,9 +145,8 @@
 
     const BACKEND_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
     let loadedRecords = [];
-    let currentUserId = null;
 
-    // Sign out event listener
+    // Sign out handler
     document.getElementById("signOutBtn").addEventListener("click", async () => {
       await signOut(auth);
       localStorage.clear();
@@ -155,10 +154,9 @@
       window.location.replace('/login.html');
     });
 
-    // Auth State Listener
+    // Authentication session handler
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        currentUserId = user.uid;
         const token = await user.getIdToken();
 
         localStorage.setItem("userId", user.uid);
@@ -168,7 +166,7 @@
         document.getElementById("userEmailDisplay").textContent = user.email;
         document.body.style.display = 'flex';
 
-        // Listen for User Plan state real-time
+        // Listen for Realtime Firestore plan updates
         onSnapshot(doc(db, "users", user.uid), (docSnap) => {
           const profile = docSnap.data() || {};
           const rawRole = String(profile.role || '').toLowerCase();
@@ -369,7 +367,7 @@
       }).join('');
     }
 
-    // AI Analysis Dispatcher
+    // AI Analysis Trigger Function
     window.triggerAIAnalysis = function(recordIndex) {
       const record = loadedRecords[recordIndex];
       if (record) {
@@ -382,36 +380,67 @@
       container.innerHTML = `<div class="text-xs text-cyan-400 animate-pulse font-medium py-3 text-center bg-slate-950 rounded-xl border border-cyan-500/20">Querying Gemini AI Model for Root-Cause Diagnostics...</div>`;
 
       try {
+        // Retrieve fresh token from current user or cache
+        let token = localStorage.getItem("authToken") || "";
+        if (auth.currentUser) {
+          token = await auth.currentUser.getIdToken(true);
+        }
+
+        const headers = { "Content-Type": "application/json" };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${BACKEND_URL}/api/genkit/rca`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: headers,
           body: JSON.stringify(record)
         });
 
-        if (!response.ok) throw new Error(`Server status ${response.status}`);
+        if (!response.ok) {
+          const errText = await response.text();
+          throw new Error(`Server returned status ${response.status}: ${errText || 'AI Endpoint error'}`);
+        }
+
         const data = await response.json();
 
-        const summaryText = data.executiveSummary || data.summary || "Automated diagnostic complete.";
-        const rawInsights = data.categoryInsights || data.insights || [];
+        // Handle various JSON schemas returned by the AI Worker
+        let summaryText = "";
+        let rawInsights = [];
 
-        let insightsHtml = rawInsights.map(item => `
-          <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 mt-2 space-y-1.5 text-xs">
-            <div class="font-bold text-cyan-400 uppercase font-heading">${escapeHtml(item.categoryName || item.category || 'Insight')}</div>
-            <div class="text-slate-300"><strong class="text-slate-400">RCA:</strong> ${escapeHtml(item.rootCauseAnalysis || item.rootCause || 'N/A')}</div>
-            <div class="text-emerald-400"><strong class="text-slate-400">Action:</strong> ${escapeHtml(item.actionableRemediation || item.action || 'N/A')}</div>
-          </div>
-        `).join('');
+        if (typeof data === "string") {
+          summaryText = data;
+        } else {
+          summaryText = data.executiveSummary || data.summary || data.result || data.response || "Automated diagnostic complete.";
+          rawInsights = data.categoryInsights || data.insights || data.actions || [];
+        }
+
+        let insightsHtml = "";
+        if (Array.isArray(rawInsights) && rawInsights.length > 0) {
+          insightsHtml = rawInsights.map(item => `
+            <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 mt-2 space-y-1.5 text-xs">
+              <div class="font-bold text-cyan-400 uppercase font-heading">${escapeHtml(item.categoryName || item.category || 'Insight')}</div>
+              <div class="text-slate-300"><strong class="text-slate-400">RCA:</strong> ${escapeHtml(item.rootCauseAnalysis || item.rootCause || item.analysis || 'N/A')}</div>
+              <div class="text-emerald-400"><strong class="text-slate-400">Action:</strong> ${escapeHtml(item.actionableRemediation || item.action || item.remediation || 'N/A')}</div>
+            </div>
+          `).join('');
+        }
 
         container.innerHTML = `
           <div class="bg-slate-950 border border-cyan-500/20 rounded-xl p-4 space-y-3 text-xs shadow-inner">
             <h4 class="font-bold text-cyan-400 text-sm flex items-center gap-2 font-heading">⚡ AI Diagnostic Summary</h4>
-            <p class="text-slate-300 leading-relaxed">${escapeHtml(summaryText)}</p>
+            <div class="text-slate-300 leading-relaxed whitespace-pre-line">${escapeHtml(summaryText)}</div>
             ${insightsHtml}
           </div>
         `;
       } catch (err) {
         console.error("AI Generation Error:", err);
-        container.innerHTML = `<div class="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs">Unable to generate AI analysis. Please try again.</div>`;
+        container.innerHTML = `
+          <div class="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs space-y-2">
+            <div>Unable to generate AI analysis: ${escapeHtml(err.message)}</div>
+            <button onclick="window.triggerAIAnalysis(${loadedRecords.indexOf(record)})" class="text-[11px] underline text-rose-300 font-semibold hover:text-rose-200">Try Again</button>
+          </div>
+        `;
       }
     }
 
@@ -426,7 +455,7 @@
     };
 
     function escapeHtml(str) {
-      return String(str)
+      return String(str || '')
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
