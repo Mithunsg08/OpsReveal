@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Exceptions & Loss Analysis</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans p-6">
+  <div class="max-w-5xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <header class="bg-white p-6 rounded-xl shadow-sm border flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Audit Exceptions</h1>
+        <p class="text-sm text-gray-500">Live summaries and Root Cause Analysis from Cloudflare</p>
+      </div>
+      <div id="user-display" class="text-xs bg-gray-100 px-3 py-1.5 rounded font-mono text-gray-600">
+        Loading user...
+      </div>
+    </header>
+
+    <!-- Exceptions Feed -->
+    <div id="cards-container" class="space-y-6">
+      <div class="text-center py-12 text-gray-500">Loading Cloudflare records...</div>
+    </div>
+
+  </div>
+
+  <script>
+    const USER_ID = "B0cjYjtrYMRy5eBVGcptatKBGAC3"; 
+    const BACKEND_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
+
+    document.getElementById("user-display").innerText = `User ID: ${USER_ID}`;
+
+    async function fetchExceptions() {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/upload-history?userId=${USER_ID}`);
+        const records = await response.json();
+        renderCards(records);
+      } catch (err) {
+        document.getElementById("cards-container").innerHTML = `
+          <div class="p-4 bg-red-50 text-red-700 rounded-lg">Failed to load exception history.</div>
+        `;
+      }
+    }
+
+    function renderCards(records) {
+      const container = document.getElementById("cards-container");
+      container.innerHTML = "";
+
+      if (!records || records.length === 0) {
+        container.innerHTML = `<div class="text-center py-8 text-gray-500">No exception reports found.</div>`;
+        return;
+      }
+
+      records.forEach((record, index) => {
+        // Dynamic Mathematical Calculations
+        const totalLeakagePct = ((record.totalLeakages / record.totalGRNValue) * 100).toFixed(2);
+        const marginPct = ((record.leakageBreakdown.marginLeakages.leakageValue / record.totalLeakages) * 100).toFixed(2);
+        const cpWholePct = ((record.leakageBreakdown.cpLeakageWhole.leakageValue / record.totalLeakages) * 100).toFixed(2);
+        const cpSameDayPct = ((record.leakageBreakdown.cpLeakageSameDayMonth.leakageValue / record.totalLeakages) * 100).toFixed(2);
+        const shelfLifePct = ((record.leakageBreakdown.shelfLifeExceptions.leakageValue / record.totalLeakages) * 100).toFixed(2);
+
+        const cardHtml = `
+          <div id="card-${index}" class="bg-white border rounded-xl p-6 shadow-sm space-y-4">
+            
+            <div class="flex justify-between items-center border-b pb-3">
+              <div>
+                <h2 class="text-lg font-bold text-gray-800">${record.fileName}</h2>
+                <span class="text-xs text-gray-400">Processed: ${new Date(record.uploadedDate).toLocaleString()} | Type: ${record.reportType}</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="px-3 py-1 text-xs font-semibold rounded-full ${record.riskScore === 'High' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}">
+                  ${record.riskScore} Risk
+                </span>
+                <button onclick="downloadCard('card-${index}', '${record.fileName}')" class="px-3 py-1.5 bg-gray-800 text-white text-xs font-medium rounded hover:bg-gray-700">
+                  Download Card
+                </button>
+              </div>
+            </div>
+
+            <!-- Core Metrics -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg text-sm">
+              <div>
+                <div class="text-gray-500 text-xs">Total Volume Reviewed</div>
+                <div class="font-bold text-gray-800">$${record.totalGRNValue.toLocaleString()}</div>
+              </div>
+              <div>
+                <div class="text-gray-500 text-xs">Total Leakage</div>
+                <div class="font-bold text-red-600">$${record.totalLeakages.toLocaleString()} (${totalLeakagePct}%)</div>
+              </div>
+              <div>
+                <div class="text-gray-500 text-xs">Processed Lines</div>
+                <div class="font-bold text-gray-800">${record.linesProcessed.toLocaleString()}</div>
+              </div>
+              <div>
+                <div class="text-gray-500 text-xs">Exceptions Flagged</div>
+                <div class="font-bold text-gray-800">${record.flaggedExceptionsCount.toLocaleString()}</div>
+              </div>
+            </div>
+
+            <!-- Percentage Breakdown -->
+            <div>
+              <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Leakage Distribution (% of Total Loss)</div>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div class="p-3 border rounded bg-white">
+                  <span class="text-gray-500 block">Margin Loss</span>
+                  <span class="font-bold text-gray-800 text-sm">${marginPct}%</span>
+                  <span class="text-gray-400 block">$${record.leakageBreakdown.marginLeakages.leakageValue.toLocaleString()}</span>
+                </div>
+                <div class="p-3 border rounded bg-white">
+                  <span class="text-gray-500 block">CP Overcharge (Overall)</span>
+                  <span class="font-bold text-gray-800 text-sm">${cpWholePct}%</span>
+                  <span class="text-gray-400 block">$${record.leakageBreakdown.cpLeakageWhole.leakageValue.toLocaleString()}</span>
+                </div>
+                <div class="p-3 border rounded bg-white">
+                  <span class="text-gray-500 block">CP Overcharge (Same Day)</span>
+                  <span class="font-bold text-gray-800 text-sm">${cpSameDayPct}%</span>
+                  <span class="text-gray-400 block">$${record.leakageBreakdown.cpLeakageSameDayMonth.leakageValue.toLocaleString()}</span>
+                </div>
+                <div class="p-3 border rounded bg-white">
+                  <span class="text-gray-500 block">Short Shelf Life</span>
+                  <span class="font-bold text-gray-800 text-sm">${shelfLifePct}%</span>
+                  <span class="text-gray-400 block">$${record.leakageBreakdown.shelfLifeExceptions.leakageValue.toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI Action Slot -->
+            <div id="ai-section-${index}" class="border-t pt-3">
+              <button onclick='generateAIAnalysis(${JSON.stringify(record)}, "ai-section-${index}")' class="w-full py-2 bg-indigo-50 border border-indigo-200 text-indigo-700 font-semibold text-xs rounded hover:bg-indigo-100 transition">
+                ⚡ Generate AI Root-Cause Analysis & Action Plan
+              </button>
+            </div>
+
+          </div>
+        `;
+        container.innerHTML += cardHtml;
+      });
+    }
+
+    async function generateAIAnalysis(record, containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = `<div class="text-xs text-indigo-600 animate-pulse font-medium">Generating AI Analysis...</div>`;
+
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/genkit/rca`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(record)
+        });
+
+        const data = await response.json();
+
+        let insightsHtml = data.categoryInsights.map(item => `
+          <div class="bg-white p-3 rounded border border-indigo-100 mt-2">
+            <div class="font-bold text-gray-800">${item.categoryName}</div>
+            <div class="text-gray-600 mt-1"><strong>RCA:</strong> ${item.rootCauseAnalysis}</div>
+            <div class="text-indigo-800 mt-1"><strong>Action:</strong> ${item.actionableRemediation}</div>
+          </div>
+        `).join("");
+
+        container.innerHTML = `
+          <div class="bg-indigo-50/50 border border-indigo-100 rounded-lg p-4 text-xs space-y-2">
+            <h4 class="font-bold text-indigo-900 text-sm">AI Diagnostic Report</h4>
+            <p class="text-gray-700">${data.executiveSummary}</p>
+            ${insightsHtml}
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = `<div class="text-xs text-red-600">Failed to generate AI analysis.</div>`;
+      }
+    }
+
+    function downloadCard(cardId, fileName) {
+      const element = document.getElementById(cardId);
+      html2canvas(element).then(canvas => {
+        const link = document.createElement("a");
+        link.download = `Audit_Summary_${fileName}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      });
+    }
+
+    fetchExceptions();
+  </script>
+</body>
+</html>
