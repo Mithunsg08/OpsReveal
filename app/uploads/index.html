@@ -275,6 +275,24 @@
         .replace(/\b\d{12}\b/g, '[MyNumber Redacted]');
     }
 
+    // Date Format Helper (MMMM/DD/YYYY)
+    function formatDateFormatted(val) {
+      if (!val) return "";
+      const date = new Date(val);
+      if (isNaN(date.getTime())) return String(val);
+      
+      const months = [
+        "January", "February", "March", "April", "May", "June", 
+        "July", "August", "September", "October", "November", "December"
+      ];
+      
+      const monthStr = months[date.getUTCMonth()];
+      const dayStr = String(date.getUTCDate()).padStart(2, '0');
+      const yearStr = date.getUTCFullYear();
+      
+      return `${monthStr}/${dayStr}/${yearStr}`;
+    }
+
     // Helper: Check and enforce quota limits
     async function checkAndEnforceQuota(user, profile) {
       const isGlobalAdmin = user.email && user.email.toLowerCase() === "mithun@preventloss.org";
@@ -346,9 +364,14 @@
 
     const SCHEMAS = {
       grn: [
-        "receiving_grn_date", "supplier_name", "product_sku", "product_name", 
+        "receiving_grn_date/Month", "supplier_name", "product_sku", "product_name", 
         "category", "receiving_cp", "receiving_mrp", "received_qty", 
-        "manufacturing_date", "expiry_date"
+        "manufacturing_date", "expiry_date", "Total GRN Value", "Shelf Life %", 
+        "Shelf Life Exception", "Margin %", "Margin % Exception", "Min margin", 
+        "Diff margin", "Margin Exception", " Margin Leakage Value ", "Min CP(whole data)", 
+        "MRP for Min CP (Whole date)", " CP Leakage (whole data) ", "CP Exception (whole data)", 
+        "Min CP(Same day/Same month)", "MRP for Min CP (Same day/Same month)", 
+        " CP Leakage (Same day/Same month) ", "CP Exception (Same day/Same month)"
       ],
       sales: [
         "sales_date", "product_sku", "product_name", 
@@ -391,7 +414,6 @@
 
       setTimeout(() => {
         const type = document.getElementById('uploadTypeSelect').value;
-        const requiredHeaders = SCHEMAS[type];
 
         const reader = new FileReader();
         reader.onload = function(evt) {
@@ -408,37 +430,37 @@
               return;
             }
 
-            const totalLines = Math.max(0, rawData.length - 1); // Exclude header row
-const userPlan = (currentUserProfile?.plan || 'starter').toLowerCase();
+            const totalLines = Math.max(0, rawData.length - 1);
+            const userPlan = (currentUserProfile?.plan || 'starter').toLowerCase();
 
-if (userPlan === 'starter' && totalLines > 20000) {
-  // 1. Build the updated error message with the upgrade text and button
-  const upgradeMessageHTML = `
-    <div>
-      <p>We can't process this report because it has <strong>${totalLines.toLocaleString()}</strong> lines to analyze. Your current Starter plan is limited to 20,000 lines maximum per upload.</p>
-      <p class="mt-1">To analyze this and more than 20K rows, <strong>Upgrade to Professional for $99/mo</strong> with unlimited uploads, unlimited lines, and up to 5 additional team seats.</p>
-      <a href="/app/settings" class="inline-block mt-3 px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-xs transition">
-        Upgrade to Professional
-      </a>
-    </div>
-  `;
+            if (userPlan === 'starter' && totalLines > 20000) {
+              const upgradeMessageHTML = `
+                <div>
+                  <p>We can't process this report because it has <strong>${totalLines.toLocaleString()}</strong> lines to analyze. Your current Starter plan is limited to 20,000 lines maximum per upload.</p>
+                  <p class="mt-1">To analyze this and more than 20K rows, <strong>Upgrade to Professional for $99/mo</strong> with unlimited uploads, unlimited lines, and up to 5 additional team seats.</p>
+                  <a href="/app/settings" class="inline-block mt-3 px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-xs transition">
+                    Upgrade to Professional
+                  </a>
+                </div>
+              `;
 
-  // 2. Insert into error banner & make visible
-  const errorMsgEl = document.getElementById('errorMessage');
-  errorMsgEl.innerHTML = upgradeMessageHTML;
-  document.getElementById('errorBanner').classList.remove('hidden');
+              const errorMsgEl = document.getElementById('errorMessage');
+              errorMsgEl.innerHTML = upgradeMessageHTML;
+              document.getElementById('errorBanner').classList.remove('hidden');
 
-  // 3. Show Toast Notification & Hide Modal
-  showToast(`Upload blocked: File exceeds 20,000 lines Starter limit.`, "error");
-  hideModal();
-  return;
-}
+              showToast(`Upload blocked: File exceeds 20,000 lines Starter limit.`, "error");
+              hideModal();
+              return;
+            }
 
             const fileHeaders = rawData[0].map(h => String(h || '').trim().toLowerCase());
-            const isValid = requiredHeaders.every((reqHeader, index) => fileHeaders[index] === reqHeader);
             
-            if (!isValid) {
-              showError(`Invalid format. The file columns must strictly match: ${requiredHeaders.join(', ')}`);
+            // Check base 10 input columns minimum for GRN processing validation
+            const baseGRNHeaders = SCHEMAS.grn.slice(0, 10).map(h => h.toLowerCase());
+            const isValid = baseGRNHeaders.every((reqHeader, index) => fileHeaders[index] === reqHeader);
+
+            if (!isValid && type === 'grn') {
+              showError(`Invalid format. The file columns must strictly start with: ${baseGRNHeaders.join(', ')}`);
               hideModal();
               return;
             }
@@ -480,14 +502,21 @@ if (userPlan === 'starter' && totalLines > 20000) {
     // -------------------------------------------------------------
     function processGRNReport(rows, fileName) {
       const targetShelfLifePct = parseFloat(document.getElementById('targetShelfLifeInput').value || 60) / 100;
+      const targetMarginPct = parseFloat(document.getElementById('targetMarginInput').value || 20) / 100;
 
       const minMarginBySKU = {};
       const minCPBySKU = {};
+      const mrpForMinCPWholeSKU = {};
+      
       const minCPSameDaySKU = {};
+      const mrpForMinCPSameDaySKU = {};
 
+      let totalGRNValue = 0;
+
+      // First Pass: Precalculate Whole Data & Same Day/Month metrics
       rows.forEach(row => {
         if (!row || row.length === 0) return;
-        const dateVal = row[0] ? String(row[0]).substring(0, 10) : '';
+        const recDateFormatted = formatDateFormatted(row[0]);
         const sku = String(row[2] || '').trim();
         const cp = parseFloat(row[5] || 0);
         const mrp = parseFloat(row[6] || 0);
@@ -500,11 +529,21 @@ if (userPlan === 'starter' && totalLines > 20000) {
 
         if (minCPBySKU[sku] === undefined || cp < minCPBySKU[sku]) {
           minCPBySKU[sku] = cp;
+          mrpForMinCPWholeSKU[sku] = mrp;
+        } else if (cp === minCPBySKU[sku]) {
+          if (mrpForMinCPWholeSKU[sku] === undefined || mrp > mrpForMinCPWholeSKU[sku]) {
+            mrpForMinCPWholeSKU[sku] = mrp;
+          }
         }
 
-        const sameDayKey = `${dateVal}_${sku}`;
+        const sameDayKey = `${recDateFormatted}_${sku}`;
         if (minCPSameDaySKU[sameDayKey] === undefined || cp < minCPSameDaySKU[sameDayKey]) {
           minCPSameDaySKU[sameDayKey] = cp;
+          mrpForMinCPSameDaySKU[sameDayKey] = mrp;
+        } else if (cp === minCPSameDaySKU[sameDayKey]) {
+          if (mrpForMinCPSameDaySKU[sameDayKey] === undefined || mrp > mrpForMinCPSameDaySKU[sameDayKey]) {
+            mrpForMinCPSameDaySKU[sameDayKey] = mrp;
+          }
         }
       });
 
@@ -527,7 +566,8 @@ if (userPlan === 'starter' && totalLines > 20000) {
       rows.forEach((row) => {
         if (!row || row.length === 0) return;
 
-        const dateVal = row[0] ? String(row[0]).substring(0, 10) : '';
+        const dateValRaw = row[0];
+        const dateVal = formatDateFormatted(dateValRaw);
         const supplier = row[1] ? sanitizeDataString(String(row[1])) : '';
         const sku = sanitizeDataString(String(row[2] || '').trim());
         const name = row[3] ? sanitizeDataString(String(row[3])) : '';
@@ -535,52 +575,70 @@ if (userPlan === 'starter' && totalLines > 20000) {
         const cp = parseFloat(row[5] || 0);
         const mrp = parseFloat(row[6] || 0);
         const qty = parseFloat(row[7] || 0);
-        const mfgDateStr = row[8] ? String(row[8]).substring(0, 10) : '';
-        const expDateStr = row[9] ? String(row[9]).substring(0, 10) : '';
+        const mfgDateStrRaw = row[8];
+        const expDateStrRaw = row[9];
+        const mfgDateStr = formatDateFormatted(mfgDateStrRaw);
+        const expDateStr = formatDateFormatted(expDateStrRaw);
 
-        const totalGRNVal = cp * qty;
-        
+        const totalGRNVal = qty * cp;
+        totalGRNValue += totalGRNVal;
+
         let shelfLifePctVal = "Dates Not Provided";
         let shelfLifeExceptionVal = "Dates Not Provided";
         
-        if (expDateStr && mfgDateStr && dateVal) {
-          const recD = new Date(dateVal);
-          const expD = new Date(expDateStr);
-          const mfgD = new Date(mfgDateStr);
+        if (!expDateStrRaw) {
+          shelfLifePctVal = "Dates Not Provided";
+        } else {
+          const recD = new Date(dateValRaw);
+          const expD = new Date(expDateStrRaw);
+          const mfgD = new Date(mfgDateStrRaw);
 
-          if (expD < recD) {
-            shelfLifePctVal = "Expired before receiving";
-            shelfLifeExceptionVal = "Expired before receiving";
+          if (expD <= recD) {
+            shelfLifePctVal = "Expired before receving";
+          } else if (!mfgDateStrRaw) {
+            shelfLifePctVal = "Dates Not Provided";
           } else if (expD < mfgD) {
             shelfLifePctVal = "Data is wrong";
-            shelfLifeExceptionVal = "Data is wrong";
           } else {
-            const totalD = expD - mfgD;
-            const remD = expD - recD;
-            const ratio = totalD > 0 ? (remD / totalD) : 0;
-            shelfLifePctVal = (ratio * 100).toFixed(1) + "%";
-            shelfLifeExceptionVal = ratio < targetShelfLifePct ? "Low Shelf life" : "Ok";
+            const totalLife = expD - mfgD;
+            const remLife = expD - recD;
+            const ratio = totalLife > 0 ? (remLife / totalLife) : 0;
+            shelfLifePctVal = ratio;
           }
         }
 
+        if (shelfLifePctVal === "Dates Not Provided") {
+          shelfLifeExceptionVal = "Dates Not Provided";
+        } else if (shelfLifePctVal === "Data is wrong") {
+          shelfLifeExceptionVal = "Data is wrong";
+        } else if (shelfLifePctVal === "Expired before receving" || shelfLifePctVal <= 0) {
+          shelfLifeExceptionVal = "Expired before receving";
+        } else if (typeof shelfLifePctVal === 'number') {
+          shelfLifeExceptionVal = shelfLifePctVal < targetShelfLifePct ? "Low Shelf life" : "Ok";
+        }
+
         const marginPctVal = mrp > 0 ? (mrp - cp) / mrp : 0;
-        const minMarginVal = minMarginBySKU[sku] !== undefined ? minMarginBySKU[sku] : 0;
-        const diffMarginVal = marginPctVal - minMarginVal;
-        const marginExceptionVal = diffMarginVal >= 0 ? "No Exception" : "There is a Margin decrease";
-        const marginLeakageVal = diffMarginVal >= 0 ? 0 : (cp * Math.abs(diffMarginVal)) * qty;
+        const marginPctExceptionVal = marginPctVal <= targetMarginPct ? "Less than average Margin" : "Ok";
+
+        const minMarginVal = minMarginBySKU[sku] !== undefined ? minMarginBySKU[sku] : marginPctVal;
+        const diffMarginVal = minMarginVal - marginPctVal;
+        const marginExceptionVal = diffMarginVal >= 0 ? "No Exception" : "There is an Margin decrease";
+        const marginLeakageVal = marginExceptionVal === "There is an Margin decrease" ? (diffMarginVal * totalGRNVal) : "Ok";
 
         const minCPWholeVal = minCPBySKU[sku] !== undefined ? minCPBySKU[sku] : cp;
-        const cpLeakageWholeVal = (cp - minCPWholeVal) * qty;
-        const cpExceptionWholeVal = cpLeakageWholeVal > 0 ? "You Got Charged More" : "Suppliers providing same price for the Sku's";
+        const mrpForMinCPWholeVal = mrpForMinCPWholeSKU[sku] !== undefined ? mrpForMinCPWholeSKU[sku] : mrp;
+        const cpLeakageWholeVal = (mrpForMinCPWholeVal === mrp ? (minCPWholeVal - cp) : 0) * qty;
+        const cpExceptionWholeVal = cpLeakageWholeVal < 0 ? "You Got Charged More" : "No Exception";
 
         const sameDayKey = `${dateVal}_${sku}`;
         const minCPSameDayVal = minCPSameDaySKU[sameDayKey] !== undefined ? minCPSameDaySKU[sameDayKey] : cp;
-        const cpLeakageSameDayVal = (cp - minCPSameDayVal) * qty;
-        const cpExceptionSameDayVal = cpLeakageSameDayVal > 0 ? "You Got Charged More" : "Suppliers providing same price for the Sku's";
+        const mrpForMinCPSameDayVal = mrpForMinCPSameDaySKU[sameDayKey] !== undefined ? mrpForMinCPSameDaySKU[sameDayKey] : mrp;
+        const cpLeakageSameDayVal = (mrpForMinCPSameDayVal === mrp ? (minCPSameDayVal - cp) : 0) * qty;
+        const cpExceptionSameDayVal = cpLeakageSameDayVal < 0 ? "You Got Charged More On Same Day" : "No Exception";
 
         let isFlagged = false;
 
-        if (shelfLifeExceptionVal === "Low Shelf life" || shelfLifeExceptionVal === "Expired before receiving") {
+        if (shelfLifeExceptionVal === "Low Shelf life" || shelfLifeExceptionVal === "Expired before receving") {
           isFlagged = true;
           totalLeakages += totalGRNVal;
           leakageBreakdown.shelfLifeExceptions.count++;
@@ -592,46 +650,49 @@ if (userPlan === 'starter' && totalLines > 20000) {
           });
         }
 
-        if (marginExceptionVal === "There is a Margin decrease") {
+        if (marginExceptionVal === "There is an Margin decrease") {
           isFlagged = true;
-          totalLeakages += marginLeakageVal;
+          const absLeakage = Math.abs(typeof marginLeakageVal === 'number' ? marginLeakageVal : 0);
+          totalLeakages += absLeakage;
           leakageBreakdown.marginLeakages.count++;
-          leakageBreakdown.marginLeakages.leakageValue += marginLeakageVal;
+          leakageBreakdown.marginLeakages.leakageValue += absLeakage;
 
           sheetMarginDecrease.push({
             "Receiving Date": dateVal, "Supplier": supplier, "SKU": sku, "Product": name,
-            "Margin Leakage Value": marginLeakageVal, "Margin %": (marginPctVal * 100).toFixed(1) + "%", "Exception": marginExceptionVal
+            "Margin Leakage Value": absLeakage, "Margin %": (marginPctVal * 100).toFixed(1) + "%", "Exception": marginExceptionVal
           });
         }
 
         if (cpExceptionWholeVal === "You Got Charged More") {
           isFlagged = true;
-          totalLeakages += cpLeakageWholeVal;
+          const absLeakage = Math.abs(cpLeakageWholeVal);
+          totalLeakages += absLeakage;
           leakageBreakdown.cpLeakageWhole.count++;
-          leakageBreakdown.cpLeakageWhole.leakageValue += cpLeakageWholeVal;
+          leakageBreakdown.cpLeakageWhole.leakageValue += absLeakage;
 
           sheetCPWhole.push({
             "Receiving Date": dateVal, "Supplier": supplier, "SKU": sku, "Product": name,
-            "CP Leakage (Whole)": cpLeakageWholeVal, "Min CP": minCPWholeVal, "Current CP": cp
+            "CP Leakage (Whole)": absLeakage, "Min CP": minCPWholeVal, "Current CP": cp
           });
         }
 
-        if (cpExceptionSameDayVal === "You Got Charged More") {
+        if (cpExceptionSameDayVal === "You Got Charged More On Same Day") {
           isFlagged = true;
-          totalLeakages += cpLeakageSameDayVal;
+          const absLeakage = Math.abs(cpLeakageSameDayVal);
+          totalLeakages += absLeakage;
           leakageBreakdown.cpLeakageSameDayMonth.count++;
-          leakageBreakdown.cpLeakageSameDayMonth.leakageValue += cpLeakageSameDayVal;
+          leakageBreakdown.cpLeakageSameDayMonth.leakageValue += absLeakage;
 
           sheetCPSameDayMonth.push({
             "Receiving Date": dateVal, "Supplier": supplier, "SKU": sku, "Product": name,
-            "CP Leakage (Same Day/Month)": cpLeakageSameDayVal, "Min CP": minCPSameDayVal, "Current CP": cp
+            "CP Leakage (Same Day/Month)": absLeakage, "Min CP": minCPSameDayVal, "Current CP": cp
           });
         }
 
         if (isFlagged) flaggedExceptionsCount++;
 
         outputData.push({
-          "receiving_grn_date/month": dateVal,
+          "receiving_grn_date/Month": dateVal,
           "supplier_name": supplier,
           "product_sku": sku,
           "product_name": name,
@@ -642,18 +703,21 @@ if (userPlan === 'starter' && totalLines > 20000) {
           "manufacturing_date": mfgDateStr,
           "expiry_date": expDateStr,
           "Total GRN Value": totalGRNVal,
-          "Shelf Life %": shelfLifePctVal,
+          "Shelf Life %": typeof shelfLifePctVal === 'number' ? (shelfLifePctVal * 100).toFixed(1) + "%" : shelfLifePctVal,
           "Shelf Life Exception": shelfLifeExceptionVal,
           "Margin %": (marginPctVal * 100).toFixed(1) + "%",
+          "Margin % Exception": marginPctExceptionVal,
           "Min margin": (minMarginVal * 100).toFixed(1) + "%",
           "Diff margin": (diffMarginVal * 100).toFixed(1) + "%",
           "Margin Exception": marginExceptionVal,
-          "Margin Leakage Value": marginLeakageVal,
+          " Margin Leakage Value ": typeof marginLeakageVal === 'number' ? marginLeakageVal : marginLeakageVal,
           "Min CP(whole data)": minCPWholeVal,
-          "CP Leakage (whole data)": cpLeakageWholeVal,
+          "MRP for Min CP (Whole date)": mrpForMinCPWholeVal,
+          " CP Leakage (whole data) ": cpLeakageWholeVal,
           "CP Exception (whole data)": cpExceptionWholeVal,
           "Min CP(Same day/Same month)": minCPSameDayVal,
-          "CP Leakage (Same day/Same month)": cpLeakageSameDayVal,
+          "MRP for Min CP (Same day/Same month)": mrpForMinCPSameDayVal,
+          " CP Leakage (Same day/Same month) ": cpLeakageSameDayVal,
           "CP Exception (Same day/Same month)": cpExceptionSameDayVal
         });
       });
@@ -662,7 +726,7 @@ if (userPlan === 'starter' && totalLines > 20000) {
 
       const wb = XLSX.utils.book_new();
       const wsMain = XLSX.utils.json_to_sheet(outputData);
-      wsMain['!cols'] = Array(24).fill({ wch: 22 });
+      wsMain['!cols'] = Array(27).fill({ wch: 22 });
       
       XLSX.utils.book_append_sheet(wb, wsMain, "Audited GRN");
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(sheetShelfLife.length ? sheetShelfLife : [{ Note: "No Shelf Life Exceptions Found" }]), "Shelf Life Summary");
@@ -676,6 +740,7 @@ if (userPlan === 'starter' && totalLines > 20000) {
         reportType: "GRN",
         fileName: sanitizeDataString(fileName),
         linesProcessed: rows.length,
+        totalGRNValue: totalGRNValue,
         totalLeakages: totalLeakages,
         flaggedExceptionsCount: flaggedExceptionsCount,
         leakageBreakdown: leakageBreakdown
@@ -687,6 +752,7 @@ if (userPlan === 'starter' && totalLines > 20000) {
     // -------------------------------------------------------------
     function processSalesReport(rows, fileName) {
       const outputData = [];
+      let totalSalesValue = 0;
       let totalLeakages = 0;
       let flaggedExceptionsCount = 0;
 
@@ -699,12 +765,14 @@ if (userPlan === 'starter' && totalLines > 20000) {
       rows.forEach((row) => {
         if (!row || row.length === 0) return;
 
-        const salesDate = row[0] ? String(row[0]).substring(0, 10) : '';
+        const salesDate = formatDateFormatted(row[0]);
         const sku = sanitizeDataString(String(row[1] || '').trim());
         const name = row[2] ? sanitizeDataString(String(row[2])) : '';
         const qty = parseFloat(row[3] || 0);
         const cp = parseFloat(row[4] || 0);
         const salesPrice = parseFloat(row[5] || 0);
+
+        totalSalesValue += (salesPrice * qty);
 
         const salesLeakageVal = (salesPrice - cp) * qty;
         const salesExceptionVal = salesLeakageVal >= 0 ? "No Exception" : "Sold in Negative margin";
@@ -752,6 +820,7 @@ if (userPlan === 'starter' && totalLines > 20000) {
         reportType: "Sales",
         fileName: sanitizeDataString(fileName),
         linesProcessed: rows.length,
+        totalGRNValue: totalSalesValue,
         totalLeakages: totalLeakages,
         flaggedExceptionsCount: flaggedExceptionsCount,
         leakageBreakdown: leakageBreakdown
@@ -780,12 +849,18 @@ if (userPlan === 'starter' && totalLines > 20000) {
     }
 
     // -------------------------------------------------------------
-    // CLOUDFLARE BACKEND STORAGE
+    // CLOUDFLARE BACKEND STORAGE DISPATCHER
     // -------------------------------------------------------------
     async function saveDetailedSummaryToCloudflare(auditDetails) {
       if (!currentUser) return;
 
-      const risk = auditDetails.flaggedExceptionsCount === 0 ? "None" : auditDetails.flaggedExceptionsCount < 10 ? "Low" : auditDetails.flaggedExceptionsCount < 50 ? "Medium" : "High";
+      const risk = auditDetails.flaggedExceptionsCount === 0 
+        ? "None" 
+        : auditDetails.flaggedExceptionsCount < 10 
+        ? "Low" 
+        : auditDetails.flaggedExceptionsCount < 50 
+        ? "Medium" 
+        : "High";
 
       const payload = {
         userId: currentUser.uid,
@@ -794,10 +869,11 @@ if (userPlan === 'starter' && totalLines > 20000) {
         fileName: auditDetails.fileName,
         reportType: auditDetails.reportType,
         linesProcessed: auditDetails.linesProcessed,
+        totalGRNValue: auditDetails.totalGRNValue || 0,
         flaggedExceptionsCount: auditDetails.flaggedExceptionsCount,
         totalLeakages: auditDetails.totalLeakages,
         riskScore: risk,
-        leakagesDetailed: auditDetails.leakageBreakdown
+        leakageBreakdown: auditDetails.leakageBreakdown
       };
 
       try {
