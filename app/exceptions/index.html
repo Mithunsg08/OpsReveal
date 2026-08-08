@@ -83,11 +83,6 @@
         <h1 class="text-3xl font-extrabold text-white tracking-tight">Audit Exceptions</h1>
         <p class="text-xs text-gray-400 mt-1">Detailed root cause diagnostics and line-item loss breakdown.</p>
       </div>
-      <div class="flex gap-3 items-center">
-        <span id="user-id-badge" class="px-3 py-1.5 bg-[#111827] border border-gray-800 text-xs text-gray-400 font-mono rounded-lg">
-          Loading...
-        </span>
-      </div>
     </header>
 
     <!-- Exceptions Feed Container -->
@@ -103,16 +98,18 @@
     const USER_ID = "B0cjYjtrYMRy5eBVGcptatKBGAC3"; 
     const BACKEND_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
 
-    document.getElementById("user-id-badge").innerText = `User ID: ${USER_ID}`;
-
     async function fetchExceptions() {
       try {
         const response = await fetch(`${BACKEND_URL}/api/upload-history?userId=${USER_ID}`);
+        if (!response.ok) {
+          throw new Error(`HTTP Error: ${response.status}`);
+        }
         const records = await response.json();
         renderCards(records);
       } catch (err) {
+        console.error("Fetch Exceptions Error:", err);
         document.getElementById("cards-container").innerHTML = `
-          <div class="p-4 bg-red-950/40 border border-red-800/50 text-red-300 rounded-xl text-sm">Failed to load exception history. Please check backend response.</div>
+          <div class="p-4 bg-red-950/40 border border-red-800/50 text-red-300 rounded-xl text-sm">Failed to load exception history (${err.message}). Please check backend status.</div>
         `;
       }
     }
@@ -121,32 +118,48 @@
       const container = document.getElementById("cards-container");
       container.innerHTML = "";
 
-      if (!records || records.length === 0) {
+      if (!records || !Array.isArray(records) || records.length === 0) {
         container.innerHTML = `<div class="text-center py-12 text-gray-500 bg-[#111827] border border-gray-800 rounded-xl">No exception reports found for this account.</div>`;
         return;
       }
 
       records.forEach((record, index) => {
-        // Dynamic Loss Calculations
-        const totalLeakagePct = record.totalGRNValue ? ((record.totalLeakages / record.totalGRNValue) * 100).toFixed(2) : "0.00";
-        const marginPct = record.totalLeakages ? ((record.leakageBreakdown.marginLeakages.leakageValue / record.totalLeakages) * 100).toFixed(2) : "0.00";
-        const cpWholePct = record.totalLeakages ? ((record.leakageBreakdown.cpLeakageWhole.leakageValue / record.totalLeakages) * 100).toFixed(2) : "0.00";
-        const cpSameDayPct = record.totalLeakages ? ((record.leakageBreakdown.cpLeakageSameDayMonth.leakageValue / record.totalLeakages) * 100).toFixed(2) : "0.00";
-        const shelfLifePct = record.totalLeakages ? ((record.leakageBreakdown.shelfLifeExceptions.leakageValue / record.totalLeakages) * 100).toFixed(2) : "0.00";
+        // Safe value extractions with defaults
+        const totalGRN = Number(record.totalGRNValue || record.totalVolume || 0);
+        const totalLeak = Number(record.totalLeakages || record.financialLeakage || 0);
+        const linesProc = Number(record.linesProcessed || record.linesAnalyzed || 0);
+        const exceptionsCount = Number(record.flaggedExceptionsCount || record.flaggedExceptions || 0);
+
+        const breakdown = record.leakageBreakdown || {};
+        const marginVal = Number(breakdown.marginLeakages?.leakageValue || breakdown.marginLoss || 0);
+        const cpWholeVal = Number(breakdown.cpLeakageWhole?.leakageValue || breakdown.cpOvercharge || 0);
+        const cpSameDayVal = Number(breakdown.cpLeakageSameDayMonth?.leakageValue || 0);
+        const shelfLifeVal = Number(breakdown.shelfLifeExceptions?.leakageValue || breakdown.shelfLife || 0);
+
+        // Percentage calculations
+        const totalLeakagePct = totalGRN > 0 ? ((totalLeak / totalGRN) * 100).toFixed(2) : "0.00";
+        const marginPct = totalLeak > 0 ? ((marginVal / totalLeak) * 100).toFixed(2) : "0.00";
+        const cpWholePct = totalLeak > 0 ? ((cpWholeVal / totalLeak) * 100).toFixed(2) : "0.00";
+        const cpSameDayPct = totalLeak > 0 ? ((cpSameDayVal / totalLeak) * 100).toFixed(2) : "0.00";
+        const shelfLifePct = totalLeak > 0 ? ((shelfLifeVal / totalLeak) * 100).toFixed(2) : "0.00";
+
+        const fileName = record.fileName || record.reportName || 'Audit Report';
+        const uploadedDate = record.uploadedDate || record.timestamp || new Date().toISOString();
+        const riskScore = record.riskScore || record.riskAssessment || 'HIGH';
 
         const cardHtml = `
           <div id="card-${index}" class="bg-[#111827] border border-gray-800 rounded-xl p-6 shadow-xl space-y-5">
             
             <div class="flex justify-between items-center border-b border-gray-800/80 pb-4">
               <div>
-                <h2 class="text-lg font-bold text-white tracking-wide">${record.fileName || 'Audit Report'}</h2>
-                <span class="text-xs text-gray-400">Processed: ${new Date(record.uploadedDate).toLocaleString()} | Type: ${record.reportType || 'GRN Audit'}</span>
+                <h2 class="text-lg font-bold text-white tracking-wide">${fileName}</h2>
+                <span class="text-xs text-gray-400">Processed: ${new Date(uploadedDate).toLocaleString()} | Type: ${record.reportType || 'GRN Audit'}</span>
               </div>
               <div class="flex items-center gap-3">
-                <span class="px-3 py-1 text-xs font-bold rounded-full ${record.riskScore === 'High' ? 'bg-red-950/80 border border-red-800 text-red-400' : 'bg-amber-950/80 border border-amber-800 text-amber-400'}">
-                  ${record.riskScore || 'HIGH'} RISK
+                <span class="px-3 py-1 text-xs font-bold rounded-full ${String(riskScore).toUpperCase() === 'HIGH' ? 'bg-red-950/80 border border-red-800 text-red-400' : 'bg-amber-950/80 border border-amber-800 text-amber-400'}">
+                  ${String(riskScore).toUpperCase()} RISK
                 </span>
-                <button onclick="downloadCard('card-${index}', '${record.fileName}')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg transition border border-gray-700">
+                <button onclick="downloadCard('card-${index}', '${fileName}')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg transition border border-gray-700">
                   Export Card
                 </button>
               </div>
@@ -156,19 +169,19 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-[#0b0f19] p-4 rounded-xl border border-gray-800/60 text-sm">
               <div>
                 <div class="text-gray-400 text-xs font-medium">Total Volume Reviewed</div>
-                <div class="font-bold text-white text-base mt-0.5">$${(record.totalGRNValue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+                <div class="font-bold text-white text-base mt-0.5">$${totalGRN.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
               </div>
               <div>
                 <div class="text-gray-400 text-xs font-medium">Financial Leakage</div>
-                <div class="font-bold text-cyan-400 text-base mt-0.5">$${(record.totalLeakages || 0).toLocaleString(undefined, {minimumFractionDigits: 2})} <span class="text-xs text-cyan-500 font-normal">(${totalLeakagePct}%)</span></div>
+                <div class="font-bold text-cyan-400 text-base mt-0.5">$${totalLeak.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span class="text-xs text-cyan-500 font-normal">(${totalLeakagePct}%)</span></div>
               </div>
               <div>
                 <div class="text-gray-400 text-xs font-medium">Processed Lines</div>
-                <div class="font-bold text-white text-base mt-0.5">${(record.linesProcessed || 0).toLocaleString()}</div>
+                <div class="font-bold text-white text-base mt-0.5">${linesProc.toLocaleString()}</div>
               </div>
               <div>
                 <div class="text-gray-400 text-xs font-medium">Flagged Exceptions</div>
-                <div class="font-bold text-amber-400 text-base mt-0.5">${(record.flaggedExceptionsCount || 0).toLocaleString()}</div>
+                <div class="font-bold text-amber-400 text-base mt-0.5">${exceptionsCount.toLocaleString()}</div>
               </div>
             </div>
 
@@ -179,29 +192,29 @@
                 <div class="p-3.5 border border-gray-800 rounded-lg bg-[#0d1322]">
                   <span class="text-gray-400 block font-medium">Margin Loss</span>
                   <span class="font-bold text-white text-base block mt-1">${marginPct}%</span>
-                  <span class="text-gray-400 block text-[11px]">$${(record.leakageBreakdown?.marginLeakages?.leakageValue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                  <span class="text-gray-400 block text-[11px]">$${marginVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
                 <div class="p-3.5 border border-gray-800 rounded-lg bg-[#0d1322]">
                   <span class="text-gray-400 block font-medium">CP Overcharge (Overall)</span>
                   <span class="font-bold text-white text-base block mt-1">${cpWholePct}%</span>
-                  <span class="text-gray-400 block text-[11px]">$${(record.leakageBreakdown?.cpLeakageWhole?.leakageValue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                  <span class="text-gray-400 block text-[11px]">$${cpWholeVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
                 <div class="p-3.5 border border-gray-800 rounded-lg bg-[#0d1322]">
                   <span class="text-gray-400 block font-medium">CP Overcharge (Same Day)</span>
                   <span class="font-bold text-white text-base block mt-1">${cpSameDayPct}%</span>
-                  <span class="text-gray-400 block text-[11px]">$${(record.leakageBreakdown?.cpLeakageSameDayMonth?.leakageValue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                  <span class="text-gray-400 block text-[11px]">$${cpSameDayVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
                 <div class="p-3.5 border border-gray-800 rounded-lg bg-[#0d1322]">
                   <span class="text-gray-400 block font-medium">Short Shelf Life</span>
                   <span class="font-bold text-white text-base block mt-1">${shelfLifePct}%</span>
-                  <span class="text-gray-400 block text-[11px]">$${(record.leakageBreakdown?.shelfLifeExceptions?.leakageValue || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+                  <span class="text-gray-400 block text-[11px]">$${shelfLifeVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                 </div>
               </div>
             </div>
 
             <!-- AI Trigger Button Slot -->
             <div id="ai-section-${index}" class="border-t border-gray-800/80 pt-3">
-              <button onclick='generateAIAnalysis(${JSON.stringify(record)}, "ai-section-${index}")' class="w-full py-2.5 bg-cyan-950/40 border border-cyan-800/60 text-cyan-300 hover:bg-cyan-900/40 font-semibold text-xs rounded-lg transition flex items-center justify-center gap-2">
+              <button onclick='generateAIAnalysis(${JSON.stringify(record).replace(/'/g, "&apos;")}, "ai-section-${index}")' class="w-full py-2.5 bg-cyan-950/40 border border-cyan-800/60 text-cyan-300 hover:bg-cyan-900/40 font-semibold text-xs rounded-lg transition flex items-center justify-center gap-2">
                 <span>⚡</span> Run AI Root-Cause Analysis & Action Plan
               </button>
             </div>
