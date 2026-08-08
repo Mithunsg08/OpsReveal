@@ -64,11 +64,11 @@
         </div>
         <div class="flex items-center gap-1.5 pt-1 text-[11px] text-gray-300">
           <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
-          <span id="user-email-display" class="truncate">sgmithun24@gmail.com</span>
+          <span id="user-email-display" class="truncate">Loading...</span>
         </div>
       </div>
 
-      <button onclick="window.location.href='/login.html'" class="w-full py-2 bg-[#111827] border border-gray-800 hover:bg-gray-800 text-gray-300 text-xs font-semibold rounded-lg transition">
+      <button onclick="handleSignOut()" class="w-full py-2 bg-[#111827] border border-gray-800 hover:bg-gray-800 text-gray-300 text-xs font-semibold rounded-lg transition">
         Sign Out
       </button>
     </div>
@@ -95,8 +95,18 @@
   </main>
 
   <script>
-    const USER_ID = "B0cjYjtrYMRy5eBVGcptatKBGAC3"; 
+    // Dynamically retrieve active user session from local storage or session storage
+    const USER_ID = localStorage.getItem("userId") || "B0cjYjtrYMRy5eBVGcptatKBGAC3"; 
+    const USER_EMAIL = localStorage.getItem("userEmail") || "sgmithun24@gmail.com";
     const BACKEND_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
+
+    // Global registry to store records securely without inline string escaping issues
+    let loadedRecords = [];
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("user-email-display").textContent = USER_EMAIL;
+      fetchExceptions();
+    });
 
     async function fetchExceptions() {
       try {
@@ -104,8 +114,8 @@
         if (!response.ok) {
           throw new Error(`HTTP Error: ${response.status}`);
         }
-        const records = await response.json();
-        renderCards(records);
+        loadedRecords = await response.json();
+        renderCards(loadedRecords);
       } catch (err) {
         console.error("Fetch Exceptions Error:", err);
         document.getElementById("cards-container").innerHTML = `
@@ -116,12 +126,13 @@
 
     function renderCards(records) {
       const container = document.getElementById("cards-container");
-      container.innerHTML = "";
 
       if (!records || !Array.isArray(records) || records.length === 0) {
         container.innerHTML = `<div class="text-center py-12 text-gray-500 bg-[#111827] border border-gray-800 rounded-xl">No exception reports found for this account.</div>`;
         return;
       }
+
+      let cardsBuffer = "";
 
       records.forEach((record, index) => {
         const totalGRN = Number(record.totalGRNValue || record.totalVolume || 0);
@@ -145,19 +156,19 @@
         const uploadedDate = record.uploadedDate || record.timestamp || new Date().toISOString();
         const riskScore = record.riskScore || record.riskAssessment || 'HIGH';
 
-        const cardHtml = `
+        cardsBuffer += `
           <div id="card-${index}" class="bg-[#111827] border border-gray-800 rounded-xl p-6 shadow-xl space-y-5 relative overflow-hidden">
             
             <div class="flex justify-between items-center border-b border-gray-800/80 pb-4">
               <div>
-                <h2 class="text-lg font-bold text-white tracking-wide">${fileName}</h2>
-                <span class="text-xs text-gray-400">Processed: ${new Date(uploadedDate).toLocaleString()} | Type: ${record.reportType || 'GRN'}</span>
+                <h2 class="text-lg font-bold text-white tracking-wide">${escapeHtml(fileName)}</h2>
+                <span class="text-xs text-gray-400">Processed: ${new Date(uploadedDate).toLocaleString()} | Type: ${escapeHtml(record.reportType || 'GRN')}</span>
               </div>
               <div class="flex items-center gap-3">
                 <span class="px-3 py-1 text-xs font-bold rounded-full ${String(riskScore).toUpperCase() === 'HIGH' ? 'bg-red-950/80 border border-red-800 text-red-400' : 'bg-amber-950/80 border border-amber-800 text-amber-400'}">
-                  ${String(riskScore).toUpperCase()} RISK
+                  ${escapeHtml(String(riskScore).toUpperCase())} RISK
                 </span>
-                <button onclick="downloadCard('card-${index}', '${fileName}')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg transition border border-gray-700 flex items-center gap-1.5">
+                <button onclick="downloadCard('card-${index}', '${escapeHtml(fileName)}')" class="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-medium rounded-lg transition border border-gray-700 flex items-center gap-1.5">
                   <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                   Export Card
                 </button>
@@ -213,15 +224,23 @@
 
             <!-- AI Trigger Button Slot -->
             <div id="ai-section-${index}" class="border-t border-gray-800/80 pt-3">
-              <button onclick='generateAIAnalysis(${JSON.stringify(record).replace(/'/g, "&apos;")}, "ai-section-${index}")' class="w-full py-2.5 bg-cyan-950/40 border border-cyan-800/60 text-cyan-300 hover:bg-cyan-900/40 font-semibold text-xs rounded-lg transition flex items-center justify-center gap-2">
+              <button onclick="triggerAIAnalysis(${index})" class="w-full py-2.5 bg-cyan-950/40 border border-cyan-800/60 text-cyan-300 hover:bg-cyan-900/40 font-semibold text-xs rounded-lg transition flex items-center justify-center gap-2">
                 <span>⚡</span> Run AI Root-Cause Analysis & Action Plan
               </button>
             </div>
 
           </div>
         `;
-        container.innerHTML += cardHtml;
       });
+
+      container.innerHTML = cardsBuffer;
+    }
+
+    function triggerAIAnalysis(recordIndex) {
+      const record = loadedRecords[recordIndex];
+      if (record) {
+        generateAIAnalysis(record, `ai-section-${recordIndex}`);
+      }
     }
 
     async function generateAIAnalysis(record, containerId) {
@@ -261,7 +280,7 @@
         if (Array.isArray(rawInsights) && rawInsights.length > 0) {
           insightsHtml = rawInsights.map(item => {
             if (typeof item === 'string') {
-              return `<div class="bg-[#0b0f19] p-3.5 rounded-lg border border-gray-800 mt-2 text-gray-300">${item}</div>`;
+              return `<div class="bg-[#0b0f19] p-3.5 rounded-lg border border-gray-800 mt-2 text-gray-300">${escapeHtml(item)}</div>`;
             }
             
             const category = item.categoryName || item.category || "Exception Insight";
@@ -270,9 +289,9 @@
 
             return `
               <div class="bg-[#0b0f19] p-3.5 rounded-lg border border-gray-800 mt-2 space-y-1.5">
-                <div class="font-bold text-cyan-400 text-xs uppercase tracking-wide">${category}</div>
-                <div class="text-gray-300"><strong class="text-gray-400">RCA:</strong> ${rca}</div>
-                <div class="text-emerald-400"><strong class="text-gray-400">Action:</strong> ${action}</div>
+                <div class="font-bold text-cyan-400 text-xs uppercase tracking-wide">${escapeHtml(category)}</div>
+                <div class="text-gray-300"><strong class="text-gray-400">RCA:</strong> ${escapeHtml(rca)}</div>
+                <div class="text-emerald-400"><strong class="text-gray-400">Action:</strong> ${escapeHtml(action)}</div>
               </div>
             `;
           }).join("");
@@ -310,30 +329,27 @@
       }
     }
 
-    // Side-Positioned High-Contrast Watermark Export Function
     function downloadCard(cardId, fileName) {
       const element = document.getElementById(cardId);
 
       html2canvas(element, { 
         backgroundColor: "#111827",
-        scale: 2
+        scale: 2,
+        useCORS: true,
+        scrollX: 0,
+        scrollY: 0
       }).then(cardCanvas => {
-        // Create an extended canvas to cleanly fit the side vertical watermark
-        const sidePadding = 45; // Pixel space on the right for the vertical watermark
+        const sidePadding = 45; 
         const finalCanvas = document.createElement("canvas");
         finalCanvas.width = cardCanvas.width + sidePadding;
         finalCanvas.height = cardCanvas.height;
 
         const ctx = finalCanvas.getContext("2d");
 
-        // Fill background color matching theme
         ctx.fillStyle = "#111827";
         ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-
-        // Draw original card content on the left
         ctx.drawImage(cardCanvas, 0, 0);
 
-        // Draw right vertical watermark strip divider
         ctx.strokeStyle = "rgba(6, 182, 212, 0.3)";
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -341,24 +357,21 @@
         ctx.lineTo(cardCanvas.width + 5, finalCanvas.height);
         ctx.stroke();
 
-        // Draw Eye-Catching Cyan Vertical Side Watermark Text
         ctx.save();
         ctx.translate(finalCanvas.width - 15, finalCanvas.height / 2);
-        ctx.rotate(Math.PI / 2); // Rotate text 90 degrees vertically down the right side
+        ctx.rotate(Math.PI / 2);
         
         ctx.font = "bold 16px sans-serif";
-        ctx.fillStyle = "#06b6d4"; // Vibrant cyan matching theme brand color
+        ctx.fillStyle = "#06b6d4"; 
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
         
-        // Eye-catching glow effect
         ctx.shadowColor = "rgba(6, 182, 212, 0.8)";
         ctx.shadowBlur = 8;
 
         ctx.fillText("OpsReveal by Preventloss.org", 0, 0);
         ctx.restore();
 
-        // Download PNG Image
         const link = document.createElement("a");
         link.download = `OpsReveal_Exception_${fileName.replace(/[^a-z0-9]/gi, '_')}.png`;
         link.href = finalCanvas.toDataURL("image/png");
@@ -366,7 +379,20 @@
       });
     }
 
-    fetchExceptions();
+    function handleSignOut() {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = '/login.html';
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
   </script>
 </body>
 </html>
