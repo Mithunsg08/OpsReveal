@@ -118,7 +118,7 @@
       <!-- CARDS CONTAINER -->
       <div id="cards-container" class="space-y-6">
         <div class="text-center py-16 text-slate-500 bg-slate-900 border border-slate-800 rounded-2xl">
-          Authenticating session...
+          Loading audit exception data...
         </div>
       </div>
 
@@ -146,6 +146,21 @@
     const BACKEND_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
     let loadedRecords = [];
 
+    // -------------------------------------------------------------
+    // CRITICAL FIX: FAST-PATH AUTH CHECK (PREVENTS REDIRECT LOOP)
+    // -------------------------------------------------------------
+    const cachedUid = localStorage.getItem("userId");
+    const cachedEmail = localStorage.getItem("userEmail");
+
+    if (cachedUid) {
+      document.body.style.display = 'flex';
+      document.getElementById("userEmailDisplay").textContent = cachedEmail || "Authenticated User";
+      fetchExceptions(cachedUid, false, false);
+    } else {
+      // If no local credentials exist at all, boot to login immediately
+      window.location.replace("/login.html");
+    }
+
     // Sign out handler
     document.getElementById("signOutBtn").addEventListener("click", async () => {
       await signOut(auth);
@@ -154,7 +169,7 @@
       window.location.replace('/login.html');
     });
 
-    // Authentication session handler
+    // Authentication session listener (Asynchronous Firebase Check)
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         const token = await user.getIdToken();
@@ -182,15 +197,11 @@
           fetchExceptions(user.uid, false, false);
         });
 
-      } else {
-        const cachedUserId = localStorage.getItem("userId");
-        if (!cachedUserId) {
-          window.location.replace("/login.html");
-        } else {
-          document.body.style.display = 'flex';
-          document.getElementById("userEmailDisplay").textContent = localStorage.getItem("userEmail") || "Authenticated";
-          fetchExceptions(cachedUserId, false, false);
-        }
+      } else if (!cachedUid) {
+        // Only redirect if Firebase confirms logged-out state AND no cache existed
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.replace("/login.html");
       }
     });
 
@@ -402,18 +413,20 @@
           throw new Error(`Server returned status ${response.status}: ${errText || 'AI Endpoint error'}`);
         }
 
-        const data = await response.json();
+        let data = await response.json();
 
-        // Handle various JSON schemas returned by the AI Worker
-        let summaryText = "";
-        let rawInsights = [];
-
+        // Handle stringified JSON responses safely
         if (typeof data === "string") {
-          summaryText = data;
-        } else {
-          summaryText = data.executiveSummary || data.summary || data.result || data.response || "Automated diagnostic complete.";
-          rawInsights = data.categoryInsights || data.insights || data.actions || [];
+          const cleanJson = data.replace(/```json/g, "").replace(/```/g, "").trim();
+          try {
+            data = JSON.parse(cleanJson);
+          } catch (e) {
+            data = { executiveSummary: data };
+          }
         }
+
+        const summaryText = data.executiveSummary || data.summary || data.result || data.response || "Automated diagnostic complete.";
+        const rawInsights = data.categoryInsights || data.insights || data.actions || [];
 
         let insightsHtml = "";
         if (Array.isArray(rawInsights) && rawInsights.length > 0) {
