@@ -12,6 +12,20 @@
       color: #f3f4f6;
     }
   </style>
+
+  <!-- AUTHENTICATION GUARD (Executes before rendering the UI) -->
+  <script>
+    (function checkAuthentication() {
+      // Check for user session tokens stored during login
+      const userId = localStorage.getItem("userId") || sessionStorage.getItem("userId");
+      const authToken = localStorage.getItem("authToken") || sessionStorage.getItem("authToken");
+
+      // If user is not logged in, immediately redirect to login page
+      if (!userId && !authToken) {
+        window.location.replace("/login.html");
+      }
+    })();
+  </script>
 </head>
 <body class="font-sans antialiased flex h-screen overflow-hidden">
 
@@ -40,7 +54,7 @@
           Upload Reports
         </a>
         
-        <!-- Exceptions Tab (Active State) -->
+        <!-- Active Exceptions Tab -->
         <a href="/app/exceptions/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-cyan-400 bg-cyan-950/40 border border-cyan-800/50 font-semibold transition">
           <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
           Exceptions
@@ -53,7 +67,7 @@
       </nav>
     </div>
 
-    <!-- Active Plan Footer Box -->
+    <!-- Active Plan & User Footer Box -->
     <div class="space-y-4">
       <div class="bg-[#111827] border border-gray-800 rounded-xl p-3.5 text-xs space-y-2">
         <div class="text-[10px] text-gray-400 font-bold tracking-wider uppercase">Active Plan</div>
@@ -76,8 +90,6 @@
 
   <!-- Main Content Area -->
   <main class="flex-1 overflow-y-auto p-8 space-y-6">
-    
-    <!-- Top Header -->
     <header class="flex justify-between items-center">
       <div>
         <h1 class="text-3xl font-extrabold text-white tracking-tight">Audit Exceptions</h1>
@@ -88,29 +100,33 @@
     <!-- Exceptions Feed Container -->
     <div id="cards-container" class="space-y-6">
       <div class="text-center py-16 text-gray-500 bg-[#111827] border border-gray-800 rounded-xl">
-        Loading Cloudflare audit records...
+        Loading audit records...
       </div>
     </div>
-
   </main>
 
   <script>
-    // Dynamically retrieve active user session from local storage or session storage
-    const USER_ID = localStorage.getItem("userId") || "B0cjYjtrYMRy5eBVGcptatKBGAC3"; 
-    const USER_EMAIL = localStorage.getItem("userEmail") || "sgmithun24@gmail.com";
+    // Dynamically retrieve authenticated user details
+    const USER_ID = localStorage.getItem("userId") || sessionStorage.getItem("userId"); 
+    const USER_EMAIL = localStorage.getItem("userEmail") || sessionStorage.getItem("userEmail") || "Authenticated User";
     const BACKEND_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
 
-    // Global registry to store records securely without inline string escaping issues
     let loadedRecords = [];
 
     document.addEventListener("DOMContentLoaded", () => {
+      // Ensure user ID exists before proceeding
+      if (!USER_ID) {
+        window.location.replace("/login.html");
+        return;
+      }
+
       document.getElementById("user-email-display").textContent = USER_EMAIL;
       fetchExceptions();
     });
 
     async function fetchExceptions() {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/upload-history?userId=${USER_ID}`);
+        const response = await fetch(`${BACKEND_URL}/api/upload-history?userId=${encodeURIComponent(USER_ID)}`);
         if (!response.ok) {
           throw new Error(`HTTP Error: ${response.status}`);
         }
@@ -119,7 +135,9 @@
       } catch (err) {
         console.error("Fetch Exceptions Error:", err);
         document.getElementById("cards-container").innerHTML = `
-          <div class="p-4 bg-red-950/40 border border-red-800/50 text-red-300 rounded-xl text-sm">Failed to load exception history (${err.message}). Please check backend status.</div>
+          <div class="p-4 bg-red-950/40 border border-red-800/50 text-red-300 rounded-xl text-sm">
+            Failed to load exception history (${escapeHtml(err.message)}). Please verify backend status or re-login.
+          </div>
         `;
       }
     }
@@ -158,7 +176,6 @@
 
         cardsBuffer += `
           <div id="card-${index}" class="bg-[#111827] border border-gray-800 rounded-xl p-6 shadow-xl space-y-5 relative overflow-hidden">
-            
             <div class="flex justify-between items-center border-b border-gray-800/80 pb-4">
               <div>
                 <h2 class="text-lg font-bold text-white tracking-wide">${escapeHtml(fileName)}</h2>
@@ -228,7 +245,6 @@
                 <span>⚡</span> Run AI Root-Cause Analysis & Action Plan
               </button>
             </div>
-
           </div>
         `;
       });
@@ -247,18 +263,6 @@
       const container = document.getElementById(containerId);
       container.innerHTML = `<div class="text-xs text-cyan-400 animate-pulse font-medium py-3 text-center bg-[#0d1322] rounded-lg border border-cyan-900/40">Querying Gemini AI Model for Root-Cause Diagnostics...</div>`;
 
-      const renderDiagnosticUI = (summary, insights) => {
-        container.innerHTML = `
-          <div class="bg-[#0d1322] border border-cyan-900/50 rounded-xl p-4 text-xs space-y-3">
-            <h4 class="font-bold text-cyan-300 text-sm flex items-center gap-2">
-              <span>⚡</span> AI Diagnostic Summary & Action Plan
-            </h4>
-            <p class="text-gray-300 leading-relaxed">${summary}</p>
-            ${insights}
-          </div>
-        `;
-      };
-
       try {
         const response = await fetch(`${BACKEND_URL}/api/genkit/rca`, {
           method: "POST",
@@ -266,115 +270,39 @@
           body: JSON.stringify(record)
         });
 
-        if (!response.ok) {
-          throw new Error(`Server status ${response.status}`);
-        }
-
+        if (!response.ok) throw new Error(`Server status ${response.status}`);
         const data = await response.json();
 
-        const summaryText = data.executiveSummary || data.summary || data.overview || "";
-        const rawInsights = data.categoryInsights || data.insights || data.rootCauses || [];
+        const summaryText = data.executiveSummary || data.summary || "Automated diagnostic complete.";
+        const rawInsights = data.categoryInsights || data.insights || [];
 
-        let insightsHtml = "";
-
-        if (Array.isArray(rawInsights) && rawInsights.length > 0) {
-          insightsHtml = rawInsights.map(item => {
-            if (typeof item === 'string') {
-              return `<div class="bg-[#0b0f19] p-3.5 rounded-lg border border-gray-800 mt-2 text-gray-300">${escapeHtml(item)}</div>`;
-            }
-            
-            const category = item.categoryName || item.category || "Exception Insight";
-            const rca = item.rootCauseAnalysis || item.rootCause || "N/A";
-            const action = item.actionableRemediation || item.action || "N/A";
-
-            return `
-              <div class="bg-[#0b0f19] p-3.5 rounded-lg border border-gray-800 mt-2 space-y-1.5">
-                <div class="font-bold text-cyan-400 text-xs uppercase tracking-wide">${escapeHtml(category)}</div>
-                <div class="text-gray-300"><strong class="text-gray-400">RCA:</strong> ${escapeHtml(rca)}</div>
-                <div class="text-emerald-400"><strong class="text-gray-400">Action:</strong> ${escapeHtml(action)}</div>
-              </div>
-            `;
-          }).join("");
-        }
-
-        renderDiagnosticUI(
-          summaryText || `Automated root-cause diagnostic completed for ${record.fileName || 'Audit File'}. Identified capital recovery channels below:`,
-          insightsHtml
-        );
-
-      } catch (err) {
-        console.error("AI Analysis Error:", err);
-
-        const totalLeakage = Number(record.totalLeakages || record.financialLeakage || 0);
-        const breakdown = record.leakageBreakdown || {};
-        const marginLossVal = Number(breakdown.marginLeakages?.leakageValue || (totalLeakage * 0.5766));
-        const cpVal = Number(breakdown.cpLeakageWhole?.leakageValue || (totalLeakage * 0.3874));
-
-        const fallbackSummary = `Diagnostic derived from report metrics (${record.fileName || 'Audit File'}). Capital leakage is concentrated in pricing variances and vendor billing errors.`;
-
-        const fallbackInsights = `
-          <div class="bg-[#0b0f19] p-3.5 rounded-lg border border-gray-800 mt-2 space-y-1.5">
-            <div class="font-bold text-cyan-400 text-xs uppercase tracking-wide">Margin Loss & Discrepancies</div>
-            <div class="text-gray-300"><strong class="text-gray-400">RCA:</strong> Discrepancy detected between vendor master contract agreed rates and actual GRN unit purchase order rates.</div>
-            <div class="text-emerald-400"><strong class="text-gray-400">Action:</strong> Issue direct debit note claims for $${marginLossVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} against active supplier accounts payable.</div>
+        let insightsHtml = rawInsights.map(item => `
+          <div class="bg-[#0b0f19] p-3.5 rounded-lg border border-gray-800 mt-2 space-y-1.5 text-xs">
+            <div class="font-bold text-cyan-400 uppercase">${escapeHtml(item.categoryName || item.category || 'Insight')}</div>
+            <div class="text-gray-300"><strong class="text-gray-400">RCA:</strong> ${escapeHtml(item.rootCauseAnalysis || item.rootCause || 'N/A')}</div>
+            <div class="text-emerald-400"><strong class="text-gray-400">Action:</strong> ${escapeHtml(item.actionableRemediation || item.action || 'N/A')}</div>
           </div>
-          <div class="bg-[#0b0f19] p-3.5 rounded-lg border border-gray-800 mt-2 space-y-1.5">
-            <div class="font-bold text-cyan-400 text-xs uppercase tracking-wide">CP Overcharge (Tier Rebates)</div>
-            <div class="text-gray-300"><strong class="text-gray-400">RCA:</strong> Invoice overbilling identified where tier-based volume discounts were omitted on batch receipts.</div>
-            <div class="text-emerald-400"><strong class="text-gray-400">Action:</strong> Initiate credit note claims for $${cpVal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} and lock intake unit price validation.</div>
+        `).join('');
+
+        container.innerHTML = `
+          <div class="bg-[#0d1322] border border-cyan-900/50 rounded-xl p-4 space-y-3 text-xs">
+            <h4 class="font-bold text-cyan-300 text-sm flex items-center gap-2">⚡ AI Diagnostic Summary</h4>
+            <p class="text-gray-300 leading-relaxed">${escapeHtml(summaryText)}</p>
+            ${insightsHtml}
           </div>
         `;
-
-        renderDiagnosticUI(fallbackSummary, fallbackInsights);
+      } catch (err) {
+        console.error("AI Generation Error:", err);
+        container.innerHTML = `<div class="p-3 bg-red-950/40 border border-red-800/50 text-red-300 rounded-lg text-xs">Unable to generate AI analysis. Please try again.</div>`;
       }
     }
 
     function downloadCard(cardId, fileName) {
       const element = document.getElementById(cardId);
-
-      html2canvas(element, { 
-        backgroundColor: "#111827",
-        scale: 2,
-        useCORS: true,
-        scrollX: 0,
-        scrollY: 0
-      }).then(cardCanvas => {
-        const sidePadding = 45; 
-        const finalCanvas = document.createElement("canvas");
-        finalCanvas.width = cardCanvas.width + sidePadding;
-        finalCanvas.height = cardCanvas.height;
-
-        const ctx = finalCanvas.getContext("2d");
-
-        ctx.fillStyle = "#111827";
-        ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
-        ctx.drawImage(cardCanvas, 0, 0);
-
-        ctx.strokeStyle = "rgba(6, 182, 212, 0.3)";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(cardCanvas.width + 5, 0);
-        ctx.lineTo(cardCanvas.width + 5, finalCanvas.height);
-        ctx.stroke();
-
-        ctx.save();
-        ctx.translate(finalCanvas.width - 15, finalCanvas.height / 2);
-        ctx.rotate(Math.PI / 2);
-        
-        ctx.font = "bold 16px sans-serif";
-        ctx.fillStyle = "#06b6d4"; 
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        
-        ctx.shadowColor = "rgba(6, 182, 212, 0.8)";
-        ctx.shadowBlur = 8;
-
-        ctx.fillText("OpsReveal by Preventloss.org", 0, 0);
-        ctx.restore();
-
+      html2canvas(element, { backgroundColor: "#111827", scale: 2, useCORS: true }).then(canvas => {
         const link = document.createElement("a");
         link.download = `OpsReveal_Exception_${fileName.replace(/[^a-z0-9]/gi, '_')}.png`;
-        link.href = finalCanvas.toDataURL("image/png");
+        link.href = canvas.toDataURL("image/png");
         link.click();
       });
     }
@@ -382,7 +310,7 @@
     function handleSignOut() {
       localStorage.clear();
       sessionStorage.clear();
-      window.location.href = '/login.html';
+      window.location.replace('/login.html');
     }
 
     function escapeHtml(str) {
