@@ -219,6 +219,14 @@
       }
     }
 
+    // Save session credentials so protected pages can identify the user
+    async function persistUserSession(user) {
+      const token = await user.getIdToken();
+      localStorage.setItem("userId", user.uid);
+      localStorage.setItem("userEmail", user.email);
+      localStorage.setItem("authToken", token);
+    }
+
     window.executeEmailLogin = async function() {
       errorBanner.classList.add('hidden');
 
@@ -250,8 +258,9 @@
         }
 
         await ensureUserDocExists(auth.currentUser);
+        await persistUserSession(auth.currentUser);
 
-        // Redirecting to nested directory structure
+        // Redirecting to protected app dashboard
         window.location.href = '/app/dashboard/';
 
       } catch (err) {
@@ -276,6 +285,8 @@
       try {
         const result = await signInWithPopup(auth, provider);
         await ensureUserDocExists(result.user);
+        await persistUserSession(result.user);
+        
         window.location.href = '/app/dashboard/';
       } catch (err) {
         console.error("Google Auth Exception:", err);
