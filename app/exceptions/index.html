@@ -1,452 +1,52 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full bg-slate-950 dark">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OpsReveal - Audit Exceptions & RCA</title>
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
-
-  <style>
-    body { font-family: 'Inter', sans-serif; }
-    h1, h2, h3, h4, .font-heading { font-family: 'Plus Jakarta Sans', sans-serif; }
-  </style>
-</head>
-<body style="display: none;" class="min-h-screen bg-slate-950 text-slate-100 flex antialiased relative">
-
-  <!-- LEFT HAND SIDEBAR NAVIGATION -->
-  <aside class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 min-h-screen z-20">
-    <div>
-      <div class="h-16 flex items-center px-6 border-b border-slate-800/80 space-x-3">
-        <div class="h-9 w-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-extrabold text-lg text-slate-950 shadow-md shadow-cyan-500/20">
-          O
-        </div>
-        <div>
-          <span class="font-heading font-extrabold text-xl text-white tracking-tight block">OpsReveal</span>
-          <span class="text-[10px] text-slate-500 block -mt-1 font-medium">Prevent Capital Loss</span>
-        </div>
-      </div>
-
-      <nav class="p-4 space-y-1.5">
-        <a href="/app/dashboard" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-          <span>Dashboard</span>
-        </a>
-
-        <a href="/app/uploads/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-          <span>Upload Reports</span>
-        </a>
-
-        <a href="/app/exceptions/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm transition">
-          <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-          <span>Exceptions & RCA</span>
-        </a>
-
-        <a href="/app/settings" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-          <span>Settings</span>
-        </a>
-      </nav>
-    </div>
-
-    <div class="p-4 border-t border-slate-800 space-y-3">
-      <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800/80 text-xs space-y-2">
-        <div>
-          <span class="text-[10px] text-slate-500 block font-semibold uppercase">Active Plan</span>
-          <span id="planLabel" class="font-bold text-cyan-400">Loading...</span>
-        </div>
-        
-        <div id="usageMeters" class="pt-2 border-t border-slate-800/60 space-y-1.5">
-          <div class="flex justify-between text-[11px]">
-            <span class="text-slate-400">Monthly Uploads:</span>
-            <span id="meterUploads" class="font-mono font-semibold text-slate-200">0 / 4</span>
-          </div>
-          <div class="flex justify-between text-[11px]">
-            <span class="text-slate-400">Monthly Lines:</span>
-            <span id="meterLines" class="font-mono font-semibold text-slate-200">0 / 20k</span>
-          </div>
-        </div>
-
-        <div class="flex items-center space-x-2 pt-2 border-t border-slate-800/60">
-          <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-          <span id="userEmailDisplay" class="text-xs font-medium text-slate-300 truncate">loading...</span>
-        </div>
-      </div>
-
-      <button onclick="logoutUser()" class="w-full bg-slate-950 hover:bg-slate-800 text-xs text-slate-400 py-2 rounded-xl border border-slate-800 font-semibold transition">
-        Sign Out
-      </button>
-    </div>
-  </aside>
-
-  <!-- MAIN CONTENT AREA -->
-  <main class="flex-1 min-w-0 overflow-y-auto px-8 py-8">
-    <div class="max-w-7xl mx-auto space-y-8">
-      
-      <!-- HEADER -->
-      <div class="flex items-center justify-between">
-        <div>
-          <h1 class="text-3xl font-extrabold text-white font-heading tracking-tight">Audit Exception Cards</h1>
-          <p class="text-xs text-slate-400 mt-1">Granular breakdown of operational leakages, Root Cause Analysis (RCA), and remediation procedures.</p>
-        </div>
-        
-        <div class="flex items-center gap-3">
-          <select id="reportTypeFilter" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500 font-medium">
-            <option value="all">All Report Types</option>
-            <option value="GRN">GRN Audit</option>
-            <option value="Margin">Margin Erosion</option>
-            <option value="Inventory">Inventory Write-Off</option>
-          </select>
-          <a href="/app/uploads/" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-md shadow-cyan-500/10">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            <span>New Audit</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- CARDS CONTAINER -->
-      <div id="cardsContainer" class="space-y-6">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center text-slate-500">
-          <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mb-3"></div>
-          <p class="text-sm italic">Loading audit exception records...</p>
-        </div>
-      </div>
-
-    </div>
-  </main>
-
-  <script type="module">
-    import { auth, db } from '/app/auth-guard.js';
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
-    const CF_AI_RCA_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/generate-rca"; // Cloudflare endpoint calling Gemini Flash
-    
-    let currentUser = null;
-    let allRecords = [];
-    let currentPlanState = { isPro: false, isAdmin: false };
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.replace('/login.html');
-        return;
-      }
-      currentUser = user;
-      document.getElementById('userEmailDisplay').textContent = user.email;
-      document.body.style.display = 'flex';
-
-      onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-        const profile = docSnap.data() || {};
-        const rawRole = String(profile.role || '').toLowerCase();
-        const rawPlan = String(profile.plan || '').toLowerCase();
-        
-        const isAdmin = rawRole === 'superadmin' || rawRole === 'admin' || rawPlan === 'admin' || user.email.toLowerCase() === 'mithun@preventloss.org';
-        const isPro = !isAdmin && (rawPlan.includes('pro') || rawPlan.includes('professional') || rawPlan.includes('tier'));
-
-        currentPlanState = { isPro, isAdmin };
-        updatePlanUI(isPro, isAdmin);
-        fetchExceptionData(user.uid, isAdmin);
+export default {
+  async fetch(request, env) {
+    if (request.method === "OPTIONS") {
+      return new Response(null, {
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+          "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type",
+        },
       });
-    });
-
-    window.logoutUser = () => {
-      signOut(auth).then(() => window.location.replace('/login.html'));
-    };
-
-    function updatePlanUI(isPro, isAdmin) {
-      const planLabel = document.getElementById('planLabel');
-      if (isAdmin) {
-        planLabel.innerText = 'Admin Console';
-        planLabel.className = 'font-bold text-cyan-400';
-      } else if (isPro) {
-        planLabel.innerText = 'Professional Tier';
-        planLabel.className = 'font-bold text-emerald-400';
-      } else {
-        planLabel.innerText = 'Starter Tier';
-        planLabel.className = 'font-bold text-amber-400';
-      }
     }
 
-    async function fetchExceptionData(userId, isAdmin) {
+    if (request.url.endsWith("/api/generate-rca") && request.method === "POST") {
       try {
-        const endpoint = isAdmin ? CF_API_URL : `${CF_API_URL}?userId=${userId}`;
-        const res = await fetch(endpoint);
-        allRecords = await res.json();
-        if (!Array.isArray(allRecords)) allRecords = [];
+        const body = await request.json();
+        const record = body.uploadRecord || {};
 
-        renderExceptionCards();
-      } catch (err) {
-        console.error("Error fetching exception logs:", err);
-        document.getElementById('cardsContainer').innerHTML = `
-          <div class="bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-2xl p-6 text-center text-xs">
-            Failed to fetch telemetry logs from Cloudflare Backend. Please check your network connection.
-          </div>
-        `;
-      }
-    }
+        // Build a prompt tailored to the specific card
+        const promptText = `Analyze this audit report and return JSON format with fields "rootCause" (string) and "actions" (array of 3 strings).
+File: ${record.fileName || "Audit"}
+Total Leakage: $${record.totalLeakages || 0}
+Breakdown: ${JSON.stringify(record.leakageBreakdown || {})}`;
 
-    function renderExceptionCards() {
-      const container = document.getElementById('cardsContainer');
-      const filter = document.getElementById('reportTypeFilter').value;
+        // Call Google AI Studio Gemini Flash 1.5 API
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${env.GEMINI_API_KEY}`;
 
-      let filtered = [...allRecords];
-      if (filter !== 'all') {
-        filtered = filtered.filter(r => (r.reportType || 'GRN').toUpperCase().includes(filter.toUpperCase()));
-      }
-
-      if (filtered.length === 0) {
-        container.innerHTML = `
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center text-slate-500">
-            <p class="text-sm">No exception records found for this category.</p>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = filtered.map((r, index) => {
-        const dateStr = r.uploadedDate || r.uploaded_date || r.timestamp || new Date().toISOString();
-        const formattedDate = new Date(dateStr).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-        const fileName = r.fileName || 'Report_Audit.xlsx';
-        const reportType = r.reportType || 'GRN Audit';
-        const lines = Number(r.linesProcessed || 0).toLocaleString();
-        const totalGRNValue = Number(r.totalGRNValue || 0);
-        const exceptionsCount = Number(r.flaggedExceptionsCount || 0).toLocaleString();
-        const totalLeakage = Number(r.totalLeakages || 0);
-        const risk = String(r.riskScore || 'High').toUpperCase();
-
-        // Breakdown Mapping
-        const bd = r.leakageBreakdown || {};
-        const shelfLife = bd.shelfLifeExceptions || { count: 0, leakageValue: 0 };
-        const margin = bd.marginLeakages || { count: 0, leakageValue: 0 };
-        const cpWhole = bd.cpLeakageWhole || { count: 0, leakageValue: 0 };
-        const cpSameDay = bd.cpLeakageSameDayMonth || { count: 0, leakageValue: 0 };
-
-        // Risk Styling
-        let riskBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/30';
-        if (risk === 'MEDIUM') riskBadge = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
-        if (risk === 'LOW') riskBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
-
-        return `
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-            
-            <!-- CARD HEADER -->
-            <div class="p-6 border-b border-slate-800/80 bg-slate-950/40 flex flex-wrap items-center justify-between gap-4">
-              <div class="flex items-center space-x-3">
-                <div class="p-2.5 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                </div>
-                <div>
-                  <div class="flex items-center space-x-2">
-                    <h3 class="text-base font-bold text-white font-heading">${fileName}</h3>
-                    <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold border ${riskBadge}">${risk} RISK</span>
-                  </div>
-                  <p class="text-xs text-slate-400 mt-0.5">Uploaded on ${formattedDate} • Type: <span class="text-cyan-400 font-medium">${reportType}</span></p>
-                </div>
-              </div>
-
-              <div class="flex items-center space-x-6 text-right">
-                <div>
-                  <span class="text-[10px] text-slate-500 uppercase font-semibold block">Total Leakage</span>
-                  <span class="text-lg font-extrabold font-mono text-rose-400">$${totalLeakage.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div>
-                  <span class="text-[10px] text-slate-500 uppercase font-semibold block">Flagged Exceptions</span>
-                  <span class="text-lg font-extrabold font-mono text-amber-400">${exceptionsCount}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- METRICS SUMMARY BAR -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-950/20 border-b border-slate-800/60 text-xs font-mono">
-              <div>
-                <span class="text-[10px] text-slate-500 block uppercase font-sans">Lines Processed</span>
-                <span class="text-slate-200 font-bold">${lines}</span>
-              </div>
-              <div>
-                <span class="text-[10px] text-slate-500 block uppercase font-sans">Total GRN Value</span>
-                <span class="text-slate-200 font-bold">$${totalGRNValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              </div>
-              <div>
-                <span class="text-[10px] text-slate-500 block uppercase font-sans">Leakage Ratio</span>
-                <span class="text-rose-400 font-bold">${((totalLeakage / (totalGRNValue || 1)) * 100).toFixed(2)}%</span>
-              </div>
-              <div>
-                <span class="text-[10px] text-slate-500 block uppercase font-sans">Audit Status</span>
-                <span class="text-emerald-400 font-bold">Processed</span>
-              </div>
-            </div>
-
-            <!-- BREAKDOWN & RCA CONTENT -->
-            <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-              
-              <!-- LEAKAGE CATEGORIES BREAKDOWN (5 COLUMNS) -->
-              <div class="lg:col-span-5 space-y-3">
-                <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider font-heading">Leakage Breakdown</h4>
-                
-                <div class="space-y-2">
-                  <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
-                    <div>
-                      <span class="text-slate-300 font-semibold block">Margin Leakages</span>
-                      <span class="text-[10px] text-slate-500">${margin.count.toLocaleString()} flagged items</span>
-                    </div>
-                    <span class="font-mono font-bold text-amber-400">$${margin.leakageValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  </div>
-
-                  <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
-                    <div>
-                      <span class="text-slate-300 font-semibold block">CP Leakage (Whole)</span>
-                      <span class="text-[10px] text-slate-500">${cpWhole.count.toLocaleString()} flagged items</span>
-                    </div>
-                    <span class="font-mono font-bold text-cyan-400">$${cpWhole.leakageValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  </div>
-
-                  <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
-                    <div>
-                      <span class="text-slate-300 font-semibold block">CP Leakage (Same Day/Mo)</span>
-                      <span class="text-[10px] text-slate-500">${cpSameDay.count.toLocaleString()} flagged items</span>
-                    </div>
-                    <span class="font-mono font-bold text-indigo-400">$${cpSameDay.leakageValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  </div>
-
-                  <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
-                    <div>
-                      <span class="text-slate-300 font-semibold block">Shelf Life Exceptions</span>
-                      <span class="text-[10px] text-slate-500">${shelfLife.count.toLocaleString()} flagged items</span>
-                    </div>
-                    <span class="font-mono font-bold text-rose-400">$${shelfLife.leakageValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- AI ROOT CAUSE & ACTION TAKEN (7 COLUMNS) -->
-              <div class="lg:col-span-7 space-y-4">
-                <div class="flex items-center justify-between">
-                  <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider font-heading flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    AI Root Cause Analysis & Corrective Actions
-                  </h4>
-                  <button id="btn-rca-${index}" onclick="triggerAiRca(${index})" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-lg text-[11px] font-semibold transition flex items-center space-x-1">
-                    <span>Generate AI RCA</span>
-                  </button>
-                </div>
-
-                <div id="rca-box-${index}" class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-4 text-xs space-y-3 min-h-[160px] flex flex-col justify-center">
-                  <p class="text-slate-500 italic text-center">Click "Generate AI RCA" to perform dynamic root cause diagnosis via Gemini AI.</p>
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        `;
-      }).join('');
-    }
-
-    // AI RCA GENERATOR VIA CLOUDFLARE BACKEND (Gemini API)
-    window.triggerAiRca = async (index) => {
-      const record = allRecords[index];
-      const box = document.getElementById(`rca-box-${index}`);
-      const btn = document.getElementById(`btn-rca-${index}`);
-
-      btn.disabled = true;
-      btn.classList.add('opacity-50', 'cursor-not-allowed');
-      box.innerHTML = `
-        <div class="flex items-center justify-center space-x-2 py-6 text-cyan-400">
-          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-400"></div>
-          <span class="text-xs font-semibold">Gemini Flash AI is diagnosing loss vectors...</span>
-        </div>
-      `;
-
-      try {
-        const response = await fetch(CF_AI_RCA_URL, {
+        const geminiRes = await fetch(geminiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ uploadRecord: record })
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: { responseMimeType: "application/json" }
+          }),
         });
 
-        const data = await response.json();
+        const geminiData = await geminiRes.json();
+        const rawText = geminiData.candidates[0].content.parts[0].text;
+        const parsedRca = JSON.parse(rawText);
 
-        if (data.success && data.rca) {
-          box.innerHTML = `
-            <div class="space-y-3 text-slate-300">
-              <div>
-                <span class="text-[10px] font-bold uppercase text-cyan-400 block tracking-wider">Root Cause Analysis (RCA)</span>
-                <p class="mt-1 leading-relaxed text-slate-300">${data.rca.rootCause}</p>
-              </div>
-              <div class="pt-2 border-t border-slate-800/80">
-                <span class="text-[10px] font-bold uppercase text-emerald-400 block tracking-wider">Immediate Corrective Actions</span>
-                <ul class="list-disc list-inside mt-1 space-y-1 text-slate-300">
-                  ${data.rca.actions.map(act => `<li>${act}</li>`).join('')}
-                </ul>
-              </div>
-            </div>
-          `;
-        } else {
-          throw new Error(data.error || "Failed to parse AI output");
-        }
+        return new Response(JSON.stringify({ success: true, rca: parsedRca }), {
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        });
       } catch (err) {
-        console.error("AI RCA Request Error:", err);
-        // Fallback Client-Side RCA Generation if Backend AI Endpoint is not configured yet
-        const fallbackRca = generateFallbackRCA(record);
-        box.innerHTML = `
-          <div class="space-y-3 text-slate-300">
-            <div>
-              <span class="text-[10px] font-bold uppercase text-cyan-400 block tracking-wider">Root Cause Analysis (Deterministic Diagnostic)</span>
-              <p class="mt-1 leading-relaxed text-slate-300">${fallbackRca.rootCause}</p>
-            </div>
-            <div class="pt-2 border-t border-slate-800/80">
-              <span class="text-[10px] font-bold uppercase text-emerald-400 block tracking-wider">Recommended Action Items</span>
-              <ul class="list-disc list-inside mt-1 space-y-1 text-slate-300">
-                ${fallbackRca.actions.map(act => `<li>${act}</li>`).join('')}
-              </ul>
-            </div>
-          </div>
-        `;
-      } finally {
-        btn.disabled = false;
-        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        return new Response(JSON.stringify({ success: false, error: err.message }), {
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        });
       }
-    };
-
-    function generateFallbackRCA(record) {
-      const total = Number(record.totalLeakages || 0);
-      const bd = record.leakageBreakdown || {};
-
-      let rootCause = "Primary capital erosion driven by cost price mismatch during GRN entry and unverified vendor invoice rates.";
-      let actions = [
-        "Block GRN creation for items with cost variances exceeding 0.5%.",
-        "Initiate Vendor Credit Note claim for overcharged CP amounts.",
-        "Audit purchasing agreements against ERP master cost price lists."
-      ];
-
-      if ((bd.marginLeakages?.leakageValue || 0) > (total * 0.4)) {
-        rootCause = "High margin erosion detected due to selling prices below minimum threshold margins or uncorrected promotional discounts.";
-        actions = [
-          "Lock POS price overriding capabilities at store manager level.",
-          "Review promotional master data for stacking discount bugs.",
-          "Re-align floor prices with revised supplier cost structures."
-        ];
-      } else if ((bd.shelfLifeExceptions?.leakageValue || 0) > (total * 0.2)) {
-        rootCause = "Severe write-off risk caused by inwarding short shelf-life batches violating 75% minimum remaining life policy.";
-        actions = [
-          "Implement mandatory batch expiry validation at gate receipt.",
-          "Reject inbound deliveries with less than 60 days remaining shelf life.",
-          "Enforce FIFO/FEFO picking rules in warehouse dispatch."
-        ];
-      }
-
-      return { rootCause, actions };
     }
 
-    document.getElementById('reportTypeFilter').addEventListener('change', renderExceptionCards);
-  </script>
-</body>
-</html>
+    return new Response("Not Found", { status: 404 });
+  },
+};
