@@ -209,6 +209,7 @@
           await setDoc(userRef, {
             uid: user.uid,
             email: user.email,
+            status: "active",
             provider: user.providerData[0]?.providerId || 'password',
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp()
@@ -217,6 +218,31 @@
       } catch (fsErr) {
         console.warn("Firestore sync non-fatal error:", fsErr);
       }
+    }
+
+    // Validates that the account status is active or verified (case-insensitive)
+    async function checkAccountStatus(user) {
+      try {
+        const userRef = doc(db, "users", user.uid);
+        const snap = await getDoc(userRef);
+
+        if (snap.exists()) {
+          const userData = snap.data();
+          const status = String(userData.status || '').toLowerCase();
+
+          // Allow login if status is 'active' or 'verified'
+          if (status !== 'active' && status !== 'verified') {
+            await signOut(auth);
+            localStorage.clear();
+            sessionStorage.clear();
+            showError("Your account is currently inactive. Access has been restricted.");
+            return false;
+          }
+        }
+      } catch (err) {
+        console.warn("Status check failed, falling back gracefully:", err);
+      }
+      return true;
     }
 
     // Save session credentials so protected pages can identify the user
@@ -258,6 +284,14 @@
         }
 
         await ensureUserDocExists(auth.currentUser);
+
+        // Validate account status before persisting session and redirecting
+        const isActive = await checkAccountStatus(auth.currentUser);
+        if (!isActive) {
+          setLoading(false);
+          return;
+        }
+
         await persistUserSession(auth.currentUser);
 
         // Redirecting to protected app dashboard
@@ -285,6 +319,11 @@
       try {
         const result = await signInWithPopup(auth, provider);
         await ensureUserDocExists(result.user);
+
+        // Validate account status before persisting session and redirecting
+        const isActive = await checkAccountStatus(result.user);
+        if (!isActive) return;
+
         await persistUserSession(result.user);
         
         window.location.href = '/app/dashboard/';
