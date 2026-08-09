@@ -3,12 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OpsReveal - Exceptions</title>
+  <title>OpsReveal - Dashboard</title>
   
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- html2canvas for exporting cards -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -36,22 +34,22 @@
       </div>
 
       <nav class="p-4 space-y-1.5">
-        <a href="/app/dashboard/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
-          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <a href="/app/dashboard" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm transition">
+          <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
           <span>Dashboard</span>
         </a>
 
-        <a href="/app/upload/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
+        <a href="/app/uploads/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
           <span>Upload Reports</span>
         </a>
 
-        <a href="/app/exceptions/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm transition">
+        <a href="/app/exceptions/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-cyan-400 bg-cyan-950/40 border border-cyan-800/50 font-semibold transition">
           <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-          <span>Exceptions</span>
+          Exceptions
         </a>
 
-        <a href="/app/settings/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
+        <a href="/app/settings" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
           <span>Settings</span>
         </a>
@@ -82,26 +80,33 @@
         </div>
       </div>
 
-      <button id="signOutBtn" class="w-full bg-slate-950 hover:bg-slate-800 text-xs text-slate-400 py-2 rounded-xl border border-slate-800 font-semibold transition">
+      <button onclick="logoutUser()" class="w-full bg-slate-950 hover:bg-slate-800 text-xs text-slate-400 py-2 rounded-xl border border-slate-800 font-semibold transition">
         Sign Out
       </button>
     </div>
   </aside>
 
-  <!-- MAIN EXCEPTIONS CONTENT -->
+  <!-- MAIN DASHBOARD CONTENT -->
   <main class="flex-1 min-w-0 overflow-y-auto px-8 py-8">
     <div class="max-w-7xl mx-auto space-y-8">
       
       <div class="flex items-center justify-between">
         <div>
-          <h1 class="text-3xl font-extrabold text-white font-heading tracking-tight">Audit Exceptions</h1>
-          <p class="text-xs text-slate-400 mt-1">Detailed root cause diagnostics and line-item loss breakdown.</p>
+          <h1 class="text-3xl font-extrabold text-white font-heading tracking-tight">Dashboard Overview</h1>
+          <p id="dashboardSubtitle" class="text-xs text-slate-400 mt-1">Total accumulated audit metrics and risk telemetry.</p>
         </div>
-
-        <a href="/app/upload/" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-md shadow-cyan-500/10">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          <span>New Audit</span>
-        </a>
+        
+        <div class="flex items-center gap-3">
+          <select id="timeFilter" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500 font-medium">
+            <option value="all">Till Date (All Time)</option>
+            <option value="month">This Month</option>
+            <option value="week">This Week</option>
+          </select>
+          <a href="/app/uploads/" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-md shadow-cyan-500/10">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>New Audit</span>
+          </a>
+        </div>
       </div>
 
       <!-- EXCEEDED BANNER -->
@@ -110,15 +115,64 @@
           <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Free Starter Usage Limit Exceeded</h4>
           <p class="text-xs text-amber-200/80 mt-0.5">Your free usage is over (4 uploads or 20,000 lines this month). Upgrade to Professional for $99/mo with unlimited uploads, unlimited lines, and up to 5 additional team seats.</p>
         </div>
-        <a href="/app/settings/" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl shrink-0 transition">
+        <a href="/app/settings" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl shrink-0 transition">
           Upgrade for $99
         </a>
       </div>
 
-      <!-- CARDS CONTAINER -->
-      <div id="cards-container" class="space-y-6">
-        <div class="text-center py-16 text-slate-500 bg-slate-900 border border-slate-800 rounded-2xl">
-          Loading audit exception data...
+      <!-- METRICS CARDS (Updated Grid with Total Lines) -->
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Audited Reports</span>
+          <span id="metricReports" class="text-2xl font-extrabold text-white font-heading mt-1 block">0</span>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Lines Analyzed</span>
+          <span id="metricTotalLines" class="text-2xl font-extrabold text-indigo-400 font-heading mt-1 block">0</span>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Receiving / GRN Leakage</span>
+          <span id="metricGrn" class="text-2xl font-extrabold text-cyan-400 font-heading mt-1 block">$0.00</span>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Sales Margin Erosion</span>
+          <span id="metricMargin" class="text-2xl font-extrabold text-amber-400 font-heading mt-1 block">$0.00</span>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Write-Off Inventory Loss</span>
+          <span id="metricWriteoff" class="text-2xl font-extrabold text-rose-400 font-heading mt-1 block">$0.00</span>
+        </div>
+      </div>
+
+      <!-- RECENT AUDIT TABLE -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden space-y-4 p-6">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider font-heading">Recent Audit History</h3>
+          <span id="historyCountLabel" class="text-xs text-slate-500">Showing 0 audit runs</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-950/60 text-slate-400 uppercase tracking-wider text-[10px] border-b border-slate-800">
+              <tr>
+                <th class="py-3 px-4 font-semibold">Timestamp</th>
+                <th class="py-3 px-4 font-semibold">Report / File Name</th>
+                <th class="py-3 px-4 font-semibold">Lines Analyzed</th>
+                <th class="py-3 px-4 font-semibold">Flagged Exceptions</th>
+                <th class="py-3 px-4 font-semibold">Risk Assessment</th>
+                <th class="py-3 px-4 font-semibold text-right">Financial Leakage</th>
+              </tr>
+            </thead>
+            <tbody id="auditTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+              <tr>
+                <td colspan="6" class="py-8 text-center text-slate-500 italic">Loading telemetry logs...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
@@ -126,124 +180,90 @@
   </main>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { auth, db } from '/app/auth-guard.js';
+    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyANvecmxTQfsum_1NThmFFVELCe3dlNm6g",
-      authDomain: "opsreveal.firebaseapp.com",
-      projectId: "opsreveal",
-      storageBucket: "opsreveal.firebasestorage.app",
-      messagingSenderId: "890870101711",
-      appId: "1:890870101711:web:4266246996091ea56c69ba"
-    };
+    const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
+    let currentUser = null;
+    let allRecords = [];
+    let currentPlanState = { isPro: false, isAdmin: false };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    const BACKEND_URL = "https://opsreveal-backend.mithun-gs.workers.dev";
-    let loadedRecords = [];
-
-    // -------------------------------------------------------------
-    // CRITICAL FIX: FAST-PATH AUTH CHECK (PREVENTS REDIRECT LOOP)
-    // -------------------------------------------------------------
-    const cachedUid = localStorage.getItem("userId");
-    const cachedEmail = localStorage.getItem("userEmail");
-
-    if (cachedUid) {
-      document.body.style.display = 'flex';
-      document.getElementById("userEmailDisplay").textContent = cachedEmail || "Authenticated User";
-      fetchExceptions(cachedUid, false, false);
-    } else {
-      // If no local credentials exist at all, boot to login immediately
-      window.location.replace("/login.html");
-    }
-
-    // Sign out handler
-    document.getElementById("signOutBtn").addEventListener("click", async () => {
-      await signOut(auth);
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.replace('/login.html');
-    });
-
-    // Authentication session listener (Asynchronous Firebase Check)
     onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const token = await user.getIdToken();
-
-        localStorage.setItem("userId", user.uid);
-        localStorage.setItem("userEmail", user.email);
-        localStorage.setItem("authToken", token);
-
-        document.getElementById("userEmailDisplay").textContent = user.email;
-        document.body.style.display = 'flex';
-
-        // Listen for Realtime Firestore plan updates
-        onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-          const profile = docSnap.data() || {};
-          const rawRole = String(profile.role || '').toLowerCase();
-          const rawPlan = String(profile.plan || '').toLowerCase();
-
-          const isAdmin = rawRole === 'superadmin' || rawRole === 'admin' || rawPlan === 'admin' || user.email.toLowerCase() === 'mithun@preventloss.org';
-          const isPro = !isAdmin && (rawPlan.includes('pro') || rawPlan.includes('professional') || rawPlan.includes('tier'));
-
-          updatePlanUI(isPro, isAdmin);
-          fetchExceptions(user.uid, isPro, isAdmin);
-        }, (error) => {
-          console.warn("Firestore snapshot listener failed, applying fallback:", error);
-          fetchExceptions(user.uid, false, false);
-        });
-
-      } else if (!cachedUid) {
-        // Only redirect if Firebase confirms logged-out state AND no cache existed
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.replace("/login.html");
+      if (!user) {
+        window.location.replace('/login.html');
+        return;
       }
+      currentUser = user;
+      document.getElementById('userEmailDisplay').textContent = user.email;
+      document.body.style.display = 'flex';
+
+      if (window.location.search.includes('reason=')) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+
+      // REALTIME FIRESTORE LISTENER
+      onSnapshot(doc(db, "users", user.uid), (docSnap) => {
+        const profile = docSnap.data() || {};
+        
+        const rawRole = String(profile.role || '').toLowerCase();
+        const rawPlan = String(profile.plan || '').toLowerCase();
+        
+        // Fixed Plan Checking Logic (Ensures plan: "starter" correctly evaluates as Starter)
+        const isAdmin = rawRole === 'superadmin' || rawRole === 'admin' || rawPlan === 'admin' || user.email.toLowerCase() === 'mithun@preventloss.org';
+        const isPro = !isAdmin && (rawPlan.includes('pro') || rawPlan.includes('professional') || rawPlan.includes('tier'));
+
+        currentPlanState = { isPro, isAdmin };
+
+        updatePlanUI(isPro, isAdmin);
+        fetchDashboardData(user.uid, isPro, isAdmin);
+      });
     });
+
+    window.logoutUser = () => {
+      signOut(auth).then(() => window.location.replace('/login.html'));
+    };
 
     function updatePlanUI(isPro, isAdmin) {
       const planLabel = document.getElementById('planLabel');
+      const subtitle = document.getElementById('dashboardSubtitle');
       
       if (isAdmin) {
         planLabel.innerText = 'Admin Console';
         planLabel.className = 'font-bold text-cyan-400';
+        subtitle.innerText = 'Consolidated system-wide audit metrics and risk telemetry across all users.';
+        document.getElementById('upgradeBanner').classList.add('hidden');
       } else if (isPro) {
         planLabel.innerText = 'Professional Tier';
         planLabel.className = 'font-bold text-emerald-400';
+        subtitle.innerText = 'Total accumulated audit metrics and risk telemetry.';
+        document.getElementById('upgradeBanner').classList.add('hidden');
       } else {
         planLabel.innerText = 'Starter Tier';
         planLabel.className = 'font-bold text-amber-400';
+        subtitle.innerText = 'Total accumulated audit metrics and risk telemetry.';
       }
     }
 
-    async function fetchExceptions(userId, isPro, isAdmin) {
+    async function fetchDashboardData(userId, isPro, isAdmin) {
       try {
-        const endpoint = isAdmin ? `${BACKEND_URL}/api/upload-history` : `${BACKEND_URL}/api/upload-history?userId=${encodeURIComponent(userId)}`;
-        const response = await fetch(endpoint);
-        if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-        
-        loadedRecords = await response.json();
-        if (!Array.isArray(loadedRecords)) loadedRecords = [];
+        const endpoint = isAdmin ? CF_API_URL : `${CF_API_URL}?userId=${userId}`;
+        const res = await fetch(endpoint);
+        allRecords = await res.json();
+        if (!Array.isArray(allRecords)) allRecords = [];
 
-        calculateMeters(loadedRecords, isPro, isAdmin);
-        renderCards(loadedRecords);
+        calculateAndRenderData(isPro, isAdmin);
       } catch (err) {
-        console.error("Fetch Exceptions Error:", err);
-        document.getElementById("cards-container").innerHTML = `
-          <div class="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs">
-            Failed to load exception history (${escapeHtml(err.message)}). Please verify backend status or re-login.
-          </div>
-        `;
+        console.error("Error fetching dashboard telemetry:", err);
       }
     }
 
-    function calculateMeters(records, isPro, isAdmin) {
+    function calculateAndRenderData(isPro, isAdmin) {
+      const filter = document.getElementById('timeFilter').value;
       const now = new Date();
-      const monthRecords = records.filter(r => {
+
+      // Current Month Usage Calculation for Starter Limits
+      const monthRecords = allRecords.filter(r => {
         const dateStr = r.uploadedDate || r.uploaded_date || r.createdAt || r.timestamp;
         if (!dateStr) return false;
         const d = new Date(dateStr);
@@ -253,228 +273,119 @@
       const monthUploads = monthRecords.length;
       const monthLines = monthRecords.reduce((acc, r) => acc + Number(r.linesProcessed || r.lines_processed || 0), 0);
 
+      // Sidebar Meters
       const isUnlimited = isPro || isAdmin;
       document.getElementById('meterUploads').textContent = isUnlimited ? 'Unlimited' : `${monthUploads} / 4`;
-      document.getElementById('meterLines').textContent = isUnlimited ? `${monthLines.toLocaleString('en-US')} (Unlimited)` : `${monthLines.toLocaleString('en-US')} / 20k`;
+      document.getElementById('meterLines').textContent = isUnlimited ? 'Unlimited' : `${monthLines.toLocaleString('en-US')} / 20k`;
 
+      // Show limit banner ONLY IF STARTER and limits exceeded
       const banner = document.getElementById('upgradeBanner');
       if (!isUnlimited && (monthUploads >= 4 || monthLines >= 20000)) {
         banner.classList.remove('hidden');
       } else {
         banner.classList.add('hidden');
       }
-    }
 
-    function renderCards(records) {
-      const container = document.getElementById("cards-container");
+      // Filter displayed history
+      let filtered = [...allRecords];
+      if (filter === 'month') {
+        filtered = monthRecords;
+      } else if (filter === 'week') {
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        filtered = allRecords.filter(r => {
+          const dateStr = r.uploadedDate || r.uploaded_date || r.createdAt || r.timestamp;
+          return dateStr && new Date(dateStr) >= oneWeekAgo;
+        });
+      }
 
-      if (!records || records.length === 0) {
-        container.innerHTML = `<div class="text-center py-16 text-slate-500 bg-slate-900 border border-slate-800 rounded-2xl">No exception reports found for this account.</div>`;
+      // Render Dashboard Metrics
+      document.getElementById('metricReports').textContent = filtered.length;
+      
+      let totalLinesAnalyzed = 0;
+      let totalGrn = 0;
+      let totalMargin = 0;
+      let totalWriteoff = 0;
+
+      filtered.forEach(r => {
+        // Accumulate Total Lines
+        totalLinesAnalyzed += Number(r.linesProcessed || r.lines_processed || 0);
+
+        // Fetch Total Leakage from all possible Cloudflare payload variations
+        const totalLeak = Number(r.totalLeakages ?? r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? r.leakageAmount ?? 0);
+        
+        // Category Breakdown Extractors
+        const grn = Number(
+          r.receivingLeakage ?? 
+          r.grnLeakage ?? 
+          r.leakagesDetailed?.cpLeakageWhole?.leakageValue ?? 
+          r.leakagesDetailed?.cpLeakageSameDayMonth?.leakageValue ?? 0
+        );
+        const margin = Number(r.salesMarginErosion ?? r.marginErosion ?? r.leakagesDetailed?.marginLeakages?.leakageValue ?? 0);
+        const writeoff = Number(r.writeOffInventoryLoss ?? r.inventoryLoss ?? r.leakagesDetailed?.shelfLifeExceptions?.leakageValue ?? 0);
+
+        // Fallback Strategy: If detailed keys are not split out, treat total as GRN / Receiving Leakage
+        if (grn === 0 && margin === 0 && writeoff === 0 && totalLeak > 0) {
+          totalGrn += totalLeak;
+        } else {
+          totalGrn += (grn > 0 ? grn : totalLeak);
+          totalMargin += margin;
+          totalWriteoff += writeoff;
+        }
+      });
+      
+      document.getElementById('metricTotalLines').textContent = totalLinesAnalyzed.toLocaleString('en-US');
+      document.getElementById('metricGrn').textContent = `$${totalGrn.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      document.getElementById('metricMargin').textContent = `$${totalMargin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      document.getElementById('metricWriteoff').textContent = `$${totalWriteoff.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+      // Render Table
+      document.getElementById('historyCountLabel').textContent = `Showing ${filtered.length} audit runs`;
+      const tbody = document.getElementById('auditTableBody');
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-8 text-center text-slate-500 italic">No audit records found.</td></tr>`;
         return;
       }
 
-      container.innerHTML = records.map((record, index) => {
-        const totalGRN = Number(record.totalGRNValue || record.totalVolume || 0);
-        const totalLeak = Number(record.totalLeakages || record.totalLeakage || record.financial_leakage || record.financialLeakage || 0);
-        const linesProc = Number(record.linesProcessed || record.lines_processed || 0);
-        const exceptionsCount = Number(record.flaggedExceptionsCount || record.flaggedExceptions || 0);
+      tbody.innerHTML = filtered.map(r => {
+        const date = new Date(r.uploadedDate || r.uploaded_date || r.timestamp || Date.now()).toLocaleString();
+        const fileName = r.fileName || r.filename || 'report.csv';
+        const lines = Number(r.linesProcessed || r.lines_processed || 0).toLocaleString();
+        
+        // Exact property match for Cloudflare: `flaggedExceptionsCount`
+        const exceptions = Number(r.flaggedExceptionsCount ?? r.exceptionsCount ?? r.exceptions ?? r.flagged_exceptions ?? 0).toLocaleString();
+        
+        // Exact property match for Cloudflare: `totalLeakages`
+        const leakage = Number(r.totalLeakages ?? r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? 0);
+        const riskLevel = String(r.riskScore || r.riskAssessment || (leakage > 50000 ? "High" : leakage > 0 ? "Medium" : "Low")).toUpperCase();
 
-        const detailed = record.leakagesDetailed || record.leakageBreakdown || {};
-        const marginVal = Number(record.salesMarginErosion || detailed.marginLeakages?.leakageValue || 0);
-        const cpWholeVal = Number(record.receivingLeakage || detailed.cpLeakageWhole?.leakageValue || 0);
-        const cpSameDayVal = Number(detailed.cpLeakageSameDayMonth?.leakageValue || 0);
-        const shelfLifeVal = Number(record.writeOffInventoryLoss || detailed.shelfLifeExceptions?.leakageValue || 0);
-
-        const totalLeakagePct = totalGRN > 0 ? ((totalLeak / totalGRN) * 100).toFixed(2) : "0.00";
-        const marginPct = totalLeak > 0 ? ((marginVal / totalLeak) * 100).toFixed(2) : "0.00";
-        const cpWholePct = totalLeak > 0 ? ((cpWholeVal / totalLeak) * 100).toFixed(2) : "0.00";
-        const cpSameDayPct = totalLeak > 0 ? ((cpSameDayVal / totalLeak) * 100).toFixed(2) : "0.00";
-        const shelfLifePct = totalLeak > 0 ? ((shelfLifeVal / totalLeak) * 100).toFixed(2) : "0.00";
-
-        const fileName = record.fileName || record.filename || 'Audit Report';
-        const uploadedDate = record.uploadedDate || record.uploaded_date || record.timestamp || new Date().toISOString();
-        const riskScore = String(record.riskScore || record.riskAssessment || (totalLeak > 50000 ? 'HIGH' : 'MEDIUM')).toUpperCase();
-
-        let riskBadgeClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
-        if (riskScore === 'HIGH') {
-          riskBadgeClass = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
-        } else if (riskScore === 'MEDIUM') {
-          riskBadgeClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+        let riskClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+        if (riskLevel === 'HIGH') {
+          riskClass = 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+        } else if (riskLevel === 'MEDIUM') {
+          riskClass = 'bg-amber-500/10 text-amber-400 border-amber-500/20';
         }
 
         return `
-          <div id="card-${index}" class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5 relative overflow-hidden">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-4">
-              <div>
-                <h2 class="text-lg font-bold text-white font-heading tracking-wide">${escapeHtml(fileName)}</h2>
-                <span class="text-xs text-slate-400">Processed: ${new Date(uploadedDate).toLocaleString()} | Type: ${escapeHtml(record.reportType || 'GRN')}</span>
-              </div>
-              <div class="flex items-center gap-3">
-                <span class="px-3 py-1 text-xs font-extrabold rounded-full border ${riskBadgeClass}">
-                  ${escapeHtml(riskScore)} RISK
-                </span>
-                <button onclick="window.downloadCard('card-${index}', '${escapeHtml(fileName)}')" class="px-3 py-1.5 bg-slate-950 hover:bg-slate-800 text-slate-300 text-xs font-semibold rounded-xl transition border border-slate-800 flex items-center gap-1.5">
-                  <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                  Export Card
-                </button>
-              </div>
-            </div>
-
-            <!-- Key Summary Telemetry -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 text-sm">
-              <div>
-                <div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Total Volume Reviewed</div>
-                <div class="font-extrabold text-white text-base mt-0.5 font-heading">$${totalGRN.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-              </div>
-              <div>
-                <div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Financial Leakage</div>
-                <div class="font-extrabold text-cyan-400 text-base mt-0.5 font-heading">$${totalLeak.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} <span class="text-xs text-cyan-500 font-normal">(${totalLeakagePct}%)</span></div>
-              </div>
-              <div>
-                <div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Processed Lines</div>
-                <div class="font-extrabold text-white text-base mt-0.5 font-mono">${linesProc.toLocaleString('en-US')}</div>
-              </div>
-              <div>
-                <div class="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Flagged Exceptions</div>
-                <div class="font-extrabold text-amber-400 text-base mt-0.5 font-mono">${exceptionsCount.toLocaleString('en-US')}</div>
-              </div>
-            </div>
-
-            <!-- Leakage Breakdown -->
-            <div>
-              <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-3">Loss Breakdown (% of Total Leakage)</div>
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <div class="p-3.5 border border-slate-800/80 rounded-xl bg-slate-950/40">
-                  <span class="text-slate-400 block font-medium">Margin Loss</span>
-                  <span class="font-bold text-white text-base block mt-1 font-heading">${marginPct}%</span>
-                  <span class="text-slate-500 block text-[11px] font-mono mt-0.5">$${marginVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                </div>
-                <div class="p-3.5 border border-slate-800/80 rounded-xl bg-slate-950/40">
-                  <span class="text-slate-400 block font-medium">CP Overcharge (Overall)</span>
-                  <span class="font-bold text-white text-base block mt-1 font-heading">${cpWholePct}%</span>
-                  <span class="text-slate-500 block text-[11px] font-mono mt-0.5">$${cpWholeVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                </div>
-                <div class="p-3.5 border border-slate-800/80 rounded-xl bg-slate-950/40">
-                  <span class="text-slate-400 block font-medium">CP Overcharge (Same Day)</span>
-                  <span class="font-bold text-white text-base block mt-1 font-heading">${cpSameDayPct}%</span>
-                  <span class="text-slate-500 block text-[11px] font-mono mt-0.5">$${cpSameDayVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                </div>
-                <div class="p-3.5 border border-slate-800/80 rounded-xl bg-slate-950/40">
-                  <span class="text-slate-400 block font-medium">Short Shelf Life</span>
-                  <span class="font-bold text-white text-base block mt-1 font-heading">${shelfLifePct}%</span>
-                  <span class="text-slate-500 block text-[11px] font-mono mt-0.5">$${shelfLifeVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- AI Trigger Button Slot -->
-            <div id="ai-section-${index}" class="border-t border-slate-800 pt-3">
-              <button onclick="window.triggerAIAnalysis(${index})" class="w-full py-2.5 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 hover:bg-cyan-500/20 font-semibold text-xs rounded-xl transition flex items-center justify-center gap-2 shadow-sm">
-                <span>⚡</span> Run AI Root-Cause Analysis & Action Plan
-              </button>
-            </div>
-          </div>
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-3 px-4 text-slate-400">${date}</td>
+            <td class="py-3 px-4 font-semibold text-white">${fileName}</td>
+            <td class="py-3 px-4 font-mono">${lines}</td>
+            <td class="py-3 px-4 font-mono text-amber-400">${exceptions}</td>
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${riskClass}">
+                ${riskLevel}
+              </span>
+            </td>
+            <td class="py-3 px-4 font-mono font-bold text-right text-cyan-400">$${leakage.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+          </tr>
         `;
       }).join('');
     }
 
-    // AI Analysis Trigger Function
-    window.triggerAIAnalysis = function(recordIndex) {
-      const record = loadedRecords[recordIndex];
-      if (record) {
-        generateAIAnalysis(record, `ai-section-${recordIndex}`);
-      }
-    };
-
-    async function generateAIAnalysis(record, containerId) {
-      const container = document.getElementById(containerId);
-      container.innerHTML = `<div class="text-xs text-cyan-400 animate-pulse font-medium py-3 text-center bg-slate-950 rounded-xl border border-cyan-500/20">Querying Gemini AI Model for Root-Cause Diagnostics...</div>`;
-
-      try {
-        // Retrieve fresh token from current user or cache
-        let token = localStorage.getItem("authToken") || "";
-        if (auth.currentUser) {
-          token = await auth.currentUser.getIdToken(true);
-        }
-
-        const headers = { "Content-Type": "application/json" };
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
-
-        const response = await fetch(`${BACKEND_URL}/api/genkit/rca`, {
-          method: "POST",
-          headers: headers,
-          body: JSON.stringify(record)
-        });
-
-        if (!response.ok) {
-          const errText = await response.text();
-          throw new Error(`Server returned status ${response.status}: ${errText || 'AI Endpoint error'}`);
-        }
-
-        let data = await response.json();
-
-        // Handle stringified JSON responses safely
-        if (typeof data === "string") {
-          const cleanJson = data.replace(/```json/g, "").replace(/```/g, "").trim();
-          try {
-            data = JSON.parse(cleanJson);
-          } catch (e) {
-            data = { executiveSummary: data };
-          }
-        }
-
-        const summaryText = data.executiveSummary || data.summary || data.result || data.response || "Automated diagnostic complete.";
-        const rawInsights = data.categoryInsights || data.insights || data.actions || [];
-
-        let insightsHtml = "";
-        if (Array.isArray(rawInsights) && rawInsights.length > 0) {
-          insightsHtml = rawInsights.map(item => `
-            <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 mt-2 space-y-1.5 text-xs">
-              <div class="font-bold text-cyan-400 uppercase font-heading">${escapeHtml(item.categoryName || item.category || 'Insight')}</div>
-              <div class="text-slate-300"><strong class="text-slate-400">RCA:</strong> ${escapeHtml(item.rootCauseAnalysis || item.rootCause || item.analysis || 'N/A')}</div>
-              <div class="text-emerald-400"><strong class="text-slate-400">Action:</strong> ${escapeHtml(item.actionableRemediation || item.action || item.remediation || 'N/A')}</div>
-            </div>
-          `).join('');
-        }
-
-        container.innerHTML = `
-          <div class="bg-slate-950 border border-cyan-500/20 rounded-xl p-4 space-y-3 text-xs shadow-inner">
-            <h4 class="font-bold text-cyan-400 text-sm flex items-center gap-2 font-heading">⚡ AI Diagnostic Summary</h4>
-            <div class="text-slate-300 leading-relaxed whitespace-pre-line">${escapeHtml(summaryText)}</div>
-            ${insightsHtml}
-          </div>
-        `;
-      } catch (err) {
-        console.error("AI Generation Error:", err);
-        container.innerHTML = `
-          <div class="p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl text-xs space-y-2">
-            <div>Unable to generate AI analysis: ${escapeHtml(err.message)}</div>
-            <button onclick="window.triggerAIAnalysis(${loadedRecords.indexOf(record)})" class="text-[11px] underline text-rose-300 font-semibold hover:text-rose-200">Try Again</button>
-          </div>
-        `;
-      }
-    }
-
-    window.downloadCard = function(cardId, fileName) {
-      const element = document.getElementById(cardId);
-      html2canvas(element, { backgroundColor: "#0f172a", scale: 2, useCORS: true }).then(canvas => {
-        const link = document.createElement("a");
-        link.download = `OpsReveal_Exception_${fileName.replace(/[^a-z0-9]/gi, '_')}.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-      });
-    };
-
-    function escapeHtml(str) {
-      return String(str || '')
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
+    document.getElementById('timeFilter').addEventListener('change', () => {
+      calculateAndRenderData(currentPlanState.isPro, currentPlanState.isAdmin);
+    });
   </script>
 </body>
 </html>
