@@ -135,14 +135,14 @@
       </div>
       
       <p class="text-xs text-slate-300 leading-relaxed">
-        We value your privacy, so we won't share the summary to any other AI. If you really want to see the RCA and Action to be taken, click on <span class="font-semibold text-cyan-400">"Confirm"</span> to launch Gemini (<span class="font-semibold text-slate-200">Work account preferred</span>) with the pre-filled prompt to immediately start processing.
+        We value your privacy, so we won't share the summary to any other AI. If you really want to see the RCA and Action to be taken, click on <span class="font-semibold text-cyan-400">"Confirm"</span> to open Gemini (<span class="font-semibold text-slate-200">Work account preferred</span>).
       </p>
 
       <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
-        <p class="font-semibold text-slate-200">Automated Execution Steps:</p>
-        <p>1. The branded card image downloads to your device instantly.</p>
-        <p>2. Gemini will open directly with the complete prompt populated.</p>
-        <p>3. Attach the downloaded image to execute instantly.</p>
+        <p class="font-semibold text-slate-200">Next Steps on Confirmation:</p>
+        <p>1. The card PNG image will download to your device automatically.</p>
+        <p>2. The analysis prompt is copied to your clipboard automatically.</p>
+        <p>3. Simply paste (Ctrl+V) into Gemini and attach the downloaded PNG image.</p>
       </div>
 
       <div class="flex items-center justify-end space-x-3 pt-2">
@@ -150,7 +150,7 @@
           Cancel
         </button>
         <button id="confirmPrivacyBtn" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition shadow-lg shadow-cyan-500/10">
-          Confirm & Execute Gemini
+          Confirm & Open Gemini
         </button>
       </div>
     </div>
@@ -466,7 +466,7 @@
       }
     };
 
-    // PRIVACY MODAL & AUTO-EXECUTE GEMINI REDIRECT
+    // PRIVACY MODAL & GEMINI FLOW
     window.openPrivacyModal = (index) => {
       selectedRecordIndex = index;
       document.getElementById('privacyModal').classList.remove('hidden');
@@ -483,17 +483,23 @@
       const index = selectedRecordIndex;
       const record = allRecords[index];
 
-      // Download card image
+      // 1. Download card PNG image
       await downloadCardImage(index);
 
-      // Construct Prompt
+      // 2. Exact prompt text
       const promptText = `Analyze the audit exception card summary in the attached image for "${record.fileName || 'Audit Report'}". Identify the root cause for all financial leakages (Margin, CP, Shelf Life) and generate actionable step-by-step remediation procedures to stop capital loss immediately.`;
-      
-      // Auto-submit URL endpoint format for Google Gemini
-      const autoRunGeminiUrl = `https://gemini.google.com/share?text=${encodeURIComponent(promptText)}`;
-      
+
+      // 3. Copy prompt directly to clipboard
+      try {
+        await navigator.clipboard.writeText(promptText);
+        alert("Card image downloaded & prompt copied to clipboard!\n\nSimply paste (Ctrl+V) in Gemini and attach the downloaded PNG image.");
+      } catch (err) {
+        console.error("Clipboard copy failed: ", err);
+      }
+
+      // 4. Safely open Gemini Web App
       closePrivacyModal();
-      window.open(autoRunGeminiUrl, '_blank');
+      window.open('https://gemini.google.com/app', '_blank');
     });
 
     document.getElementById('reportTypeFilter').addEventListener('change', renderExceptionCards);
