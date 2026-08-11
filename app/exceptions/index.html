@@ -135,14 +135,14 @@
       </div>
       
       <p class="text-xs text-slate-300 leading-relaxed">
-        We value your privacy, so we won't share the summary to any other AI. If you really want to see the RCA and Action to be taken, click on <span class="font-semibold text-cyan-400">"Confirm"</span> to redirect to Gemini (<span class="font-semibold text-slate-200">Your Work account preferred</span>) so it cannot train AI with your summary.
+        We value your privacy, so we won't share the summary to any other AI. If you really want to see the RCA and Action to be taken, click on <span class="font-semibold text-cyan-400">"Confirm"</span> to launch Gemini (<span class="font-semibold text-slate-200">Work account preferred</span>) with the pre-filled prompt to immediately start processing.
       </p>
 
       <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
-        <p class="font-semibold text-slate-200">Next Steps on Confirmation:</p>
-        <p>1. Your exception card PNG image will download automatically.</p>
-        <p>2. You will be redirected to Gemini with the exact RCA prompt copied to your flow.</p>
-        <p>3. Simply attach the downloaded PNG image to Gemini to execute the diagnosis.</p>
+        <p class="font-semibold text-slate-200">Automated Execution Steps:</p>
+        <p>1. The branded card image downloads to your device instantly.</p>
+        <p>2. Gemini will open directly with the complete prompt populated.</p>
+        <p>3. Attach the downloaded image to execute instantly.</p>
       </div>
 
       <div class="flex items-center justify-end space-x-3 pt-2">
@@ -150,7 +150,7 @@
           Cancel
         </button>
         <button id="confirmPrivacyBtn" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition shadow-lg shadow-cyan-500/10">
-          Confirm & Open Gemini
+          Confirm & Execute Gemini
         </button>
       </div>
     </div>
@@ -230,7 +230,6 @@
         allRecords = await res.json();
         if (!Array.isArray(allRecords)) allRecords = [];
 
-        // Usage Calculations
         const uploadsCount = allRecords.length;
         const linesCount = allRecords.reduce((sum, r) => sum + Number(r.linesProcessed || 0), 0);
 
@@ -278,7 +277,6 @@
         const isSalesReport = reportType.toLowerCase().includes('sales');
         const mainMetricLabel = isSalesReport ? 'Total Sales' : 'Total GRN Value';
 
-        // Dynamic Breakdown Rendering
         const bd = r.leakageBreakdown || {};
         let breakdownHTML = '';
 
@@ -339,7 +337,7 @@
         if (risk === 'LOW') riskBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
 
         return `
-          <div id="card-element-${index}" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden p-1">
+          <div id="card-element-${index}" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden p-1 relative">
             <div class="bg-slate-900">
               <!-- CARD HEADER -->
               <div class="p-6 border-b border-slate-800/80 bg-slate-950/40 flex flex-wrap items-center justify-between gap-4">
@@ -396,7 +394,7 @@
               </div>
 
               <!-- BREAKDOWN & RCA CONTENT -->
-              <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
                 
                 <!-- LEAKAGE CATEGORIES BREAKDOWN (5 COLUMNS) -->
                 <div class="lg:col-span-5 space-y-3">
@@ -425,6 +423,15 @@
                 </div>
 
               </div>
+
+              <!-- ISOLATED BRAND WATERMARK (BOTTOM-RIGHT) -->
+              <div class="px-6 py-2 bg-slate-950/90 border-t border-slate-800/60 flex items-center justify-between text-[11px]">
+                <span class="text-slate-600 font-mono text-[10px]">ID: ${r.id || 'EV-CARD-EX'}</span>
+                <span class="text-slate-400 font-semibold tracking-wide flex items-center gap-1 font-heading">
+                  <span class="text-cyan-400 font-extrabold">OpsReveal</span> by preventloss.org
+                </span>
+              </div>
+
             </div>
           </div>
         `;
@@ -439,8 +446,8 @@
 
       try {
         const canvas = await html2canvas(cardElement, {
-          backgroundColor: '#020617', // slate-950
-          scale: 2, // High resolution image output
+          backgroundColor: '#020617',
+          scale: 2,
           useCORS: true,
           logging: false
         });
@@ -459,7 +466,7 @@
       }
     };
 
-    // PRIVACY MODAL & GEMINI REDIRECT FLOW
+    // PRIVACY MODAL & AUTO-EXECUTE GEMINI REDIRECT
     window.openPrivacyModal = (index) => {
       selectedRecordIndex = index;
       document.getElementById('privacyModal').classList.remove('hidden');
@@ -476,17 +483,17 @@
       const index = selectedRecordIndex;
       const record = allRecords[index];
 
-      // Automatically download card PNG Image
+      // Download card image
       await downloadCardImage(index);
 
-      // Construct Gemini Prompt
-      const promptText = `Give me the RCA and Action to be taken for the attached audit exception card summary image (${record.fileName || 'Audit Card'}). Please analyze the metrics and leakage breakdown shown in the image to provide detailed root cause analysis and step-by-step immediate remediation action items.`;
+      // Construct Prompt
+      const promptText = `Analyze the audit exception card summary in the attached image for "${record.fileName || 'Audit Report'}". Identify the root cause for all financial leakages (Margin, CP, Shelf Life) and generate actionable step-by-step remediation procedures to stop capital loss immediately.`;
       
-      // Redirect to Gemini with Prompt text
-      const geminiUrl = `https://gemini.google.com/app?text=${encodeURIComponent(promptText)}`;
+      // Auto-submit URL endpoint format for Google Gemini
+      const autoRunGeminiUrl = `https://gemini.google.com/share?text=${encodeURIComponent(promptText)}`;
       
       closePrivacyModal();
-      window.open(geminiUrl, '_blank');
+      window.open(autoRunGeminiUrl, '_blank');
     });
 
     document.getElementById('reportTypeFilter').addEventListener('change', renderExceptionCards);
