@@ -304,14 +304,24 @@
 
         const totalLeak = Number(r.totalLeakages ?? r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? r.leakageAmount ?? 0);
         const reportType = String(r.reportType || '').toUpperCase();
+        const fileName = String(r.fileName || r.filename || '').toLowerCase();
         const bd = r.leakageBreakdown || r.leakagesDetailed || {};
 
-        if (reportType.includes('SALES') || r.fileName?.toLowerCase().includes('sales')) {
-          // Extract sales-specific leakages (Negative margin sales)
+        const isWOReport = reportType.includes('WRITEOFF') || reportType.includes('WO') || fileName.includes('writeoff') || fileName.includes('write_off');
+        const isSalesReport = reportType.includes('SALES') || fileName.includes('sales');
+
+        if (isSalesReport) {
+          // Sales Margin Erosion Logic
           const negMargin = Number(bd.negativeMarginSales?.leakageValue ?? r.salesMarginErosion ?? r.marginErosion ?? 0);
           totalMargin += (negMargin > 0 ? negMargin : totalLeak);
+
+        } else if (isWOReport) {
+          // Explicit Write-Off Upload Logic
+          const woVal = Number(bd.shelfLifeExceptions?.leakageValue ?? r.writeOffInventoryLoss ?? r.inventoryLoss ?? 0);
+          totalWriteoff += (woVal > 0 ? woVal : totalLeak);
+
         } else {
-          // Extract GRN-specific leakages
+          // GRN / Receiving Logic: All GRN leakage (including shelf-life exceptions) counts toward GRN card
           const grnVal = Number(
             bd.marginLeakages?.leakageValue ?? 0
           ) + Number(
@@ -319,17 +329,12 @@
           ) + Number(
             bd.cpLeakageSameDayMonth?.leakageValue ?? 0
           ) + Number(
+            bd.shelfLifeExceptions?.leakageValue ?? 0
+          ) + Number(
             r.receivingLeakage ?? r.grnLeakage ?? 0
           );
 
-          const writeoffVal = Number(bd.shelfLifeExceptions?.leakageValue ?? r.writeOffInventoryLoss ?? r.inventoryLoss ?? 0);
-
-          if (grnVal === 0 && writeoffVal === 0 && totalLeak > 0) {
-            totalGrn += totalLeak;
-          } else {
-            totalGrn += grnVal;
-            totalWriteoff += writeoffVal;
-          }
+          totalGrn += (grnVal > 0 ? grnVal : totalLeak);
         }
       });
       
