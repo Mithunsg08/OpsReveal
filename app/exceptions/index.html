@@ -8,6 +8,9 @@
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
+  <!-- html2canvas for Image Capture -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -121,17 +124,49 @@
     </div>
   </main>
 
+  <!-- PRIVACY REDIRECT MODAL -->
+  <div id="privacyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+      <div class="flex items-center space-x-3 text-cyan-400">
+        <div class="p-2 bg-cyan-500/10 rounded-xl border border-cyan-500/20">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 002-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        </div>
+        <h3 class="text-lg font-bold text-white font-heading">We Value Your Privacy</h3>
+      </div>
+      
+      <p class="text-xs text-slate-300 leading-relaxed">
+        We value your privacy, so we won't share the summary to any other AI. If you really want to see the RCA and Action to be taken, click on <span class="font-semibold text-cyan-400">"Confirm"</span> to redirect to Gemini (<span class="font-semibold text-slate-200">Your Work account preferred</span>) so it cannot train AI with your summary.
+      </p>
+
+      <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-[11px] text-slate-400 space-y-1">
+        <p class="font-semibold text-slate-200">Next Steps on Confirmation:</p>
+        <p>1. Your exception card PNG image will download automatically.</p>
+        <p>2. You will be redirected to Gemini with the exact RCA prompt copied to your flow.</p>
+        <p>3. Simply attach the downloaded PNG image to Gemini to execute the diagnosis.</p>
+      </div>
+
+      <div class="flex items-center justify-end space-x-3 pt-2">
+        <button onclick="closePrivacyModal()" class="px-4 py-2 rounded-xl border border-slate-800 text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
+          Cancel
+        </button>
+        <button id="confirmPrivacyBtn" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition shadow-lg shadow-cyan-500/10">
+          Confirm & Open Gemini
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { auth, db } from '/app/auth-guard.js';
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
-    const CF_AI_RCA_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/generate-rca"; 
     
     let currentUser = null;
     let allRecords = [];
     let currentPlanState = { isPro: false, isAdmin: false };
+    let selectedRecordIndex = null;
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -199,9 +234,7 @@
         const uploadsCount = allRecords.length;
         const linesCount = allRecords.reduce((sum, r) => sum + Number(r.linesProcessed || 0), 0);
 
-        // Update meter values
         updatePlanUI(currentPlanState.isPro, currentPlanState.isAdmin, { uploadsCount, linesCount });
-
         renderExceptionCards();
       } catch (err) {
         console.error("Error fetching exception logs:", err);
@@ -301,212 +334,160 @@
           `;
         }
 
-        // Risk Styling
         let riskBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/30';
         if (risk === 'MEDIUM') riskBadge = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
         if (risk === 'LOW') riskBadge = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30';
 
         return `
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
-            
-            <!-- CARD HEADER -->
-            <div class="p-6 border-b border-slate-800/80 bg-slate-950/40 flex flex-wrap items-center justify-between gap-4">
-              <div class="flex items-center space-x-3">
-                <div class="p-2.5 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                </div>
-                <div>
-                  <div class="flex items-center space-x-2">
-                    <h3 class="text-base font-bold text-white font-heading">${fileName}</h3>
-                    <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold border ${riskBadge}">${risk} RISK</span>
+          <div id="card-element-${index}" class="bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden p-1">
+            <div class="bg-slate-900">
+              <!-- CARD HEADER -->
+              <div class="p-6 border-b border-slate-800/80 bg-slate-950/40 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                  <div class="p-2.5 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                   </div>
-                  <p class="text-xs text-slate-400 mt-0.5">Uploaded on ${formattedDate} • Type: <span class="text-cyan-400 font-medium">${reportType}</span></p>
+                  <div>
+                    <div class="flex items-center space-x-2">
+                      <h3 class="text-base font-bold text-white font-heading">${fileName}</h3>
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold border ${riskBadge}">${risk} RISK</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-0.5">Uploaded on ${formattedDate} • Type: <span class="text-cyan-400 font-medium">${reportType}</span></p>
+                  </div>
                 </div>
-              </div>
 
-              <div class="flex items-center space-x-6 text-right">
-                <div>
-                  <span class="text-[10px] text-slate-500 uppercase font-semibold block">Total Leakage</span>
-                  <span class="text-lg font-extrabold font-mono text-rose-400">$${totalLeakage.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                </div>
-                <div>
-                  <span class="text-[10px] text-slate-500 uppercase font-semibold block">Flagged Exceptions</span>
-                  <span class="text-lg font-extrabold font-mono text-amber-400">${exceptionsCount}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- METRICS SUMMARY BAR -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-950/20 border-b border-slate-800/60 text-xs font-mono">
-              <div>
-                <span class="text-[10px] text-slate-500 block uppercase font-sans">Lines Processed</span>
-                <span class="text-slate-200 font-bold">${lines}</span>
-              </div>
-              <div>
-                <span class="text-[10px] text-slate-500 block uppercase font-sans">${mainMetricLabel}</span>
-                <span class="text-slate-200 font-bold">$${totalGRNValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-              </div>
-              <div>
-                <span class="text-[10px] text-slate-500 block uppercase font-sans">Leakage Ratio</span>
-                <span class="text-rose-400 font-bold">${((totalLeakage / (totalGRNValue || 1)) * 100).toFixed(2)}%</span>
-              </div>
-              <div>
-                <span class="text-[10px] text-slate-500 block uppercase font-sans">Audit Status</span>
-                <span class="text-emerald-400 font-bold">Processed</span>
-              </div>
-            </div>
-
-            <!-- BREAKDOWN & RCA CONTENT -->
-            <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-              
-              <!-- LEAKAGE CATEGORIES BREAKDOWN (5 COLUMNS) -->
-              <div class="lg:col-span-5 space-y-3">
-                <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider font-heading">Leakage Breakdown</h4>
-                
-                <div class="space-y-2">
-                  ${breakdownHTML}
-                </div>
-              </div>
-
-              <!-- AI ROOT CAUSE & ACTION TAKEN (7 COLUMNS) -->
-              <div class="lg:col-span-7 space-y-4">
-                <div class="flex items-center justify-between">
-                  <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider font-heading flex items-center gap-1.5">
-                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                    AI Root Cause Analysis & Corrective Actions
-                  </h4>
-                  <button id="btn-rca-${index}" onclick="triggerAiRca(${index})" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-lg text-[11px] font-semibold transition flex items-center space-x-1">
-                    <span>Generate AI RCA</span>
+                <div class="flex items-center space-x-4">
+                  <button data-html2canvas-ignore="true" onclick="downloadCardImage(${index})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                    <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>Download Card Data</span>
                   </button>
-                </div>
 
-                <div id="rca-box-${index}" class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-4 text-xs space-y-3 min-h-[160px] flex flex-col justify-center">
-                  <p class="text-slate-500 italic text-center">Click "Generate AI RCA" to perform dynamic root cause diagnosis via Google AI Studio.</p>
+                  <div class="flex items-center space-x-6 text-right border-l border-slate-800 pl-4">
+                    <div>
+                      <span class="text-[10px] text-slate-500 uppercase font-semibold block">Total Leakage</span>
+                      <span class="text-lg font-extrabold font-mono text-rose-400">$${totalLeakage.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <div>
+                      <span class="text-[10px] text-slate-500 uppercase font-semibold block">Flagged Exceptions</span>
+                      <span class="text-lg font-extrabold font-mono text-amber-400">${exceptionsCount}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-            </div>
+              <!-- METRICS SUMMARY BAR -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-slate-950/20 border-b border-slate-800/60 text-xs font-mono">
+                <div>
+                  <span class="text-[10px] text-slate-500 block uppercase font-sans">Lines Processed</span>
+                  <span class="text-slate-200 font-bold">${lines}</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-500 block uppercase font-sans">${mainMetricLabel}</span>
+                  <span class="text-slate-200 font-bold">$${totalGRNValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-500 block uppercase font-sans">Leakage Ratio</span>
+                  <span class="text-rose-400 font-bold">${((totalLeakage / (totalGRNValue || 1)) * 100).toFixed(2)}%</span>
+                </div>
+                <div>
+                  <span class="text-[10px] text-slate-500 block uppercase font-sans">Audit Status</span>
+                  <span class="text-emerald-400 font-bold">Processed</span>
+                </div>
+              </div>
 
+              <!-- BREAKDOWN & RCA CONTENT -->
+              <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                <!-- LEAKAGE CATEGORIES BREAKDOWN (5 COLUMNS) -->
+                <div class="lg:col-span-5 space-y-3">
+                  <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider font-heading">Leakage Breakdown</h4>
+                  
+                  <div class="space-y-2">
+                    ${breakdownHTML}
+                  </div>
+                </div>
+
+                <!-- AI ROOT CAUSE & ACTION TAKEN (7 COLUMNS) -->
+                <div class="lg:col-span-7 space-y-4">
+                  <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider font-heading flex items-center gap-1.5">
+                      <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                      AI Root Cause Analysis & Corrective Actions
+                    </h4>
+                    <button data-html2canvas-ignore="true" id="btn-rca-${index}" onclick="openPrivacyModal(${index})" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-lg text-[11px] font-semibold transition flex items-center space-x-1">
+                      <span>Generate AI RCA</span>
+                    </button>
+                  </div>
+
+                  <div id="rca-box-${index}" class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-4 text-xs space-y-3 min-h-[160px] flex flex-col justify-center">
+                    <p class="text-slate-500 italic text-center">Click "Generate AI RCA" to perform dynamic root cause diagnosis via Google Gemini.</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
           </div>
         `;
       }).join('');
     }
 
-    // AI RCA GENERATOR VIA CLOUDFLARE BACKEND (Gemini Flash API)
-    window.triggerAiRca = async (index) => {
+    // DOWNLOAD CARD AS PNG IMAGE
+    window.downloadCardImage = async (index) => {
+      const cardElement = document.getElementById(`card-element-${index}`);
       const record = allRecords[index];
-      const box = document.getElementById(`rca-box-${index}`);
-      const btn = document.getElementById(`btn-rca-${index}`);
-
-      btn.disabled = true;
-      btn.classList.add('opacity-50', 'cursor-not-allowed');
-      box.innerHTML = `
-        <div class="flex items-center justify-center space-x-2 py-6 text-cyan-400">
-          <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-cyan-400"></div>
-          <span class="text-xs font-semibold">Google Gemini AI is diagnosing loss vectors...</span>
-        </div>
-      `;
+      if (!cardElement || !record) return;
 
       try {
-        const response = await fetch(CF_AI_RCA_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            uploadRecord: record,
-            fileName: record.fileName,
-            totalLeakages: record.totalLeakages,
-            leakageBreakdown: record.leakageBreakdown
-          })
+        const canvas = await html2canvas(cardElement, {
+          backgroundColor: '#020617', // slate-950
+          scale: 2, // High resolution image output
+          useCORS: true,
+          logging: false
         });
 
-        const data = await response.json();
-
-        if (data.success && data.rca) {
-          box.innerHTML = `
-            <div class="space-y-3 text-slate-300">
-              <div>
-                <span class="text-[10px] font-bold uppercase text-cyan-400 block tracking-wider">Root Cause Analysis (Gemini Flash)</span>
-                <p class="mt-1 leading-relaxed text-slate-300">${data.rca.rootCause}</p>
-              </div>
-              <div class="pt-2 border-t border-slate-800/80">
-                <span class="text-[10px] font-bold uppercase text-emerald-400 block tracking-wider">Immediate Corrective Actions</span>
-                <ul class="list-disc list-inside mt-1 space-y-1 text-slate-300">
-                  ${data.rca.actions.map(act => `<li>${act}</li>`).join('')}
-                </ul>
-              </div>
-            </div>
-          `;
-        } else {
-          throw new Error(data.error || "Failed to parse AI output");
-        }
+        const image = canvas.toDataURL("image/png");
+        const downloadAnchor = document.createElement('a');
+        const safeName = (record.fileName || 'Audit_Card').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        
+        downloadAnchor.href = image;
+        downloadAnchor.download = `Exception_Card_${safeName}.png`;
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
       } catch (err) {
-        console.error("AI RCA Request Error:", err);
-        const fallbackRca = generateFallbackRCA(record);
-        box.innerHTML = `
-          <div class="space-y-3 text-slate-300">
-            <div>
-              <span class="text-[10px] font-bold uppercase text-cyan-400 block tracking-wider">Root Cause Analysis (Diagnostic Mode)</span>
-              <p class="mt-1 leading-relaxed text-slate-300">${fallbackRca.rootCause}</p>
-            </div>
-            <div class="pt-2 border-t border-slate-800/80">
-              <span class="text-[10px] font-bold uppercase text-emerald-400 block tracking-wider">Recommended Action Items</span>
-              <ul class="list-disc list-inside mt-1 space-y-1 text-slate-300">
-                ${fallbackRca.actions.map(act => `<li>${act}</li>`).join('')}
-              </ul>
-            </div>
-          </div>
-        `;
-      } finally {
-        btn.disabled = false;
-        btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        console.error("Failed to generate image:", err);
       }
     };
 
-    function generateFallbackRCA(record) {
-      const bd = record.leakageBreakdown || {};
-      const file = record.fileName || 'Audit Record';
+    // PRIVACY MODAL & GEMINI REDIRECT FLOW
+    window.openPrivacyModal = (index) => {
+      selectedRecordIndex = index;
+      document.getElementById('privacyModal').classList.remove('hidden');
+    };
 
-      const marginVal = Number(bd.marginLeakages?.leakageValue || 0);
-      const shelfVal = Number(bd.shelfLifeExceptions?.leakageValue || 0);
-      const cpVal = Number(bd.cpLeakageWhole?.leakageValue || 0);
-      const negVal = Number(bd.negativeMarginSales?.leakageValue || 0);
+    window.closePrivacyModal = () => {
+      selectedRecordIndex = null;
+      document.getElementById('privacyModal').classList.add('hidden');
+    };
 
-      if (negVal > 0) {
-        return {
-          rootCause: `Sales audit of ${file} identified $${negVal.toLocaleString('en-US', { minimumFractionDigits: 2 })} in negative margin sales due to discounted pricing below landed unit cost.`,
-          actions: [
-            "Review promotional price caps to prevent sales below cost.",
-            "Audit floor price configurations at POS.",
-            "Re-align minimum selling prices with updated cost prices."
-          ]
-        };
-      }
+    document.getElementById('confirmPrivacyBtn').addEventListener('click', async () => {
+      if (selectedRecordIndex === null) return;
+      
+      const index = selectedRecordIndex;
+      const record = allRecords[index];
 
-      let rootCause = `Audit of ${file} identified significant CP variance amounting to $${cpVal.toLocaleString('en-US', { minimumFractionDigits: 2 })} driven by cost price mismatch during entry.`;
-      let actions = [
-        "Block GRN creation for items with cost variances exceeding 0.5%.",
-        "Initiate Vendor Credit Note claim for overcharged CP amounts.",
-        "Audit purchasing agreements against ERP master cost price lists."
-      ];
+      // Automatically download card PNG Image
+      await downloadCardImage(index);
 
-      if (marginVal > shelfVal && marginVal > cpVal) {
-        rootCause = `Analysis of ${file} shows primary loss driven by $${marginVal.toLocaleString('en-US', { minimumFractionDigits: 2 })} in margin leakage from promotional pricing errors or selling below threshold.`;
-        actions = [
-          "Lock POS price overriding capabilities at store manager level.",
-          "Review promotional master data for stacking discount bugs.",
-          "Re-align floor prices with revised supplier cost structures."
-        ];
-      } else if (shelfVal > marginVal && shelfVal > cpVal) {
-        rootCause = `Audit for ${file} flags $${shelfVal.toLocaleString('en-US', { minimumFractionDigits: 2 })} in short shelf-life risk due to inwarding batches violating the 75% remaining life policy.`;
-        actions = [
-          "Implement mandatory batch expiry validation at gate receipt.",
-          "Reject inbound deliveries with less than 60 days remaining shelf life.",
-          "Enforce FIFO/FEFO picking rules in warehouse dispatch."
-        ];
-      }
-
-      return { rootCause, actions };
-    }
+      // Construct Gemini Prompt
+      const promptText = `Give me the RCA and Action to be taken for the attached audit exception card summary image (${record.fileName || 'Audit Card'}). Please analyze the metrics and leakage breakdown shown in the image to provide detailed root cause analysis and step-by-step immediate remediation action items.`;
+      
+      // Redirect to Gemini with Prompt text
+      const geminiUrl = `https://gemini.google.com/app?text=${encodeURIComponent(promptText)}`;
+      
+      closePrivacyModal();
+      window.open(geminiUrl, '_blank');
+    });
 
     document.getElementById('reportTypeFilter').addEventListener('change', renderExceptionCards);
   </script>
