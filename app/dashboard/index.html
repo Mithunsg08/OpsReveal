@@ -44,9 +44,9 @@
           <span>Upload Reports</span>
         </a>
 
-        <a href="/app/exceptions/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-cyan-400 bg-cyan-950/40 border border-cyan-800/50 font-semibold transition">
-          <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-          Exceptions
+        <a href="/app/exceptions/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 font-semibold transition">
+          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          <span>Exceptions</span>
         </a>
 
         <a href="/app/settings" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
@@ -120,7 +120,7 @@
         </a>
       </div>
 
-      <!-- METRICS CARDS (Updated Grid with Total Lines) -->
+      <!-- METRICS CARDS -->
       <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Audited Reports</span>
@@ -202,14 +202,12 @@
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      // REALTIME FIRESTORE LISTENER
       onSnapshot(doc(db, "users", user.uid), (docSnap) => {
         const profile = docSnap.data() || {};
         
         const rawRole = String(profile.role || '').toLowerCase();
         const rawPlan = String(profile.plan || '').toLowerCase();
         
-        // Fixed Plan Checking Logic (Ensures plan: "starter" correctly evaluates as Starter)
         const isAdmin = rawRole === 'superadmin' || rawRole === 'admin' || rawPlan === 'admin' || user.email.toLowerCase() === 'mithun@preventloss.org';
         const isPro = !isAdmin && (rawPlan.includes('pro') || rawPlan.includes('professional') || rawPlan.includes('tier'));
 
@@ -262,7 +260,6 @@
       const filter = document.getElementById('timeFilter').value;
       const now = new Date();
 
-      // Current Month Usage Calculation for Starter Limits
       const monthRecords = allRecords.filter(r => {
         const dateStr = r.uploadedDate || r.uploaded_date || r.createdAt || r.timestamp;
         if (!dateStr) return false;
@@ -273,12 +270,10 @@
       const monthUploads = monthRecords.length;
       const monthLines = monthRecords.reduce((acc, r) => acc + Number(r.linesProcessed || r.lines_processed || 0), 0);
 
-      // Sidebar Meters
       const isUnlimited = isPro || isAdmin;
       document.getElementById('meterUploads').textContent = isUnlimited ? 'Unlimited' : `${monthUploads} / 4`;
       document.getElementById('meterLines').textContent = isUnlimited ? 'Unlimited' : `${monthLines.toLocaleString('en-US')} / 20k`;
 
-      // Show limit banner ONLY IF STARTER and limits exceeded
       const banner = document.getElementById('upgradeBanner');
       if (!isUnlimited && (monthUploads >= 4 || monthLines >= 20000)) {
         banner.classList.remove('hidden');
@@ -286,7 +281,6 @@
         banner.classList.add('hidden');
       }
 
-      // Filter displayed history
       let filtered = [...allRecords];
       if (filter === 'month') {
         filtered = monthRecords;
@@ -298,7 +292,6 @@
         });
       }
 
-      // Render Dashboard Metrics
       document.getElementById('metricReports').textContent = filtered.length;
       
       let totalLinesAnalyzed = 0;
@@ -307,29 +300,36 @@
       let totalWriteoff = 0;
 
       filtered.forEach(r => {
-        // Accumulate Total Lines
         totalLinesAnalyzed += Number(r.linesProcessed || r.lines_processed || 0);
 
-        // Fetch Total Leakage from all possible Cloudflare payload variations
         const totalLeak = Number(r.totalLeakages ?? r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? r.leakageAmount ?? 0);
-        
-        // Category Breakdown Extractors
-        const grn = Number(
-          r.receivingLeakage ?? 
-          r.grnLeakage ?? 
-          r.leakagesDetailed?.cpLeakageWhole?.leakageValue ?? 
-          r.leakagesDetailed?.cpLeakageSameDayMonth?.leakageValue ?? 0
-        );
-        const margin = Number(r.salesMarginErosion ?? r.marginErosion ?? r.leakagesDetailed?.marginLeakages?.leakageValue ?? 0);
-        const writeoff = Number(r.writeOffInventoryLoss ?? r.inventoryLoss ?? r.leakagesDetailed?.shelfLifeExceptions?.leakageValue ?? 0);
+        const reportType = String(r.reportType || '').toUpperCase();
+        const bd = r.leakageBreakdown || r.leakagesDetailed || {};
 
-        // Fallback Strategy: If detailed keys are not split out, treat total as GRN / Receiving Leakage
-        if (grn === 0 && margin === 0 && writeoff === 0 && totalLeak > 0) {
-          totalGrn += totalLeak;
+        if (reportType.includes('SALES') || r.fileName?.toLowerCase().includes('sales')) {
+          // Extract sales-specific leakages (Negative margin sales)
+          const negMargin = Number(bd.negativeMarginSales?.leakageValue ?? r.salesMarginErosion ?? r.marginErosion ?? 0);
+          totalMargin += (negMargin > 0 ? negMargin : totalLeak);
         } else {
-          totalGrn += (grn > 0 ? grn : totalLeak);
-          totalMargin += margin;
-          totalWriteoff += writeoff;
+          // Extract GRN-specific leakages
+          const grnVal = Number(
+            bd.marginLeakages?.leakageValue ?? 0
+          ) + Number(
+            bd.cpLeakageWhole?.leakageValue ?? 0
+          ) + Number(
+            bd.cpLeakageSameDayMonth?.leakageValue ?? 0
+          ) + Number(
+            r.receivingLeakage ?? r.grnLeakage ?? 0
+          );
+
+          const writeoffVal = Number(bd.shelfLifeExceptions?.leakageValue ?? r.writeOffInventoryLoss ?? r.inventoryLoss ?? 0);
+
+          if (grnVal === 0 && writeoffVal === 0 && totalLeak > 0) {
+            totalGrn += totalLeak;
+          } else {
+            totalGrn += grnVal;
+            totalWriteoff += writeoffVal;
+          }
         }
       });
       
@@ -338,7 +338,6 @@
       document.getElementById('metricMargin').textContent = `$${totalMargin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       document.getElementById('metricWriteoff').textContent = `$${totalWriteoff.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-      // Render Table
       document.getElementById('historyCountLabel').textContent = `Showing ${filtered.length} audit runs`;
       const tbody = document.getElementById('auditTableBody');
 
@@ -352,10 +351,7 @@
         const fileName = r.fileName || r.filename || 'report.csv';
         const lines = Number(r.linesProcessed || r.lines_processed || 0).toLocaleString();
         
-        // Exact property match for Cloudflare: `flaggedExceptionsCount`
         const exceptions = Number(r.flaggedExceptionsCount ?? r.exceptionsCount ?? r.exceptions ?? r.flagged_exceptions ?? 0).toLocaleString();
-        
-        // Exact property match for Cloudflare: `totalLeakages`
         const leakage = Number(r.totalLeakages ?? r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? 0);
         const riskLevel = String(r.riskScore || r.riskAssessment || (leakage > 50000 ? "High" : leakage > 0 ? "Medium" : "Low")).toUpperCase();
 
