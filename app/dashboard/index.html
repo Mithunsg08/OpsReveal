@@ -48,7 +48,7 @@
         </a>
 
         <a href="/app/exceptions/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 font-semibold transition">
-          <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
           <span>Exceptions</span>
         </a>
 
@@ -125,8 +125,23 @@
         </a>
       </div>
 
-      <!-- METRICS CARDS GRID (3x2 Layout) -->
+      <!-- METRICS CARDS GRID -->
       <div id="metricsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        
+        <!-- NEW TOTAL LEAKAGES CARD (FULL WIDTH HERO CARD) -->
+        <div id="cardOverallLeakage" class="bg-gradient-to-r from-red-950/40 via-slate-900 to-slate-900 border border-red-500/30 rounded-2xl p-6 shadow-xl md:col-span-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+              <span class="text-xs font-bold text-red-400 uppercase tracking-wider block">Total Accumulated Leakages (Overall Account Loss)</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1">Aggregated financial exposure identified across all audited operational reports and historical logs.</p>
+          </div>
+          <div>
+            <span id="metricOverallLeakage" class="text-3xl md:text-4xl font-extrabold text-red-400 font-heading tracking-tight block">$0</span>
+          </div>
+        </div>
+
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Audited Reports</span>
           <span id="metricReports" class="text-2xl font-extrabold text-white font-heading mt-1 block">0</span>
@@ -358,11 +373,14 @@
       let totalWriteoff = 0;
       let totalAgeing = 0;
       let totalConsolidated = 0;
+      let overallAccountLeakage = 0;
 
       filtered.forEach(r => {
         totalLinesAnalyzed += Number(r.linesProcessed || r.lines_processed || 0);
 
         const totalLeak = Number(r.totalLeakages ?? r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? r.leakageAmount ?? 0);
+        overallAccountLeakage += totalLeak;
+
         const reportType = String(r.reportType || '').toUpperCase();
         const fileName = String(r.fileName || r.filename || '').toLowerCase();
         const bd = r.leakageBreakdown || r.leakagesDetailed || {};
@@ -404,6 +422,7 @@
       });
       
       // Rounded integers without decimal places
+      document.getElementById('metricOverallLeakage').textContent = `$${Math.round(overallAccountLeakage).toLocaleString('en-US')}`;
       document.getElementById('metricTotalLines').textContent = Math.round(totalLinesAnalyzed).toLocaleString('en-US');
       document.getElementById('metricGrn').textContent = `$${Math.round(totalGrn).toLocaleString('en-US')}`;
       document.getElementById('metricMargin').textContent = `$${Math.round(totalMargin).toLocaleString('en-US')}`;
