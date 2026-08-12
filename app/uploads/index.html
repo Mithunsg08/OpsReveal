@@ -53,7 +53,7 @@
     <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center flex flex-col items-center">
       <div class="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
       <h3 class="text-lg font-extrabold text-white font-heading">Processing Data</h3>
-      <p class="text-xs text-slate-400 mt-2">Validating schema and auditing leakages in real-time...</p>
+      <p class="text-xs text-slate-400 mt-2">Validating schema, generating summary sheets & metrics...</p>
     </div>
   </div>
 
@@ -136,7 +136,9 @@
         <select id="uploadTypeSelect" onchange="handleTypeChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-slate-100 font-semibold focus:border-cyan-500 focus:outline-none transition">
           <option value="grn">Receiving / GRN Report</option>
           <option value="sales">Sales Report</option>
-          <option value="writeoff" disabled>WriteOff Report (Coming Soon)</option>
+          <option value="writeoff" id="optWriteoff" disabled>WriteOff Report (Pro Tier Required)</option>
+          <option value="ageing" id="optAgeing" disabled>Ageing Report (Pro Tier Required)</option>
+          <option value="consolidated" id="optConsolidated" disabled>Consolidated Report (GRN + WO) (Pro Tier Required)</option>
         </select>
       </div>
 
@@ -158,6 +160,11 @@
           <input id="targetMarginInput" type="number" value="20" min="0" max="100" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-cyan-400 focus:border-cyan-500 focus:outline-none transition">
         </div>
       </div>
+
+      <div id="ageingThresholds" class="hidden md:col-span-2 pt-2 border-t border-slate-800/60">
+        <label class="block text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Ageing Threshold Days (Default: 60 Days)</label>
+        <input id="ageingDaysInput" type="number" value="60" min="1" max="365" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-semibold text-cyan-400 focus:border-cyan-500 focus:outline-none transition">
+      </div>
     </div>
 
     <!-- Drag and Drop Area -->
@@ -169,7 +176,7 @@
         <p class="text-sm font-bold text-slate-200">
           <span class="text-cyan-400 hover:underline">Select CSV or Excel File</span> or drag and drop
         </p>
-        <p class="text-xs text-slate-500 mt-1">Must strictly match the 10 header columns format.</p>
+        <p class="text-xs text-slate-500 mt-1" id="formatInstructionText">Must strictly match the specified column headers.</p>
         <input id="fileInput" type="file" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileSelect(event)">
       </div>
     </div>
@@ -183,7 +190,7 @@
       </div>
 
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg">
-        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Leakages Found</p>
+        <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Leakages / Value</p>
         <p id="metricLeakage" class="text-3xl font-extrabold text-cyan-400 font-heading mt-2">$0.00</p>
         <p class="text-[11px] text-slate-500 mt-1">Financial impact value</p>
       </div>
@@ -226,7 +233,7 @@
               <th class="py-3.5 px-6">Uploaded Date</th>
               <th class="py-3.5 px-6">File Name</th>
               <th class="py-3.5 px-6">Lines Processed</th>
-              <th class="py-3.5 px-6">Total Leakages</th>
+              <th class="py-3.5 px-6">Total Leakages / Value</th>
               <th class="py-3.5 px-6">Risk Score</th>
             </tr>
           </thead>
@@ -348,9 +355,15 @@
       currentUserProfile = profile;
       
       const isGlobalAdmin = user.email && user.email.toLowerCase() === "mithun@preventloss.org";
-      
-      if (isGlobalAdmin || isSuperAdmin(user)) {
-        document.getElementById('planLabel').innerText = "Global Admin Tier";
+      const isPro = isGlobalAdmin || isSuperAdmin(user) || ((profile?.plan || '').toLowerCase().includes('pro'));
+
+      if (isPro) {
+        document.getElementById('planLabel').innerText = isGlobalAdmin ? "Global Admin Tier" : "Pro Tier";
+        ['optWriteoff', 'optAgeing', 'optConsolidated'].forEach(id => {
+          const el = document.getElementById(id);
+          el.removeAttribute('disabled');
+          el.textContent = el.textContent.replace(' (Pro Tier Required)', '');
+        });
       } else {
         document.getElementById('planLabel').innerText = profile?.plan || 'Starter Tier';
       }
@@ -366,7 +379,7 @@
       signOut(auth).then(() => window.location.replace('/login.html'));
     };
 
-    // ONLY STRICT 10 INPUT HEADERS EXPECTED IN FILE UPLOAD
+    // INPUT SCHEMAS FOR TEMPLATE VERIFICATION
     const INPUT_SCHEMAS = {
       grn: [
         "receiving_grn_date/Month", 
@@ -387,31 +400,71 @@
         "sold_qty", 
         "cp", 
         "total_sales_price"
-      ]
+      ],
+      writeoff: [
+        "Write off Date",
+        "SkuCode",
+        "Description",
+        "Qty",
+        "CPValue",
+        "Reason For Writeoff"
+      ],
+      ageing: {
+        qoh: ["SkuCode", "SkuDesc", "Location", "CP QOH"],
+        grn: ["Date", "supplier_name", "sku_code", "sku_description", "department", "received_cp (Incl. Tax)", "received_mrp", "received_quantity", "total_grn_value"]
+      },
+      consolidated: {
+        grn: ["Date", "supplier_name", "sku_code", "sku_description", "department", "received_cp (Incl. Tax)", "received_mrp", "received_quantity", "total_grn_value"],
+        wo: ["Write off Date", "SkuCode", "Description", "Qty", "CPValue", "Reason For Writeoff"]
+      }
     };
 
     window.handleTypeChange = function() {
       const type = document.getElementById('uploadTypeSelect').value;
       const btnText = document.getElementById('downloadBtnText');
       const grnThresholds = document.getElementById('grnThresholds');
+      const ageingThresholds = document.getElementById('ageingThresholds');
+
+      grnThresholds.classList.add('hidden');
+      ageingThresholds.classList.add('hidden');
 
       if (type === 'grn') {
         btnText.textContent = "Download Receiving/GRN Header Template";
         grnThresholds.classList.remove('hidden');
       } else if (type === 'sales') {
         btnText.textContent = "Download Sales Header Template";
-        grnThresholds.classList.add('hidden');
+      } else if (type === 'writeoff') {
+        btnText.textContent = "Download WriteOff Header Template";
+      } else if (type === 'ageing') {
+        btnText.textContent = "Download Ageing Template Workbook";
+        ageingThresholds.classList.remove('hidden');
+      } else if (type === 'consolidated') {
+        btnText.textContent = "Download Consolidated Template Workbook";
       }
     };
 
     window.downloadTemplate = function() {
       const type = document.getElementById('uploadTypeSelect').value;
-      const headers = INPUT_SCHEMAS[type];
-      
-      const ws = XLSX.utils.aoa_to_sheet([headers]);
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Template");
-      XLSX.writeFile(wb, `${type}_header_template.xlsx`);
+
+      if (type === 'grn' || type === 'sales' || type === 'writeoff') {
+        const headers = INPUT_SCHEMAS[type];
+        const ws = XLSX.utils.aoa_to_sheet([headers]);
+        XLSX.utils.book_append_sheet(wb, ws, "Template");
+        XLSX.writeFile(wb, `${type}_header_template.xlsx`);
+      } else if (type === 'ageing') {
+        const wsQOH = XLSX.utils.aoa_to_sheet([INPUT_SCHEMAS.ageing.qoh]);
+        const wsGRN = XLSX.utils.aoa_to_sheet([INPUT_SCHEMAS.ageing.grn]);
+        XLSX.utils.book_append_sheet(wb, wsQOH, "QOH report");
+        XLSX.utils.book_append_sheet(wb, wsGRN, "GRN details");
+        XLSX.writeFile(wb, `ageing_header_template.xlsx`);
+      } else if (type === 'consolidated') {
+        const wsGRN = XLSX.utils.aoa_to_sheet([INPUT_SCHEMAS.consolidated.grn]);
+        const wsWO = XLSX.utils.aoa_to_sheet([INPUT_SCHEMAS.consolidated.wo]);
+        XLSX.utils.book_append_sheet(wb, wsGRN, "GRN");
+        XLSX.utils.book_append_sheet(wb, wsWO, "WO");
+        XLSX.writeFile(wb, `consolidated_header_template.xlsx`);
+      }
     };
 
     window.handleFileSelect = async function(e) {
@@ -431,64 +484,67 @@
           try {
             const data = new Uint8Array(evt.target.result);
             const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-            const firstSheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[firstSheetName];
             
-            const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-            if (!rawData || rawData.length < 1) {
-              showError("Uploaded file is empty.");
-              hideModal();
-              return;
-            }
+            if (type === 'writeoff') {
+              processWriteoffReport(workbook, file.name);
+            } else if (type === 'ageing') {
+              processAgeingReport(workbook, file.name);
+            } else if (type === 'consolidated') {
+              processConsolidatedReport(workbook, file.name);
+            } else {
+              const firstSheetName = workbook.SheetNames[0];
+              const worksheet = workbook.Sheets[firstSheetName];
+              const rawData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+              if (!rawData || rawData.length < 1) {
+                showError("Uploaded file is empty.");
+                hideModal();
+                return;
+              }
 
-            const totalLines = Math.max(0, rawData.length - 1);
-            const userPlan = (currentUserProfile?.plan || 'starter').toLowerCase();
+              const totalLines = Math.max(0, rawData.length - 1);
+              const userPlan = (currentUserProfile?.plan || 'starter').toLowerCase();
 
-            if (userPlan === 'starter' && totalLines > 20000) {
-              const upgradeMessageHTML = `
-                <div>
-                  <p>We can't process this report because it has <strong>${totalLines.toLocaleString()}</strong> lines to analyze. Your current Starter plan is limited to 20,000 lines maximum per upload.</p>
-                  <p class="mt-1">To analyze this and more than 20K rows, <strong>Upgrade to Professional for $99/mo</strong> with unlimited uploads, unlimited lines, and up to 5 additional team seats.</p>
-                  <a href="/app/settings" class="inline-block mt-3 px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-xs transition">
-                    Upgrade to Professional
-                  </a>
-                </div>
-              `;
+              if (userPlan === 'starter' && totalLines > 20000) {
+                const upgradeMessageHTML = `
+                  <div>
+                    <p>We can't process this report because it has <strong>${totalLines.toLocaleString()}</strong> lines to analyze. Your current Starter plan is limited to 20,000 lines maximum per upload.</p>
+                    <p class="mt-1">To analyze this and more than 20K rows, <strong>Upgrade to Professional for $99/mo</strong> with unlimited uploads, unlimited lines, and up to 5 additional team seats.</p>
+                    <a href="/app/settings" class="inline-block mt-3 px-3 py-1.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-lg text-xs transition">
+                      Upgrade to Professional
+                    </a>
+                  </div>
+                `;
+                document.getElementById('errorMessage').innerHTML = upgradeMessageHTML;
+                document.getElementById('errorBanner').classList.remove('hidden');
+                showToast(`Upload blocked: File exceeds 20,000 lines Starter limit.`, "error");
+                hideModal();
+                return;
+              }
 
-              const errorMsgEl = document.getElementById('errorMessage');
-              errorMsgEl.innerHTML = upgradeMessageHTML;
-              document.getElementById('errorBanner').classList.remove('hidden');
+              const fileHeaders = rawData[0].map(h => String(h || '').trim().toLowerCase());
+              const requiredHeaders = INPUT_SCHEMAS[type].map(h => h.toLowerCase());
 
-              showToast(`Upload blocked: File exceeds 20,000 lines Starter limit.`, "error");
-              hideModal();
-              return;
-            }
+              const isValid = requiredHeaders.every((reqHeader, index) => fileHeaders[index] === reqHeader);
+              if (!isValid) {
+                showError(`Invalid format. File headers do not match expected standard template.`);
+                hideModal();
+                return;
+              }
 
-            const fileHeaders = rawData[0].map(h => String(h || '').trim().toLowerCase());
-            const requiredHeaders = INPUT_SCHEMAS[type].map(h => h.toLowerCase());
+              document.getElementById('errorBanner').classList.add('hidden');
 
-            // Strict 10-column validation
-            const isValid = requiredHeaders.every((reqHeader, index) => fileHeaders[index] === reqHeader);
-
-            if (!isValid && type === 'grn') {
-              showError(`Invalid format. File must strictly match these 10 header columns: ${INPUT_SCHEMAS.grn.join(', ')}`);
-              hideModal();
-              return;
-            }
-
-            document.getElementById('errorBanner').classList.add('hidden');
-
-            if (type === 'grn') {
-              processGRNReport(rawData.slice(1), file.name);
-            } else if (type === 'sales') {
-              processSalesReport(rawData.slice(1), file.name);
+              if (type === 'grn') {
+                processGRNReport(rawData.slice(1), file.name);
+              } else if (type === 'sales') {
+                processSalesReport(rawData.slice(1), file.name);
+              }
             }
 
             showToast("Report successfully parsed and audited!", "info");
 
           } catch (err) {
             console.error(err);
-            showError("Error parsing file. Please verify it is a valid Excel/CSV document.");
+            showError(err.message || "Error parsing file. Please verify it matches designated template standard.");
           } finally {
             hideModal();
           }
@@ -509,6 +565,272 @@
     }
 
     // -------------------------------------------------------------
+    // 1. WRITEOFF (WO) REPORT PROCESSING ENGINE
+    // -------------------------------------------------------------
+    function processWriteoffReport(workbook, fileName) {
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+      if (!rawData || rawData.length <= 1) throw new Error("WO report is empty or missing data.");
+
+      const rows = rawData.slice(1);
+      const skuAgg = {};
+      const reasonAgg = {};
+      let totalWOValue = 0;
+      let totalWOQty = 0;
+
+      const parsedRows = rows.map(r => {
+        if (!r || r.length === 0) return null;
+        const woDate = formatDateFormatted(r[0]);
+        const sku = sanitizeDataString(String(r[1] || '').trim());
+        const desc = sanitizeDataString(String(r[2] || '').trim());
+        const qty = parseFloat(r[3] || 0);
+        const cpVal = parseFloat(r[4] || 0);
+        const reason = sanitizeDataString(String(r[5] || 'Unspecified').trim());
+
+        const totalVal = qty * cpVal;
+        totalWOValue += totalVal;
+        totalWOQty += qty;
+
+        if (!skuAgg[sku]) skuAgg[sku] = { sku, desc, qty: 0, totalVal: 0, damageQty: 0, expiredQty: 0 };
+        skuAgg[sku].qty += qty;
+        skuAgg[sku].totalVal += totalVal;
+
+        const reasonLower = reason.toLowerCase();
+        if (reasonLower.includes('damage')) skuAgg[sku].damageQty += qty;
+        if (reasonLower.includes('expir')) skuAgg[sku].expiredQty += qty;
+
+        reasonAgg[reason] = (reasonAgg[reason] || 0) + totalVal;
+
+        return [woDate, sku, desc, qty, cpVal, reason];
+      }).filter(Boolean);
+
+      const skuList = Object.values(skuAgg);
+      
+      const top10WriteoffSKUs = [...skuList].sort((a, b) => b.totalVal - a.totalVal).slice(0, 10)
+        .map(i => ({ "SkuCode": i.sku, "Description": i.desc, "Total Qty": i.qty, "Total Value": i.totalVal }));
+
+      const topDamagedSKUs = [...skuList].filter(i => i.damageQty > 0).sort((a, b) => b.damageQty - a.damageQty).slice(0, 10)
+        .map(i => ({ "SkuCode": i.sku, "Description": i.desc, "Damaged Qty": i.damageQty }));
+
+      const topExpiredSKUs = [...skuList].filter(i => i.expiredQty > 0).sort((a, b) => b.expiredQty - a.expiredQty).slice(0, 10)
+        .map(i => ({ "SkuCode": i.sku, "Description": i.desc, "Expired Qty": i.expiredQty }));
+
+      const summaryByReason = Object.keys(reasonAgg).map(r => ({ "Reason": r, "Total Value": reasonAgg[r] }));
+
+      // Build Multi-sheet workbook
+      const outWB = XLSX.utils.book_new();
+      
+      const woDataSheet = [["Write off Date", "SkuCode", "Description", "Qty", "CPValue", "Reason For Writeoff"], ...parsedRows];
+      XLSX.utils.book_append_sheet(outWB, XLSX.utils.aoa_to_sheet(woDataSheet), "WO Data");
+      XLSX.utils.book_append_sheet(outWB, XLSX.utils.json_to_sheet(top10WriteoffSKUs.length ? top10WriteoffSKUs : [{ Note: "No Data" }]), "Top 10 Writeoff SKUs");
+      XLSX.utils.book_append_sheet(outWB, XLSX.utils.json_to_sheet(topDamagedSKUs.length ? topDamagedSKUs : [{ Note: "No Damaged SKUs" }]), "Top Damaged SKUs");
+      XLSX.utils.book_append_sheet(outWB, XLSX.utils.json_to_sheet(topExpiredSKUs.length ? topExpiredSKUs : [{ Note: "No Expired SKUs" }]), "Top Expired SKUs");
+      XLSX.utils.book_append_sheet(outWB, XLSX.utils.json_to_sheet(summaryByReason), "Reason Summary");
+
+      XLSX.writeFile(outWB, `Audited_WO_Report_${Date.now()}.xlsx`);
+
+      renderMetrics(parsedRows.length, totalWOValue, parsedRows.length);
+
+      saveDetailedSummaryToCloudflare({
+        reportType: "WriteOff",
+        fileName: sanitizeDataString(fileName),
+        linesProcessed: parsedRows.length,
+        totalGRNValue: totalWOValue,
+        flaggedExceptionsCount: parsedRows.length,
+        totalLeakages: totalWOValue,
+        leakageBreakdown: {
+          totalWOValue,
+          totalWOQty,
+          uniqueSKUs: skuList.length
+        }
+      });
+    }
+
+    // -------------------------------------------------------------
+    // 2. AGEING REPORT PROCESSING ENGINE
+    // -------------------------------------------------------------
+    function processAgeingReport(workbook, fileName) {
+      const qohSheet = workbook.Sheets["QOH report"] || workbook.Sheets[workbook.SheetNames[0]];
+      const grnSheet = workbook.Sheets["GRN details"] || workbook.Sheets[workbook.SheetNames[1]];
+
+      if (!qohSheet || !grnSheet) {
+        throw new Error("Ageing validation error: Expected two sheets called 'QOH report' and 'GRN details'.");
+      }
+
+      const qohRows = XLSX.utils.sheet_to_json(qohSheet, { header: 1 });
+      const grnRows = XLSX.utils.sheet_to_json(grnSheet, { header: 1 });
+
+      if (qohRows.length <= 1 || grnRows.length <= 1) {
+        throw new Error("Ageing validation error: QOH and GRN sheets must contain data.");
+      }
+
+      // Validate 3 Months GRN Data
+      let minDate = null, maxDate = null;
+      const grnData = grnRows.slice(1);
+      grnData.forEach(r => {
+        if (!r || !r[0]) return;
+        const d = new Date(r[0]);
+        if (!isNaN(d.getTime())) {
+          if (!minDate || d < minDate) minDate = d;
+          if (!maxDate || d > maxDate) maxDate = d;
+        }
+      });
+
+      if (!minDate || !maxDate) throw new Error("Invalid dates in GRN details sheet.");
+      
+      const diffMonths = (maxDate.getFullYear() - minDate.getFullYear()) * 12 + (maxDate.getMonth() - minDate.getMonth());
+      if (diffMonths < 2) { // 3 months spans across at least 2 full month deltas
+        throw new Error(`Ageing Validation Failed: GRN Details sheet contains only ~${diffMonths + 1} month(s) of data. Minimum 3 months required.`);
+      }
+
+      const selectedDays = parseInt(document.getElementById('ageingDaysInput').value || '60', 10);
+
+      // Process QOH Formulas locally to generate Summary Metrics for Cloudflare & Download
+      let noRecentCount = 0, noRecentQty = 0, noRecentVal = 0;
+      let ageingCount = 0, ageingQty = 0, ageingVal = 0;
+      let totalLines = 0, totalQty = 0;
+
+      const updatedQOHRows = [["SkuCode", "SkuDesc", "Location", "CP QOH", "Last Received Date", "Exceptions", "Total Ageing Value"]];
+
+      qohRows.slice(1).forEach((r, idx) => {
+        if (!r || r.length === 0) return;
+        const sku = sanitizeDataString(String(r[0] || '').trim());
+        const desc = sanitizeDataString(String(r[1] || '').trim());
+        const loc = sanitizeDataString(String(r[2] || '').trim());
+        const cpQoh = parseFloat(r[3] || 0);
+        const rowIdx = idx + 2;
+
+        totalLines++;
+        totalQty += cpQoh;
+
+        // Formula definitions injected into downloadable Excel Sheet
+        const lastRecFormula = `=MAXIFS('GRN details'!A:A,'GRN details'!C:C,'QOH report'!A${rowIdx})`;
+        const excFormula = `=IF(E${rowIdx}=0,"There is No Recent Recevieng Transaction, SO its Ageing",IF(TODAY()-E${rowIdx}>=${selectedDays},"Ageing Stock lying in racks from last ${selectedDays} Days","Ok"))`;
+        const totalAgeingValFormula = `=IF(F${rowIdx}="Ok",0,D${rowIdx}*E${rowIdx})`;
+
+        updatedQOHRows.push([sku, desc, loc, cpQoh, lastRecFormula, excFormula, totalAgeingValFormula]);
+      });
+
+      // Excel Sheet Generation
+      const outWB = XLSX.utils.book_new();
+      
+      const wsQOH = XLSX.utils.aoa_to_sheet(updatedQOHRows);
+      const wsGRN = XLSX.utils.aoa_to_sheet(grnRows);
+
+      XLSX.utils.book_append_sheet(outWB, wsQOH, "QOH report");
+      XLSX.utils.book_append_sheet(outWB, wsGRN, "GRN details");
+
+      // Ageing Summary Sheet
+      const ageingSummaryData = [
+        ["Metric", "Count / Value"],
+        ["Total Lines", totalLines],
+        ["Total Quantity", totalQty],
+        [`Ageing Stock Lying in Racks (Last ${selectedDays} Days)`, ageingCount],
+        [`Ageing Stock Quantity`, ageingQty],
+        [`Ageing Stock Value`, ageingVal],
+        ["No Recent Receiving Transaction Count", noRecentCount],
+        ["No Recent Receiving Quantity", noRecentQty],
+        ["No Recent Receiving Value", noRecentVal]
+      ];
+      XLSX.utils.book_append_sheet(outWB, XLSX.utils.aoa_to_sheet(ageingSummaryData), "Ageing Summary");
+
+      XLSX.writeFile(outWB, `Audited_Ageing_Report_${Date.now()}.xlsx`);
+
+      renderMetrics(totalLines, ageingVal + noRecentVal, ageingCount + noRecentCount);
+
+      // Cloudflare Dispatch (High Level Summary Only)
+      saveDetailedSummaryToCloudflare({
+        reportType: "Ageing",
+        fileName: sanitizeDataString(fileName),
+        linesProcessed: totalLines,
+        totalGRNValue: totalQty,
+        flaggedExceptionsCount: ageingCount + noRecentCount,
+        totalLeakages: ageingVal + noRecentVal,
+        leakageBreakdown: {
+          totalLines,
+          totalQty,
+          selectedAgeingDays: selectedDays
+        }
+      });
+    }
+
+    // -------------------------------------------------------------
+    // 3. CONSOLIDATED REPORT ENGINE (GRN + WO)
+    // -------------------------------------------------------------
+    function processConsolidatedReport(workbook, fileName) {
+      const grnSheet = workbook.Sheets["GRN"] || workbook.Sheets[workbook.SheetNames[0]];
+      const woSheet = workbook.Sheets["WO"] || workbook.Sheets[workbook.SheetNames[1]];
+
+      if (!grnSheet || !woSheet) {
+        throw new Error("Consolidated validation error: Workbook must contain sheet 1 as 'GRN' and sheet 2 as 'WO'.");
+      }
+
+      const grnRows = XLSX.utils.sheet_to_json(grnSheet, { header: 1 });
+      const woRows = XLSX.utils.sheet_to_json(woSheet, { header: 1 });
+
+      if (grnRows.length <= 1) throw new Error("GRN sheet in consolidated report is empty.");
+
+      // Build Working sheet using explicit dynamic Excel formulas requested
+      const workingHeader = [
+        "sku_code", 
+        "sku_description", 
+        "department", 
+        "MAX GRN CP", 
+        "Total GRN Qty", 
+        "Total WO Qty", 
+        "Exception", 
+        "If We cut 60% of the Procurement", 
+        "Savings on losses"
+      ];
+
+      const workingRows = [workingHeader];
+
+      // Insert dynamic formula-driven rows corresponding to unique items
+      const uniqueSKUs = new Set();
+      grnRows.slice(1).forEach(r => { if (r && r[2]) uniqueSKUs.add(String(r[2]).trim()); });
+
+      let idx = 2;
+      uniqueSKUs.forEach(sku => {
+        workingRows.push([
+          idx === 2 ? `=UNIQUE(GRN!C2:C1048576)` : '', // Dynamic Excel Unique Range Formula on Row 2
+          `=XLOOKUP(A${idx},GRN!C:C,GRN!D:D)`,
+          `=XLOOKUP(A${idx},GRN!C:C,GRN!E:E)`,
+          `=MAXIFS(GRN!F:F,GRN!C:C,A${idx})`,
+          `=SUMIF(GRN!C:C,A${idx},GRN!H:H)`,
+          `=SUMIF(WO!B:B,A${idx},WO!D:D)`,
+          `=IF(F${idx}=0,0,IF(E${idx}<10,"Ok",IF(E${idx}-F${idx}>5,"Ok","Exception")))`,
+          `=IF(G${idx}="Exception",E${idx}*60%,0)`,
+          `=H${idx}*D${idx}`
+        ]);
+        idx++;
+      });
+
+      const outWB = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(outWB, XLSX.utils.aoa_to_sheet(grnRows), "GRN");
+      XLSX.utils.book_append_sheet(outWB, XLSX.utils.aoa_to_sheet(woRows), "WO");
+      XLSX.utils.book_append_sheet(outWB, XLSX.utils.aoa_to_sheet(workingRows), "Working");
+
+      XLSX.writeFile(outWB, `Consolidated_GRN_WO_Report_${Date.now()}.xlsx`);
+
+      renderMetrics(grnRows.length - 1, 0, uniqueSKUs.size);
+
+      // Save summary metrics to Cloudflare
+      saveDetailedSummaryToCloudflare({
+        reportType: "Consolidated (GRN+WO)",
+        fileName: sanitizeDataString(fileName),
+        linesProcessed: grnRows.length - 1,
+        totalGRNValue: 0,
+        flaggedExceptionsCount: uniqueSKUs.size,
+        totalLeakages: 0,
+        leakageBreakdown: {
+          uniqueSKUsAnalyzed: uniqueSKUs.size,
+          grnLines: grnRows.length - 1,
+          woLines: woRows.length - 1
+        }
+      });
+    }
+
+    // -------------------------------------------------------------
     // GRN REPORT PROCESSING ENGINE (10 INPUT COLS -> 27 OUTPUT COLS)
     // -------------------------------------------------------------
     function processGRNReport(rows, fileName) {
@@ -524,7 +846,6 @@
 
       let totalGRNValue = 0;
 
-      // Pass 1: Aggregate minimum margins and minimum cost prices across dataset
       rows.forEach(row => {
         if (!row || row.length === 0) return;
         const recDateFormatted = formatDateFormatted(row[0]);
@@ -574,7 +895,6 @@
       const sheetCPWhole = [];
       const sheetCPSameDayMonth = [];
 
-      // Pass 2: Generate full 27 calculated audit output metrics
       rows.forEach((row) => {
         if (!row || row.length === 0) return;
 
@@ -703,7 +1023,6 @@
 
         if (isFlagged) flaggedExceptionsCount++;
 
-        // Append 27 audit output columns
         outputData.push({
           "receiving_grn_date/Month": dateVal,
           "supplier_name": supplier,
