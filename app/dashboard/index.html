@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OpsReveal - Dashboard</title>
-  
+
+  <!-- PNG Favicon -->
+  <link rel="icon" type="image/png" href="/favicon.png">
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -121,13 +124,13 @@
       </div>
 
       <!-- METRICS CARDS -->
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div id="metricsGrid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Audited Reports</span>
           <span id="metricReports" class="text-2xl font-extrabold text-white font-heading mt-1 block">0</span>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div id="cardTotalLines" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Lines Analyzed</span>
           <span id="metricTotalLines" class="text-2xl font-extrabold text-indigo-400 font-heading mt-1 block">0</span>
         </div>
@@ -142,9 +145,14 @@
           <span id="metricMargin" class="text-2xl font-extrabold text-amber-400 font-heading mt-1 block">$0.00</span>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <div id="cardWriteoff" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Write-Off Inventory Loss</span>
           <span id="metricWriteoff" class="text-2xl font-extrabold text-rose-400 font-heading mt-1 block">$0.00</span>
+        </div>
+
+        <div id="cardConsolidatedAgeing" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Ageing & Consolidated Loss</span>
+          <span id="metricConsolidatedAgeing" class="text-2xl font-extrabold text-purple-400 font-heading mt-1 block">$0.00</span>
         </div>
       </div>
 
@@ -225,21 +233,46 @@
     function updatePlanUI(isPro, isAdmin) {
       const planLabel = document.getElementById('planLabel');
       const subtitle = document.getElementById('dashboardSubtitle');
+      const grid = document.getElementById('metricsGrid');
       
+      const cardTotalLines = document.getElementById('cardTotalLines');
+      const cardWriteoff = document.getElementById('cardWriteoff');
+      const cardConsolidatedAgeing = document.getElementById('cardConsolidatedAgeing');
+
       if (isAdmin) {
         planLabel.innerText = 'Admin Console';
         planLabel.className = 'font-bold text-cyan-400';
         subtitle.innerText = 'Consolidated system-wide audit metrics and risk telemetry across all users.';
         document.getElementById('upgradeBanner').classList.add('hidden');
+        
+        // Show all cards
+        cardTotalLines.classList.remove('hidden');
+        cardWriteoff.classList.remove('hidden');
+        cardConsolidatedAgeing.classList.remove('hidden');
+        grid.className = "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4";
+
       } else if (isPro) {
         planLabel.innerText = 'Professional Tier';
         planLabel.className = 'font-bold text-emerald-400';
         subtitle.innerText = 'Total accumulated audit metrics and risk telemetry.';
         document.getElementById('upgradeBanner').classList.add('hidden');
+        
+        // Show all cards
+        cardTotalLines.classList.remove('hidden');
+        cardWriteoff.classList.remove('hidden');
+        cardConsolidatedAgeing.classList.remove('hidden');
+        grid.className = "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4";
+
       } else {
         planLabel.innerText = 'Starter Tier';
         planLabel.className = 'font-bold text-amber-400';
         subtitle.innerText = 'Total accumulated audit metrics and risk telemetry.';
+        
+        // Hide Writeoff, Total Lines, Ageing/Consolidated for Starter plan
+        cardTotalLines.classList.add('hidden');
+        cardWriteoff.classList.add('hidden');
+        cardConsolidatedAgeing.classList.add('hidden');
+        grid.className = "grid grid-cols-1 md:grid-cols-3 gap-4";
       }
     }
 
@@ -298,6 +331,7 @@
       let totalGrn = 0;
       let totalMargin = 0;
       let totalWriteoff = 0;
+      let totalConsolidatedAgeing = 0;
 
       filtered.forEach(r => {
         totalLinesAnalyzed += Number(r.linesProcessed || r.lines_processed || 0);
@@ -309,6 +343,8 @@
 
         const isWOReport = reportType.includes('WRITEOFF') || reportType.includes('WO') || fileName.includes('writeoff') || fileName.includes('write_off');
         const isSalesReport = reportType.includes('SALES') || fileName.includes('sales');
+        const isAgeingReport = reportType.includes('AGEING') || fileName.includes('ageing');
+        const isConsolidatedReport = reportType.includes('CONSOLIDATED') || fileName.includes('consolidated');
 
         if (isSalesReport) {
           // Sales Margin Erosion Logic
@@ -319,6 +355,10 @@
           // Explicit Write-Off Upload Logic
           const woVal = Number(bd.shelfLifeExceptions?.leakageValue ?? r.writeOffInventoryLoss ?? r.inventoryLoss ?? 0);
           totalWriteoff += (woVal > 0 ? woVal : totalLeak);
+
+        } else if (isAgeingReport || isConsolidatedReport) {
+          // Ageing & Consolidated Audit Logic
+          totalConsolidatedAgeing += totalLeak;
 
         } else {
           // GRN / Receiving Logic: All GRN leakage (including shelf-life exceptions) counts toward GRN card
@@ -342,6 +382,7 @@
       document.getElementById('metricGrn').textContent = `$${totalGrn.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       document.getElementById('metricMargin').textContent = `$${totalMargin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       document.getElementById('metricWriteoff').textContent = `$${totalWriteoff.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      document.getElementById('metricConsolidatedAgeing').textContent = `$${totalConsolidatedAgeing.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
       document.getElementById('historyCountLabel').textContent = `Showing ${filtered.length} audit runs`;
       const tbody = document.getElementById('auditTableBody');
