@@ -53,7 +53,7 @@
     <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center flex flex-col items-center">
       <div class="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mb-4"></div>
       <h3 class="text-lg font-extrabold text-white font-heading">Processing Data</h3>
-      <p class="text-xs text-slate-400 mt-2">Validating schema, generating summary sheets & metrics...</p>
+      <p class="text-xs text-slate-400 mt-2">Validating schema, computing values & generating metrics...</p>
     </div>
   </div>
 
@@ -647,7 +647,7 @@
     }
 
     // -------------------------------------------------------------
-    // 2. AGEING REPORT PROCESSING ENGINE
+    // 2. AGEING REPORT PROCESSING ENGINE (ALL FORMULAS EVALUATED TO STATIC VALUES)
     // -------------------------------------------------------------
     function processAgeingReport(workbook, fileName) {
       const qohSheet = workbook.Sheets["QOH report"] || workbook.Sheets[workbook.SheetNames[0]];
@@ -664,51 +664,81 @@
         throw new Error("Ageing validation error: QOH and GRN sheets must contain data.");
       }
 
-      // Validate 3 Months GRN Data
+      // Build Map of Latest Receiving Date per SKU from GRN
+      const latestGRNDateBySKU = {};
       let minDate = null, maxDate = null;
-      const grnData = grnRows.slice(1);
-      grnData.forEach(r => {
-        if (!r || !r[0]) return;
-        const d = new Date(r[0]);
+
+      grnRows.slice(1).forEach(r => {
+        if (!r || r.length === 0) return;
+        const rawDate = r[0];
+        const sku = sanitizeDataString(String(r[2] || '').trim());
+        
+        const d = new Date(rawDate);
         if (!isNaN(d.getTime())) {
           if (!minDate || d < minDate) minDate = d;
           if (!maxDate || d > maxDate) maxDate = d;
+
+          if (!latestGRNDateBySKU[sku] || d > latestGRNDateBySKU[sku]) {
+            latestGRNDateBySKU[sku] = d;
+          }
         }
       });
 
       if (!minDate || !maxDate) throw new Error("Invalid dates in GRN details sheet.");
       
       const diffMonths = (maxDate.getFullYear() - minDate.getFullYear()) * 12 + (maxDate.getMonth() - minDate.getMonth());
-      if (diffMonths < 2) { // 3 months spans across at least 2 full month deltas
+      if (diffMonths < 2) {
         throw new Error(`Ageing Validation Failed: GRN Details sheet contains only ~${diffMonths + 1} month(s) of data. Minimum 3 months required.`);
       }
 
       const selectedDays = parseInt(document.getElementById('ageingDaysInput').value || '60', 10);
+      const today = new Date();
 
-      // Process QOH Formulas locally to generate Summary Metrics for Cloudflare & Download
       let noRecentCount = 0, noRecentQty = 0, noRecentVal = 0;
       let ageingCount = 0, ageingQty = 0, ageingVal = 0;
       let totalLines = 0, totalQty = 0;
 
       const updatedQOHRows = [["SkuCode", "SkuDesc", "Location", "CP QOH", "Last Received Date", "Exceptions", "Total Ageing Value"]];
 
-      qohRows.slice(1).forEach((r, idx) => {
+      qohRows.slice(1).forEach(r => {
         if (!r || r.length === 0) return;
         const sku = sanitizeDataString(String(r[0] || '').trim());
         const desc = sanitizeDataString(String(r[1] || '').trim());
         const loc = sanitizeDataString(String(r[2] || '').trim());
         const cpQoh = parseFloat(r[3] || 0);
-        const rowIdx = idx + 2;
 
         totalLines++;
         totalQty += cpQoh;
 
-        // Formula definitions injected into downloadable Excel Sheet
-        const lastRecFormula = `=MAXIFS('GRN details'!A:A,'GRN details'!C:C,'QOH report'!A${rowIdx})`;
-        const excFormula = `=IF(E${rowIdx}=0,"There is No Recent Recevieng Transaction, SO its Ageing",IF(TODAY()-E${rowIdx}>=${selectedDays},"Ageing Stock lying in racks from last ${selectedDays} Days","Ok"))`;
-        const totalAgeingValFormula = `=IF(F${rowIdx}="Ok",0,D${rowIdx}*E${rowIdx})`;
+        const lastRecDate = latestGRNDateBySKU[sku] || null;
+        let lastRecDateStr = "0";
+        let exceptionStr = "Ok";
+        let totalAgeingVal = 0;
 
-        updatedQOHRows.push([sku, desc, loc, cpQoh, lastRecFormula, excFormula, totalAgeingValFormula]);
+        if (!lastRecDate) {
+          lastRecDateStr = "0";
+          exceptionStr = "There is No Recent Recevieng Transaction, SO its Ageing";
+          totalAgeingVal = cpQoh; // Calculated static value
+          noRecentCount++;
+          noRecentQty += cpQoh;
+          noRecentVal += totalAgeingVal;
+        } else {
+          lastRecDateStr = formatDateFormatted(lastRecDate);
+          const diffDays = Math.floor((today - lastRecDate) / (1000 * 60 * 60 * 24));
+          
+          if (diffDays >= selectedDays) {
+            exceptionStr = `Ageing Stock lying in racks from last ${selectedDays} Days`;
+            totalAgeingVal = cpQoh * diffDays; // Calculated static value
+            ageingCount++;
+            ageingQty += cpQoh;
+            ageingVal += totalAgeingVal;
+          } else {
+            exceptionStr = "Ok";
+            totalAgeingVal = 0;
+          }
+        }
+
+        updatedQOHRows.push([sku, desc, loc, cpQoh, lastRecDateStr, exceptionStr, totalAgeingVal]);
       });
 
       // Excel Sheet Generation
@@ -755,7 +785,7 @@
     }
 
     // -------------------------------------------------------------
-    // 3. CONSOLIDATED REPORT ENGINE (GRN + WO)
+    // 3. CONSOLIDATED REPORT ENGINE (GRN + WO) (ALL FORMULAS EVALUATED TO STATIC VALUES)
     // -------------------------------------------------------------
     function processConsolidatedReport(workbook, fileName) {
       const grnSheet = workbook.Sheets["GRN"] || workbook.Sheets[workbook.SheetNames[0]];
@@ -770,7 +800,34 @@
 
       if (grnRows.length <= 1) throw new Error("GRN sheet in consolidated report is empty.");
 
-      // Build Working sheet using explicit dynamic Excel formulas requested
+      // Parse GRN Data into Lookup Structures
+      const grnMap = {}; // SKU -> { desc, dept, maxCP, grnQty }
+      grnRows.slice(1).forEach(r => {
+        if (!r || !r[2]) return;
+        const sku = sanitizeDataString(String(r[2]).trim());
+        const desc = sanitizeDataString(String(r[3] || '').trim());
+        const dept = sanitizeDataString(String(r[4] || '').trim());
+        const cp = parseFloat(r[5] || 0);
+        const qty = parseFloat(r[7] || 0);
+
+        if (!grnMap[sku]) {
+          grnMap[sku] = { desc, dept, maxCP: cp, totalGRNQty: 0 };
+        }
+        grnMap[sku].totalGRNQty += qty;
+        if (cp > grnMap[sku].maxCP) grnMap[sku].maxCP = cp;
+      });
+
+      // Parse WO Data into Lookup Structures
+      const woQtyMap = {}; // SKU -> totalWOQty
+      if (woRows.length > 1) {
+        woRows.slice(1).forEach(r => {
+          if (!r || !r[1]) return;
+          const sku = sanitizeDataString(String(r[1]).trim());
+          const qty = parseFloat(r[3] || 0);
+          woQtyMap[sku] = (woQtyMap[sku] || 0) + qty;
+        });
+      }
+
       const workingHeader = [
         "sku_code", 
         "sku_description", 
@@ -784,25 +841,45 @@
       ];
 
       const workingRows = [workingHeader];
+      let exceptionCount = 0;
+      let totalSavings = 0;
 
-      // Insert dynamic formula-driven rows corresponding to unique items
-      const uniqueSKUs = new Set();
-      grnRows.slice(1).forEach(r => { if (r && r[2]) uniqueSKUs.add(String(r[2]).trim()); });
+      // Calculate static values for each unique SKU
+      Object.keys(grnMap).forEach(sku => {
+        const item = grnMap[sku];
+        const totalWOQty = woQtyMap[sku] || 0;
+        
+        // Evaluate Exception Logic
+        let exceptionVal = "Ok";
+        if (totalWOQty > 0) {
+          if (item.totalGRNQty < 10) {
+            exceptionVal = "Ok";
+          } else if ((item.totalGRNQty - totalWOQty) > 5) {
+            exceptionVal = "Ok";
+          } else {
+            exceptionVal = "Exception";
+          }
+        }
 
-      let idx = 2;
-      uniqueSKUs.forEach(sku => {
+        const procurementCut60 = exceptionVal === "Exception" ? (item.totalGRNQty * 0.6) : 0;
+        const savingsOnLosses = procurementCut60 * item.maxCP;
+
+        if (exceptionVal === "Exception") {
+          exceptionCount++;
+          totalSavings += savingsOnLosses;
+        }
+
         workingRows.push([
-          idx === 2 ? `=UNIQUE(GRN!C2:C1048576)` : '', // Dynamic Excel Unique Range Formula on Row 2
-          `=XLOOKUP(A${idx},GRN!C:C,GRN!D:D)`,
-          `=XLOOKUP(A${idx},GRN!C:C,GRN!E:E)`,
-          `=MAXIFS(GRN!F:F,GRN!C:C,A${idx})`,
-          `=SUMIF(GRN!C:C,A${idx},GRN!H:H)`,
-          `=SUMIF(WO!B:B,A${idx},WO!D:D)`,
-          `=IF(F${idx}=0,0,IF(E${idx}<10,"Ok",IF(E${idx}-F${idx}>5,"Ok","Exception")))`,
-          `=IF(G${idx}="Exception",E${idx}*60%,0)`,
-          `=H${idx}*D${idx}`
+          sku,
+          item.desc,
+          item.dept,
+          item.maxCP,
+          item.totalGRNQty,
+          totalWOQty,
+          exceptionVal,
+          procurementCut60,
+          savingsOnLosses
         ]);
-        idx++;
       });
 
       const outWB = XLSX.utils.book_new();
@@ -812,7 +889,7 @@
 
       XLSX.writeFile(outWB, `Consolidated_GRN_WO_Report_${Date.now()}.xlsx`);
 
-      renderMetrics(grnRows.length - 1, 0, uniqueSKUs.size);
+      renderMetrics(grnRows.length - 1, totalSavings, exceptionCount);
 
       // Save summary metrics to Cloudflare
       saveDetailedSummaryToCloudflare({
@@ -820,10 +897,10 @@
         fileName: sanitizeDataString(fileName),
         linesProcessed: grnRows.length - 1,
         totalGRNValue: 0,
-        flaggedExceptionsCount: uniqueSKUs.size,
-        totalLeakages: 0,
+        flaggedExceptionsCount: exceptionCount,
+        totalLeakages: totalSavings,
         leakageBreakdown: {
-          uniqueSKUsAnalyzed: uniqueSKUs.size,
+          uniqueSKUsAnalyzed: Object.keys(grnMap).length,
           grnLines: grnRows.length - 1,
           woLines: woRows.length - 1
         }
