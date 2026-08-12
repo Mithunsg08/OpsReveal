@@ -102,8 +102,10 @@
         <div class="flex items-center gap-3">
           <select id="timeFilter" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500 font-medium">
             <option value="all">Till Date (All Time)</option>
-            <option value="month">This Month</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
             <option value="week">This Week</option>
+            <option value="month">This Month</option>
           </select>
           <a href="/app/uploads/" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-md shadow-cyan-500/10">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -123,8 +125,8 @@
         </a>
       </div>
 
-      <!-- METRICS CARDS -->
-      <div id="metricsGrid" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <!-- METRICS CARDS (3 on top, 3 on bottom grid layout) -->
+      <div id="metricsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Audited Reports</span>
           <span id="metricReports" class="text-2xl font-extrabold text-white font-heading mt-1 block">0</span>
@@ -137,22 +139,22 @@
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Receiving / GRN Leakage</span>
-          <span id="metricGrn" class="text-2xl font-extrabold text-cyan-400 font-heading mt-1 block">$0.00</span>
+          <span id="metricGrn" class="text-2xl font-extrabold text-cyan-400 font-heading mt-1 block">$0</span>
         </div>
 
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Sales Margin Erosion</span>
-          <span id="metricMargin" class="text-2xl font-extrabold text-amber-400 font-heading mt-1 block">$0.00</span>
+          <span id="metricMargin" class="text-2xl font-extrabold text-amber-400 font-heading mt-1 block">$0</span>
         </div>
 
         <div id="cardWriteoff" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Write-Off Inventory Loss</span>
-          <span id="metricWriteoff" class="text-2xl font-extrabold text-rose-400 font-heading mt-1 block">$0.00</span>
+          <span id="metricWriteoff" class="text-2xl font-extrabold text-rose-400 font-heading mt-1 block">$0</span>
         </div>
 
         <div id="cardConsolidatedAgeing" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Ageing & Consolidated Loss</span>
-          <span id="metricConsolidatedAgeing" class="text-2xl font-extrabold text-purple-400 font-heading mt-1 block">$0.00</span>
+          <span id="metricConsolidatedAgeing" class="text-2xl font-extrabold text-purple-400 font-heading mt-1 block">$0</span>
         </div>
       </div>
 
@@ -245,11 +247,10 @@
         subtitle.innerText = 'Consolidated system-wide audit metrics and risk telemetry across all users.';
         document.getElementById('upgradeBanner').classList.add('hidden');
         
-        // Show all cards
         cardTotalLines.classList.remove('hidden');
         cardWriteoff.classList.remove('hidden');
         cardConsolidatedAgeing.classList.remove('hidden');
-        grid.className = "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4";
+        grid.className = "grid grid-cols-1 md:grid-cols-3 gap-5";
 
       } else if (isPro) {
         planLabel.innerText = 'Professional Tier';
@@ -257,22 +258,20 @@
         subtitle.innerText = 'Total accumulated audit metrics and risk telemetry.';
         document.getElementById('upgradeBanner').classList.add('hidden');
         
-        // Show all cards
         cardTotalLines.classList.remove('hidden');
         cardWriteoff.classList.remove('hidden');
         cardConsolidatedAgeing.classList.remove('hidden');
-        grid.className = "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4";
+        grid.className = "grid grid-cols-1 md:grid-cols-3 gap-5";
 
       } else {
         planLabel.innerText = 'Starter Tier';
         planLabel.className = 'font-bold text-amber-400';
         subtitle.innerText = 'Total accumulated audit metrics and risk telemetry.';
         
-        // Hide Writeoff, Total Lines, Ageing/Consolidated for Starter plan
         cardTotalLines.classList.add('hidden');
         cardWriteoff.classList.add('hidden');
         cardConsolidatedAgeing.classList.add('hidden');
-        grid.className = "grid grid-cols-1 md:grid-cols-3 gap-4";
+        grid.className = "grid grid-cols-1 md:grid-cols-3 gap-5";
       }
     }
 
@@ -315,14 +314,31 @@
       }
 
       let filtered = [...allRecords];
-      if (filter === 'month') {
-        filtered = monthRecords;
+
+      if (filter === 'today') {
+        filtered = allRecords.filter(r => {
+          const dateStr = r.uploadedDate || r.uploaded_date || r.createdAt || r.timestamp;
+          if (!dateStr) return false;
+          const d = new Date(dateStr);
+          return d.toDateString() === now.toDateString();
+        });
+      } else if (filter === 'yesterday') {
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        filtered = allRecords.filter(r => {
+          const dateStr = r.uploadedDate || r.uploaded_date || r.createdAt || r.timestamp;
+          if (!dateStr) return false;
+          const d = new Date(dateStr);
+          return d.toDateString() === yesterday.toDateString();
+        });
       } else if (filter === 'week') {
         const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         filtered = allRecords.filter(r => {
           const dateStr = r.uploadedDate || r.uploaded_date || r.createdAt || r.timestamp;
           return dateStr && new Date(dateStr) >= oneWeekAgo;
         });
+      } else if (filter === 'month') {
+        filtered = monthRecords;
       }
 
       document.getElementById('metricReports').textContent = filtered.length;
@@ -347,21 +363,17 @@
         const isConsolidatedReport = reportType.includes('CONSOLIDATED') || fileName.includes('consolidated');
 
         if (isSalesReport) {
-          // Sales Margin Erosion Logic
           const negMargin = Number(bd.negativeMarginSales?.leakageValue ?? r.salesMarginErosion ?? r.marginErosion ?? 0);
           totalMargin += (negMargin > 0 ? negMargin : totalLeak);
 
         } else if (isWOReport) {
-          // Explicit Write-Off Upload Logic
           const woVal = Number(bd.shelfLifeExceptions?.leakageValue ?? r.writeOffInventoryLoss ?? r.inventoryLoss ?? 0);
           totalWriteoff += (woVal > 0 ? woVal : totalLeak);
 
         } else if (isAgeingReport || isConsolidatedReport) {
-          // Ageing & Consolidated Audit Logic
           totalConsolidatedAgeing += totalLeak;
 
         } else {
-          // GRN / Receiving Logic: All GRN leakage (including shelf-life exceptions) counts toward GRN card
           const grnVal = Number(
             bd.marginLeakages?.leakageValue ?? 0
           ) + Number(
@@ -378,11 +390,12 @@
         }
       });
       
-      document.getElementById('metricTotalLines').textContent = totalLinesAnalyzed.toLocaleString('en-US');
-      document.getElementById('metricGrn').textContent = `$${totalGrn.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      document.getElementById('metricMargin').textContent = `$${totalMargin.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      document.getElementById('metricWriteoff').textContent = `$${totalWriteoff.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      document.getElementById('metricConsolidatedAgeing').textContent = `$${totalConsolidatedAgeing.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      // Rounded integers without decimal places
+      document.getElementById('metricTotalLines').textContent = Math.round(totalLinesAnalyzed).toLocaleString('en-US');
+      document.getElementById('metricGrn').textContent = `$${Math.round(totalGrn).toLocaleString('en-US')}`;
+      document.getElementById('metricMargin').textContent = `$${Math.round(totalMargin).toLocaleString('en-US')}`;
+      document.getElementById('metricWriteoff').textContent = `$${Math.round(totalWriteoff).toLocaleString('en-US')}`;
+      document.getElementById('metricConsolidatedAgeing').textContent = `$${Math.round(totalConsolidatedAgeing).toLocaleString('en-US')}`;
 
       document.getElementById('historyCountLabel').textContent = `Showing ${filtered.length} audit runs`;
       const tbody = document.getElementById('auditTableBody');
@@ -395,10 +408,10 @@
       tbody.innerHTML = filtered.map(r => {
         const date = new Date(r.uploadedDate || r.uploaded_date || r.timestamp || Date.now()).toLocaleString();
         const fileName = r.fileName || r.filename || 'report.csv';
-        const lines = Number(r.linesProcessed || r.lines_processed || 0).toLocaleString();
+        const lines = Math.round(Number(r.linesProcessed || r.lines_processed || 0)).toLocaleString();
         
-        const exceptions = Number(r.flaggedExceptionsCount ?? r.exceptionsCount ?? r.exceptions ?? r.flagged_exceptions ?? 0).toLocaleString();
-        const leakage = Number(r.totalLeakages ?? r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? 0);
+        const exceptions = Math.round(Number(r.flaggedExceptionsCount ?? r.exceptionsCount ?? r.exceptions ?? r.flagged_exceptions ?? 0)).toLocaleString();
+        const leakage = Math.round(Number(r.totalLeakages ?? r.totalLeakage ?? r.financial_leakage ?? r.total_leakage ?? r.financialLeakage ?? 0));
         const riskLevel = String(r.riskScore || r.riskAssessment || (leakage > 50000 ? "High" : leakage > 0 ? "Medium" : "Low")).toUpperCase();
 
         let riskClass = 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
@@ -419,7 +432,7 @@
                 ${riskLevel}
               </span>
             </td>
-            <td class="py-3 px-4 font-mono font-bold text-right text-cyan-400">$${leakage.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+            <td class="py-3 px-4 font-mono font-bold text-right text-cyan-400">$${leakage.toLocaleString('en-US')}</td>
           </tr>
         `;
       }).join('');
