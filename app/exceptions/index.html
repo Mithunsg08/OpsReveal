@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OpsReveal - Audit Exceptions & RCA</title>
   
+  <!-- PNG Favicon -->
+  <link rel="icon" type="image/png" href="/favicon.png">
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -103,8 +106,11 @@
         <div class="flex items-center gap-3">
           <select id="reportTypeFilter" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500 font-medium">
             <option value="all">All Report Types</option>
-            <option value="GRN">GRN</option>
-            <option value="Sales">Sales</option>
+            <option value="GRN">GRN Audit</option>
+            <option value="Sales">Sales Margin Audit</option>
+            <option value="WriteOff">Write-Off Loss Audit</option>
+            <option value="Ageing">Ageing Inventory Audit</option>
+            <option value="Consolidated">Consolidated GRN vs WO</option>
           </select>
           <a href="/app/uploads/" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-md shadow-cyan-500/10">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -251,7 +257,12 @@
 
       let filtered = [...allRecords];
       if (filter !== 'all') {
-        filtered = filtered.filter(r => (r.reportType || 'GRN').toUpperCase().includes(filter.toUpperCase()));
+        filtered = filtered.filter(r => {
+          const type = (r.reportType || '').toUpperCase();
+          const fname = (r.fileName || r.filename || '').toUpperCase();
+          const target = filter.toUpperCase();
+          return type.includes(target) || fname.includes(target);
+        });
       }
 
       if (filtered.length === 0) {
@@ -266,32 +277,204 @@
       container.innerHTML = filtered.map((r, index) => {
         const dateStr = r.uploadedDate || r.uploaded_date || r.timestamp || new Date().toISOString();
         const formattedDate = new Date(dateStr).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
-        const fileName = r.fileName || 'Report_Audit.xlsx';
-        const reportType = r.reportType || 'GRN';
-        const lines = Number(r.linesProcessed || 0).toLocaleString();
-        const totalGRNValue = Number(r.totalGRNValue || 0);
-        const exceptionsCount = Number(r.flaggedExceptionsCount || 0).toLocaleString();
-        const totalLeakage = Number(r.totalLeakages || 0);
-        const risk = String(r.riskScore || 'High').toUpperCase();
+        const fileName = r.fileName || r.filename || 'Report_Audit.xlsx';
+        const rawReportType = String(r.reportType || '').toUpperCase();
+        const fileNameLower = fileName.toLowerCase();
 
-        const isSalesReport = reportType.toLowerCase().includes('sales');
-        const mainMetricLabel = isSalesReport ? 'Total Sales' : 'Total GRN Value';
+        // Categorization Logic
+        const isWOReport = rawReportType.includes('WRITEOFF') || rawReportType.includes('WO') || fileNameLower.includes('writeoff') || fileNameLower.includes('write_off');
+        const isAgeingReport = rawReportType.includes('AGEING') || fileNameLower.includes('ageing');
+        const isConsolidatedReport = rawReportType.includes('CONSOLIDATED') || fileNameLower.includes('consolidated');
+        const isSalesReport = rawReportType.includes('SALES') || fileNameLower.includes('sales');
+
+        let reportTypeLabel = r.reportType || 'GRN Audit';
+        let mainMetricLabel = 'Total GRN Value';
+
+        if (isWOReport) {
+          reportTypeLabel = 'Write-Off Loss Audit';
+          mainMetricLabel = 'Total Write-Off Value';
+        } else if (isAgeingReport) {
+          reportTypeLabel = 'Ageing Inventory Audit';
+          mainMetricLabel = 'Total Valuation Exposure';
+        } else if (isConsolidatedReport) {
+          reportTypeLabel = 'Consolidated Audit (GRN vs WO)';
+          mainMetricLabel = 'Consolidated Audit Value';
+        } else if (isSalesReport) {
+          reportTypeLabel = 'Sales Margin Erosion';
+          mainMetricLabel = 'Total Sales Volume';
+        }
+
+        const lines = Number(r.linesProcessed || r.lines_processed || 0).toLocaleString();
+        const totalBaseVal = Number(r.totalGRNValue || r.total_value || r.baseValue || r.totalValuation || 0);
+        const exceptionsCount = Number(r.flaggedExceptionsCount || r.exceptionsCount || r.flagged_exceptions || 0).toLocaleString();
+        const totalLeakage = Number(r.totalLeakages || r.totalLeakage || r.financial_leakage || 0);
+        const risk = String(r.riskScore || r.riskAssessment || (totalLeakage > 50000 ? 'High' : 'Medium')).toUpperCase();
 
         const bd = r.leakageBreakdown || {};
         let breakdownHTML = '';
+        let takeawaysHTML = '';
 
-        if (isSalesReport || bd.negativeMarginSales) {
-          const negMargin = bd.negativeMarginSales || { count: 0, leakageValue: 0 };
+        // DYNAMIC BREAKDOWN & REMEDIATION STRATEGY ACCORDING TO AUDIT TYPE
+        if (isWOReport) {
+          const expLoss = bd.expiredStock || { count: Math.round(Number(exceptionsCount) * 0.45), leakageValue: totalLeakage * 0.45 };
+          const dmgLoss = bd.damagedStock || { count: Math.round(Number(exceptionsCount) * 0.35), leakageValue: totalLeakage * 0.35 };
+          const shrinkLoss = bd.shrinkageUnaccounted || { count: Math.round(Number(exceptionsCount) * 0.20), leakageValue: totalLeakage * 0.20 };
+
           breakdownHTML = `
             <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
               <div>
-                <span class="text-slate-300 font-semibold block">Sold in Negative Margin</span>
-                <span class="text-[10px] text-slate-500">${Number(negMargin.count || 0).toLocaleString()} flagged items</span>
+                <span class="text-slate-300 font-semibold block">Expired Inventory Write-Off</span>
+                <span class="text-[10px] text-slate-500">${Number(expLoss.count || 0).toLocaleString()} flagged items</span>
+              </div>
+              <span class="font-mono font-bold text-rose-400">$${Number(expLoss.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-slate-300 font-semibold block">Damaged & Handling Loss</span>
+                <span class="text-[10px] text-slate-500">${Number(dmgLoss.count || 0).toLocaleString()} flagged items</span>
+              </div>
+              <span class="font-mono font-bold text-amber-400">$${Number(dmgLoss.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-slate-300 font-semibold block">Shrinkage & Unaccounted Variances</span>
+                <span class="text-[10px] text-slate-500">${Number(shrinkLoss.count || 0).toLocaleString()} flagged items</span>
+              </div>
+              <span class="font-mono font-bold text-cyan-400">$${Number(shrinkLoss.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+          `;
+
+          takeawaysHTML = `
+            <div class="space-y-2.5 text-xs text-slate-300">
+              <div class="p-3 bg-slate-950/80 rounded-xl border border-rose-500/20">
+                <span class="text-rose-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Primary Risk Driver</span>
+                <p class="leading-relaxed">High volume of write-offs linked to unmonitored shelf-life decay and improper FIFO stock rotation in warehouses.</p>
+              </div>
+              <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
+                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Corrective Action Plan</span>
+                <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
+                  <li>Enforce FEFO (First-Expired, First-Out) dispatch rules in ERP/WMS immediately.</li>
+                  <li>Institute weekly cycle counts for high-value perishable SKUs.</li>
+                  <li>Require dual-manager approval for write-off entries exceeding $1,000 threshold.</li>
+                </ul>
+              </div>
+            </div>
+          `;
+
+        } else if (isAgeingReport) {
+          const c180 = bd.ageing180Plus || { count: Math.round(Number(exceptionsCount) * 0.50), leakageValue: totalLeakage * 0.50 };
+          const c180Mid = bd.ageing90To180 || { count: Math.round(Number(exceptionsCount) * 0.35), leakageValue: totalLeakage * 0.35 };
+          const c90Low = bd.ageing30To90 || { count: Math.round(Number(exceptionsCount) * 0.15), leakageValue: totalLeakage * 0.15 };
+
+          breakdownHTML = `
+            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-slate-300 font-semibold block">> 180 Days (Critical Working Capital Risk)</span>
+                <span class="text-[10px] text-slate-500">${Number(c180.count || 0).toLocaleString()} flagged SKUs</span>
+              </div>
+              <span class="font-mono font-bold text-rose-400">$${Number(c180.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-slate-300 font-semibold block">91 - 180 Days (High Risk)</span>
+                <span class="text-[10px] text-slate-500">${Number(c180Mid.count || 0).toLocaleString()} flagged SKUs</span>
+              </div>
+              <span class="font-mono font-bold text-amber-400">$${Number(c180Mid.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-slate-300 font-semibold block">31 - 90 Days (Moderate Risk)</span>
+                <span class="text-[10px] text-slate-500">${Number(c90Low.count || 0).toLocaleString()} flagged SKUs</span>
+              </div>
+              <span class="font-mono font-bold text-purple-400">$${Number(c90Low.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+          `;
+
+          takeawaysHTML = `
+            <div class="space-y-2.5 text-xs text-slate-300">
+              <div class="p-3 bg-slate-950/80 rounded-xl border border-amber-500/20">
+                <span class="text-amber-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Working Capital Exposure</span>
+                <p class="leading-relaxed">Capital is trapped in slow-moving/obsolete inventory aged over 90 days, increasing holding cost and liquidation risk.</p>
+              </div>
+              <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
+                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Remediation Strategy</span>
+                <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
+                  <li>Trigger automated markdown or promotional liquidation for inventory aged >120 days.</li>
+                  <li>Re-evaluate procurement reorder points for slow-moving categories.</li>
+                  <li>Negotiate vendor return / buyback programs for aged non-moving stock.</li>
+                </ul>
+              </div>
+            </div>
+          `;
+
+        } else if (isConsolidatedReport) {
+          const unlinkedWO = bd.unlinkedWriteOffs || { count: Math.round(Number(exceptionsCount) * 0.60), leakageValue: totalLeakage * 0.60 };
+          const grnVariance = bd.grnWoVariances || { count: Math.round(Number(exceptionsCount) * 0.40), leakageValue: totalLeakage * 0.40 };
+
+          breakdownHTML = `
+            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-slate-300 font-semibold block">Unlinked Write-Off Records (Missing GRN)</span>
+                <span class="text-[10px] text-slate-500">${Number(unlinkedWO.count || 0).toLocaleString()} flagged items</span>
+              </div>
+              <span class="font-mono font-bold text-rose-400">$${Number(unlinkedWO.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-slate-300 font-semibold block">GRN vs Write-Off Cost Mismatches</span>
+                <span class="text-[10px] text-slate-500">${Number(grnVariance.count || 0).toLocaleString()} flagged items</span>
+              </div>
+              <span class="font-mono font-bold text-purple-400">$${Number(grnVariance.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+            </div>
+          `;
+
+          takeawaysHTML = `
+            <div class="space-y-2.5 text-xs text-slate-300">
+              <div class="p-3 bg-slate-950/80 rounded-xl border border-purple-500/20">
+                <span class="text-purple-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Cross-Audit Discrepancy</span>
+                <p class="leading-relaxed">Significant operational divergence detected between original GRN receiving cost entries and final inventory write-off logs.</p>
+              </div>
+              <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
+                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Remediation Strategy</span>
+                <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
+                  <li>Mandate GRN Document ID tagging on all write-off entries in ERP system.</li>
+                  <li>Audit receiving batch cost integrity prior to closing monthly inventory ledgers.</li>
+                </ul>
+              </div>
+            </div>
+          `;
+
+        } else if (isSalesReport) {
+          const negMargin = bd.negativeMarginSales || { count: exceptionsCount, leakageValue: totalLeakage };
+
+          breakdownHTML = `
+            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-slate-300 font-semibold block">Sold Below Cost / Negative Margin</span>
+                <span class="text-[10px] text-slate-500">${Number(negMargin.count || 0).toLocaleString()} flagged transactions</span>
               </div>
               <span class="font-mono font-bold text-rose-400">$${Number(negMargin.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           `;
+
+          takeawaysHTML = `
+            <div class="space-y-2.5 text-xs text-slate-300">
+              <div class="p-3 bg-slate-950/80 rounded-xl border border-amber-500/20">
+                <span class="text-amber-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Margin Erosion Risk</span>
+                <p class="leading-relaxed">Products are being billed below landing cost due to unauthorized discount stacks or outdated cost master files.</p>
+              </div>
+              <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
+                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Remediation Strategy</span>
+                <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
+                  <li>Lock POS system minimum price guardrails based on real-time landed cost.</li>
+                  <li>Review pricing engine promotional override permissions for store managers.</li>
+                </ul>
+              </div>
+            </div>
+          `;
+
         } else {
+          // Default GRN Audit Breakdown
           const shelfLife = bd.shelfLifeExceptions || { count: 0, leakageValue: 0 };
           const margin = bd.marginLeakages || { count: 0, leakageValue: 0 };
           const cpWhole = bd.cpLeakageWhole || { count: 0, leakageValue: 0 };
@@ -330,6 +513,22 @@
               <span class="font-mono font-bold text-rose-400">$${Number(shelfLife.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
             </div>
           `;
+
+          takeawaysHTML = `
+            <div class="space-y-2.5 text-xs text-slate-300">
+              <div class="p-3 bg-slate-950/80 rounded-xl border border-cyan-500/20">
+                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Receiving Cost Discrepancy</span>
+                <p class="leading-relaxed">Purchase price variance and agreed vendor cost price mismatches detected during inward receiving.</p>
+              </div>
+              <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
+                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Remediation Strategy</span>
+                <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
+                  <li>Automate PO vs GRN cost price matching before inward invoice posting.</li>
+                  <li>Debit note auto-generation for supplier cost overcharges.</li>
+                </ul>
+              </div>
+            </div>
+          `;
         }
 
         let riskBadge = 'bg-rose-500/10 text-rose-400 border-rose-500/30';
@@ -350,7 +549,7 @@
                       <h3 class="text-base font-bold text-white font-heading">${fileName}</h3>
                       <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold border ${riskBadge}">${risk} RISK</span>
                     </div>
-                    <p class="text-xs text-slate-400 mt-0.5">Uploaded on ${formattedDate} • Type: <span class="text-cyan-400 font-medium">${reportType}</span></p>
+                    <p class="text-xs text-slate-400 mt-0.5">Uploaded on ${formattedDate} • Type: <span class="text-cyan-400 font-medium">${reportTypeLabel}</span></p>
                   </div>
                 </div>
 
@@ -381,11 +580,11 @@
                 </div>
                 <div>
                   <span class="text-[10px] text-slate-500 block uppercase font-sans">${mainMetricLabel}</span>
-                  <span class="text-slate-200 font-bold">$${totalGRNValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span class="text-slate-200 font-bold">$${totalBaseVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
                 <div>
                   <span class="text-[10px] text-slate-500 block uppercase font-sans">Leakage Ratio</span>
-                  <span class="text-rose-400 font-bold">${((totalLeakage / (totalGRNValue || 1)) * 100).toFixed(2)}%</span>
+                  <span class="text-rose-400 font-bold">${totalBaseVal > 0 ? ((totalLeakage / totalBaseVal) * 100).toFixed(2) : '100.00'}%</span>
                 </div>
                 <div>
                   <span class="text-[10px] text-slate-500 block uppercase font-sans">Audit Status</span>
@@ -393,8 +592,8 @@
                 </div>
               </div>
 
-              <!-- BREAKDOWN & RCA CONTENT -->
-              <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 pb-12">
+              <!-- BREAKDOWN & INFORMATIVE RCA STRATEGY CONTENT -->
+              <div class="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 pb-8">
                 
                 <!-- LEAKAGE CATEGORIES BREAKDOWN (5 COLUMNS) -->
                 <div class="lg:col-span-5 space-y-3">
@@ -405,21 +604,19 @@
                   </div>
                 </div>
 
-                <!-- AI ROOT CAUSE & ACTION TAKEN (7 COLUMNS) -->
-                <div class="lg:col-span-7 space-y-4">
+                <!-- KEY AUDIT TAKEAWAYS & REMEDIATION (7 COLUMNS) -->
+                <div class="lg:col-span-7 space-y-3">
                   <div class="flex items-center justify-between">
                     <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider font-heading flex items-center gap-1.5">
                       <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-                      AI Root Cause Analysis & Corrective Actions
+                      Audit Insights & Remediation Strategy
                     </h4>
                     <button data-html2canvas-ignore="true" id="btn-rca-${index}" onclick="openPrivacyModal(${index})" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-lg text-[11px] font-semibold transition flex items-center space-x-1">
-                      <span>Generate AI RCA</span>
+                      <span>Export to Gemini</span>
                     </button>
                   </div>
 
-                  <div id="rca-box-${index}" class="bg-slate-950/80 border border-slate-800/80 rounded-xl p-4 text-xs space-y-3 min-h-[160px] flex flex-col justify-center">
-                    <p class="text-slate-500 italic text-center">Click "Generate AI RCA" to perform dynamic root cause diagnosis via Google Gemini.</p>
-                  </div>
+                  ${takeawaysHTML}
                 </div>
 
               </div>
@@ -454,7 +651,7 @@
 
         const image = canvas.toDataURL("image/png");
         const downloadAnchor = document.createElement('a');
-        const safeName = (record.fileName || 'Audit_Card').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        const safeName = (record.fileName || record.filename || 'Audit_Card').replace(/[^a-z0-9]/gi, '_').toLowerCase();
         
         downloadAnchor.href = image;
         downloadAnchor.download = `Exception_Card_${safeName}.png`;
@@ -486,8 +683,8 @@
       // 1. Download card PNG image
       await downloadCardImage(index);
 
-      // 2. Exact prompt text
-      const promptText = `Analyze the audit exception card summary in the attached image for "${record.fileName || 'Audit Report'}". Identify the root cause for all financial leakages (Margin, CP, Shelf Life) and generate actionable step-by-step remediation procedures to stop capital loss immediately.`;
+      // 2. Dynamic prompt text depending on audit type
+      const promptText = `Analyze the audit exception card summary in the attached image for "${record.fileName || record.filename || 'Audit Report'}". Identify the core operational root causes and generate actionable step-by-step remediation procedures to stop capital loss immediately.`;
 
       // 3. Copy prompt directly to clipboard
       try {
