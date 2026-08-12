@@ -410,7 +410,7 @@
         "Reason For Writeoff"
       ],
       ageing: {
-        qoh: ["SkuCode", "SkuDesc", "Location", "CP QOH"],
+        qoh: ["SkuCode", "SkuDesc", "Location", "CP", "QOH"],
         grn: ["Date", "supplier_name", "sku_code", "sku_description", "department", "received_cp (Incl. Tax)", "received_mrp", "received_quantity", "total_grn_value"]
       },
       consolidated: {
@@ -647,7 +647,7 @@
     }
 
     // -------------------------------------------------------------
-    // 2. AGEING REPORT PROCESSING ENGINE (ALL FORMULAS EVALUATED TO STATIC VALUES)
+    // 2. AGEING REPORT PROCESSING ENGINE (UPDATED: SEPARATE CP AND QOH)
     // -------------------------------------------------------------
     function processAgeingReport(workbook, fileName) {
       const qohSheet = workbook.Sheets["QOH report"] || workbook.Sheets[workbook.SheetNames[0]];
@@ -698,17 +698,19 @@
       let ageingCount = 0, ageingQty = 0, ageingVal = 0;
       let totalLines = 0, totalQty = 0;
 
-      const updatedQOHRows = [["SkuCode", "SkuDesc", "Location", "CP QOH", "Last Received Date", "Exceptions", "Total Ageing Value"]];
+      // Header output matching the 5 source columns + 3 computed evaluation columns
+      const updatedQOHRows = [["SkuCode", "SkuDesc", "Location", "CP", "QOH", "Last Received Date", "Exceptions", "Total Ageing Value"]];
 
       qohRows.slice(1).forEach(r => {
         if (!r || r.length === 0) return;
         const sku = sanitizeDataString(String(r[0] || '').trim());
         const desc = sanitizeDataString(String(r[1] || '').trim());
         const loc = sanitizeDataString(String(r[2] || '').trim());
-        const cpQoh = parseFloat(r[3] || 0);
+        const cp = parseFloat(r[3] || 0);
+        const qoh = parseFloat(r[4] || 0);
 
         totalLines++;
-        totalQty += cpQoh;
+        totalQty += qoh;
 
         const lastRecDate = latestGRNDateBySKU[sku] || null;
         let lastRecDateStr = "0";
@@ -718,9 +720,9 @@
         if (!lastRecDate) {
           lastRecDateStr = "0";
           exceptionStr = "There is No Recent Recevieng Transaction, SO its Ageing";
-          totalAgeingVal = cpQoh; // Calculated static value
+          totalAgeingVal = qoh * cp; // Computed static numeric value
           noRecentCount++;
-          noRecentQty += cpQoh;
+          noRecentQty += qoh;
           noRecentVal += totalAgeingVal;
         } else {
           lastRecDateStr = formatDateFormatted(lastRecDate);
@@ -728,9 +730,9 @@
           
           if (diffDays >= selectedDays) {
             exceptionStr = `Ageing Stock lying in racks from last ${selectedDays} Days`;
-            totalAgeingVal = cpQoh * diffDays; // Calculated static value
+            totalAgeingVal = qoh * cp; // Computed static numeric value
             ageingCount++;
-            ageingQty += cpQoh;
+            ageingQty += qoh;
             ageingVal += totalAgeingVal;
           } else {
             exceptionStr = "Ok";
@@ -738,7 +740,7 @@
           }
         }
 
-        updatedQOHRows.push([sku, desc, loc, cpQoh, lastRecDateStr, exceptionStr, totalAgeingVal]);
+        updatedQOHRows.push([sku, desc, loc, cp, qoh, lastRecDateStr, exceptionStr, totalAgeingVal]);
       });
 
       // Excel Sheet Generation
