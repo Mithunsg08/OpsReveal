@@ -281,41 +281,79 @@
         const rawReportType = String(r.reportType || '').toUpperCase();
         const fileNameLower = fileName.toLowerCase();
 
-        // Categorization Logic
-        const isWOReport = rawReportType.includes('WRITEOFF') || rawReportType.includes('WO') || fileNameLower.includes('writeoff') || fileNameLower.includes('write_off');
-        const isAgeingReport = rawReportType.includes('AGEING') || fileNameLower.includes('ageing');
+        // STRICT SEPARATION: Write-Off vs GRN vs WO Consolidated
         const isConsolidatedReport = rawReportType.includes('CONSOLIDATED') || fileNameLower.includes('consolidated');
+        const isWOReport = !isConsolidatedReport && (rawReportType.includes('WRITEOFF') || rawReportType.includes('WO') || fileNameLower.includes('writeoff') || fileNameLower.includes('write_off'));
+        const isAgeingReport = rawReportType.includes('AGEING') || fileNameLower.includes('ageing');
         const isSalesReport = rawReportType.includes('SALES') || fileNameLower.includes('sales');
 
         let reportTypeLabel = r.reportType || 'GRN Audit';
         let mainMetricLabel = 'Total GRN Value';
 
-        if (isWOReport) {
+        if (isConsolidatedReport) {
+          reportTypeLabel = 'GRN vs WO Cross-Audit';
+          mainMetricLabel = 'Consolidated Audit Value';
+        } else if (isWOReport) {
           reportTypeLabel = 'Write-Off Loss Audit';
           mainMetricLabel = 'Total Write-Off Value';
         } else if (isAgeingReport) {
           reportTypeLabel = 'Ageing Inventory Audit';
           mainMetricLabel = 'Total Valuation Exposure';
-        } else if (isConsolidatedReport) {
-          reportTypeLabel = 'Consolidated Audit (GRN vs WO)';
-          mainMetricLabel = 'Consolidated Audit Value';
         } else if (isSalesReport) {
           reportTypeLabel = 'Sales Margin Erosion';
           mainMetricLabel = 'Total Sales Volume';
         }
 
-        const lines = Number(r.linesProcessed || r.lines_processed || 0).toLocaleString();
-        const totalBaseVal = Number(r.totalGRNValue || r.total_value || r.baseValue || r.totalValuation || 0);
-        const exceptionsCount = Number(r.flaggedExceptionsCount || r.exceptionsCount || r.flagged_exceptions || 0).toLocaleString();
-        const totalLeakage = Number(r.totalLeakages || r.totalLeakage || r.financial_leakage || 0);
+        const lines = Math.round(Number(r.linesProcessed || r.lines_processed || 0)).toLocaleString();
+        const totalBaseVal = Math.round(Number(r.totalGRNValue || r.total_value || r.baseValue || r.totalValuation || 0));
+        const exceptionsCount = Math.round(Number(r.flaggedExceptionsCount || r.exceptionsCount || r.flagged_exceptions || 0)).toLocaleString();
+        const totalLeakage = Math.round(Number(r.totalLeakages || r.totalLeakage || r.financial_leakage || 0));
         const risk = String(r.riskScore || r.riskAssessment || (totalLeakage > 50000 ? 'High' : 'Medium')).toUpperCase();
 
         const bd = r.leakageBreakdown || {};
         let breakdownHTML = '';
         let takeawaysHTML = '';
 
-        // DYNAMIC BREAKDOWN & REMEDIATION STRATEGY ACCORDING TO AUDIT TYPE
-        if (isWOReport) {
+        // DYNAMIC BREAKDOWN & REMEDIATION STRATEGY
+        if (isConsolidatedReport) {
+          const excessProc = bd.excessProcurementLeakage || { count: Math.round(Number(r.highRatioSkus || exceptionsCount * 0.6)), leakageValue: totalLeakage * 0.70 };
+          const wasteRatio = bd.highRatioLeakage || { count: Math.round(Number(exceptionsCount * 0.4)), leakageValue: totalLeakage * 0.30 };
+
+          breakdownHTML = `
+            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-slate-300 font-semibold block">Excess Procurement Leakage</span>
+                <span class="text-[10px] text-slate-500">${Number(excessProc.count || 0).toLocaleString()} over-ordered SKUs</span>
+              </div>
+              <span class="font-mono font-bold text-cyan-400">$${Math.round(Number(excessProc.leakageValue || 0)).toLocaleString('en-US')}</span>
+            </div>
+            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
+              <div>
+                <span class="text-slate-300 font-semibold block">High Write-Off / GRN Ratio Items</span>
+                <span class="text-[10px] text-slate-500">${Number(wasteRatio.count || 0).toLocaleString()} recurring waste SKUs</span>
+              </div>
+              <span class="font-mono font-bold text-amber-400">$${Math.round(Number(wasteRatio.leakageValue || 0)).toLocaleString('en-US')}</span>
+            </div>
+          `;
+
+          takeawaysHTML = `
+            <div class="space-y-2.5 text-xs text-slate-300">
+              <div class="p-3 bg-slate-950/80 rounded-xl border border-cyan-500/20">
+                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Primary Risk Driver</span>
+                <p class="leading-relaxed">Systemic over-procurement relative to actual consumption, causing high receiving volumes to go directly to write-off loss.</p>
+              </div>
+              <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
+                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Corrective Action Plan</span>
+                <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
+                  <li><strong>Procurement Adjustment:</strong> Reduce purchase order quantities on SKUs exhibiting high write-off velocity to cut loss at source.</li>
+                  <li>Cap GRN re-order limits for items where historical write-off exceeds 15% of received volume.</li>
+                  <li>Re-align vendor minimum order quantities (MOQs) with actual store consumption rates.</li>
+                </ul>
+              </div>
+            </div>
+          `;
+
+        } else if (isWOReport) {
           const expLoss = bd.expiredStock || { count: Math.round(Number(exceptionsCount) * 0.45), leakageValue: totalLeakage * 0.45 };
           const dmgLoss = bd.damagedStock || { count: Math.round(Number(exceptionsCount) * 0.35), leakageValue: totalLeakage * 0.35 };
           const shrinkLoss = bd.shrinkageUnaccounted || { count: Math.round(Number(exceptionsCount) * 0.20), leakageValue: totalLeakage * 0.20 };
@@ -326,21 +364,21 @@
                 <span class="text-slate-300 font-semibold block">Expired Inventory Write-Off</span>
                 <span class="text-[10px] text-slate-500">${Number(expLoss.count || 0).toLocaleString()} flagged items</span>
               </div>
-              <span class="font-mono font-bold text-rose-400">$${Number(expLoss.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="font-mono font-bold text-rose-400">$${Math.round(Number(expLoss.leakageValue || 0)).toLocaleString('en-US')}</span>
             </div>
             <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
               <div>
                 <span class="text-slate-300 font-semibold block">Damaged & Handling Loss</span>
                 <span class="text-[10px] text-slate-500">${Number(dmgLoss.count || 0).toLocaleString()} flagged items</span>
               </div>
-              <span class="font-mono font-bold text-amber-400">$${Number(dmgLoss.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="font-mono font-bold text-amber-400">$${Math.round(Number(dmgLoss.leakageValue || 0)).toLocaleString('en-US')}</span>
             </div>
             <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
               <div>
                 <span class="text-slate-300 font-semibold block">Shrinkage & Unaccounted Variances</span>
                 <span class="text-[10px] text-slate-500">${Number(shrinkLoss.count || 0).toLocaleString()} flagged items</span>
               </div>
-              <span class="font-mono font-bold text-cyan-400">$${Number(shrinkLoss.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="font-mono font-bold text-purple-400">$${Math.round(Number(shrinkLoss.leakageValue || 0)).toLocaleString('en-US')}</span>
             </div>
           `;
 
@@ -348,14 +386,14 @@
             <div class="space-y-2.5 text-xs text-slate-300">
               <div class="p-3 bg-slate-950/80 rounded-xl border border-rose-500/20">
                 <span class="text-rose-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Primary Risk Driver</span>
-                <p class="leading-relaxed">High volume of write-offs linked to unmonitored shelf-life decay and improper FIFO stock rotation in warehouses.</p>
+                <p class="leading-relaxed">Physical stock decay, warehouse handling damage, and unmonitored shelf-life expiration on stored items.</p>
               </div>
               <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
                 <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Corrective Action Plan</span>
                 <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
-                  <li>Enforce FEFO (First-Expired, First-Out) dispatch rules in ERP/WMS immediately.</li>
-                  <li>Institute weekly cycle counts for high-value perishable SKUs.</li>
-                  <li>Require dual-manager approval for write-off entries exceeding $1,000 threshold.</li>
+                  <li>Strictly enforce FEFO (First-Expired, First-Out) dispatching at warehouse level.</li>
+                  <li>Institute targeted promotional markdowns for near-expiry SKUs (>30 days remaining).</li>
+                  <li>Audit physical handling protocols and require dual approval for entries exceeding $1,000 threshold.</li>
                 </ul>
               </div>
             </div>
@@ -372,21 +410,21 @@
                 <span class="text-slate-300 font-semibold block">> 180 Days (Critical Working Capital Risk)</span>
                 <span class="text-[10px] text-slate-500">${Number(c180.count || 0).toLocaleString()} flagged SKUs</span>
               </div>
-              <span class="font-mono font-bold text-rose-400">$${Number(c180.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="font-mono font-bold text-rose-400">$${Math.round(Number(c180.leakageValue || 0)).toLocaleString('en-US')}</span>
             </div>
             <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
               <div>
                 <span class="text-slate-300 font-semibold block">91 - 180 Days (High Risk)</span>
                 <span class="text-[10px] text-slate-500">${Number(c180Mid.count || 0).toLocaleString()} flagged SKUs</span>
               </div>
-              <span class="font-mono font-bold text-amber-400">$${Number(c180Mid.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="font-mono font-bold text-amber-400">$${Math.round(Number(c180Mid.leakageValue || 0)).toLocaleString('en-US')}</span>
             </div>
             <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
               <div>
                 <span class="text-slate-300 font-semibold block">31 - 90 Days (Moderate Risk)</span>
                 <span class="text-[10px] text-slate-500">${Number(c90Low.count || 0).toLocaleString()} flagged SKUs</span>
               </div>
-              <span class="font-mono font-bold text-purple-400">$${Number(c90Low.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="font-mono font-bold text-purple-400">$${Math.round(Number(c90Low.leakageValue || 0)).toLocaleString('en-US')}</span>
             </div>
           `;
 
@@ -407,43 +445,6 @@
             </div>
           `;
 
-        } else if (isConsolidatedReport) {
-          const unlinkedWO = bd.unlinkedWriteOffs || { count: Math.round(Number(exceptionsCount) * 0.60), leakageValue: totalLeakage * 0.60 };
-          const grnVariance = bd.grnWoVariances || { count: Math.round(Number(exceptionsCount) * 0.40), leakageValue: totalLeakage * 0.40 };
-
-          breakdownHTML = `
-            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
-              <div>
-                <span class="text-slate-300 font-semibold block">Unlinked Write-Off Records (Missing GRN)</span>
-                <span class="text-[10px] text-slate-500">${Number(unlinkedWO.count || 0).toLocaleString()} flagged items</span>
-              </div>
-              <span class="font-mono font-bold text-rose-400">$${Number(unlinkedWO.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            </div>
-            <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
-              <div>
-                <span class="text-slate-300 font-semibold block">GRN vs Write-Off Cost Mismatches</span>
-                <span class="text-[10px] text-slate-500">${Number(grnVariance.count || 0).toLocaleString()} flagged items</span>
-              </div>
-              <span class="font-mono font-bold text-purple-400">$${Number(grnVariance.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            </div>
-          `;
-
-          takeawaysHTML = `
-            <div class="space-y-2.5 text-xs text-slate-300">
-              <div class="p-3 bg-slate-950/80 rounded-xl border border-purple-500/20">
-                <span class="text-purple-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Cross-Audit Discrepancy</span>
-                <p class="leading-relaxed">Significant operational divergence detected between original GRN receiving cost entries and final inventory write-off logs.</p>
-              </div>
-              <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
-                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Remediation Strategy</span>
-                <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
-                  <li>Mandate GRN Document ID tagging on all write-off entries in ERP system.</li>
-                  <li>Audit receiving batch cost integrity prior to closing monthly inventory ledgers.</li>
-                </ul>
-              </div>
-            </div>
-          `;
-
         } else if (isSalesReport) {
           const negMargin = bd.negativeMarginSales || { count: exceptionsCount, leakageValue: totalLeakage };
 
@@ -453,7 +454,7 @@
                 <span class="text-slate-300 font-semibold block">Sold Below Cost / Negative Margin</span>
                 <span class="text-[10px] text-slate-500">${Number(negMargin.count || 0).toLocaleString()} flagged transactions</span>
               </div>
-              <span class="font-mono font-bold text-rose-400">$${Number(negMargin.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="font-mono font-bold text-rose-400">$${Math.round(Number(negMargin.leakageValue || 0)).toLocaleString('en-US')}</span>
             </div>
           `;
 
@@ -486,7 +487,7 @@
                 <span class="text-slate-300 font-semibold block">Margin Leakages</span>
                 <span class="text-[10px] text-slate-500">${Number(margin.count || 0).toLocaleString()} flagged items</span>
               </div>
-              <span class="font-mono font-bold text-amber-400">$${Number(margin.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="font-mono font-bold text-amber-400">$${Math.round(Number(margin.leakageValue || 0)).toLocaleString('en-US')}</span>
             </div>
 
             <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
@@ -494,7 +495,7 @@
                 <span class="text-slate-300 font-semibold block">CP Leakage (Whole)</span>
                 <span class="text-[10px] text-slate-500">${Number(cpWhole.count || 0).toLocaleString()} flagged items</span>
               </div>
-              <span class="font-mono font-bold text-cyan-400">$${Number(cpWhole.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="font-mono font-bold text-cyan-400">$${Math.round(Number(cpWhole.leakageValue || 0)).toLocaleString('en-US')}</span>
             </div>
 
             <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
@@ -502,7 +503,7 @@
                 <span class="text-slate-300 font-semibold block">CP Leakage (Same Day/Mo)</span>
                 <span class="text-[10px] text-slate-500">${Number(cpSameDay.count || 0).toLocaleString()} flagged items</span>
               </div>
-              <span class="font-mono font-bold text-indigo-400">$${Number(cpSameDay.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="font-mono font-bold text-indigo-400">$${Math.round(Number(cpSameDay.leakageValue || 0)).toLocaleString('en-US')}</span>
             </div>
 
             <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 flex items-center justify-between text-xs">
@@ -510,7 +511,7 @@
                 <span class="text-slate-300 font-semibold block">Shelf Life Exceptions</span>
                 <span class="text-[10px] text-slate-500">${Number(shelfLife.count || 0).toLocaleString()} flagged items</span>
               </div>
-              <span class="font-mono font-bold text-rose-400">$${Number(shelfLife.leakageValue || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span class="font-mono font-bold text-rose-400">$${Math.round(Number(shelfLife.leakageValue || 0)).toLocaleString('en-US')}</span>
             </div>
           `;
 
@@ -562,7 +563,7 @@
                   <div class="flex items-center space-x-6 text-right border-l border-slate-800 pl-4">
                     <div>
                       <span class="text-[10px] text-slate-500 uppercase font-semibold block">Total Leakage</span>
-                      <span class="text-lg font-extrabold font-mono text-rose-400">$${totalLeakage.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                      <span class="text-lg font-extrabold font-mono text-rose-400">$${totalLeakage.toLocaleString('en-US')}</span>
                     </div>
                     <div>
                       <span class="text-[10px] text-slate-500 uppercase font-semibold block">Flagged Exceptions</span>
@@ -580,7 +581,7 @@
                 </div>
                 <div>
                   <span class="text-[10px] text-slate-500 block uppercase font-sans">${mainMetricLabel}</span>
-                  <span class="text-slate-200 font-bold">$${totalBaseVal.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span class="text-slate-200 font-bold">$${totalBaseVal.toLocaleString('en-US')}</span>
                 </div>
                 <div>
                   <span class="text-[10px] text-slate-500 block uppercase font-sans">Leakage Ratio</span>
