@@ -125,7 +125,7 @@
         </a>
       </div>
 
-      <!-- METRICS CARDS (3 on top, 3 on bottom grid layout) -->
+      <!-- METRICS CARDS GRID (3x2 Layout) -->
       <div id="metricsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
           <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Audited Reports</span>
@@ -148,13 +148,18 @@
         </div>
 
         <div id="cardWriteoff" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
-          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Write-Off Inventory Loss</span>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Write-Off Loss Audit</span>
           <span id="metricWriteoff" class="text-2xl font-extrabold text-rose-400 font-heading mt-1 block">$0</span>
         </div>
 
-        <div id="cardConsolidatedAgeing" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
-          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Ageing & Consolidated Loss</span>
-          <span id="metricConsolidatedAgeing" class="text-2xl font-extrabold text-purple-400 font-heading mt-1 block">$0</span>
+        <div id="cardAgeing" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Ageing Inventory Loss</span>
+          <span id="metricAgeing" class="text-2xl font-extrabold text-purple-400 font-heading mt-1 block">$0</span>
+        </div>
+
+        <div id="cardConsolidated" class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl md:col-span-3">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">GRN vs WO Cross-Audit (Consolidated)</span>
+          <span id="metricConsolidated" class="text-2xl font-extrabold text-teal-400 font-heading mt-1 block">$0</span>
         </div>
       </div>
 
@@ -239,7 +244,8 @@
       
       const cardTotalLines = document.getElementById('cardTotalLines');
       const cardWriteoff = document.getElementById('cardWriteoff');
-      const cardConsolidatedAgeing = document.getElementById('cardConsolidatedAgeing');
+      const cardAgeing = document.getElementById('cardAgeing');
+      const cardConsolidated = document.getElementById('cardConsolidated');
 
       if (isAdmin) {
         planLabel.innerText = 'Admin Console';
@@ -249,7 +255,8 @@
         
         cardTotalLines.classList.remove('hidden');
         cardWriteoff.classList.remove('hidden');
-        cardConsolidatedAgeing.classList.remove('hidden');
+        cardAgeing.classList.remove('hidden');
+        cardConsolidated.classList.remove('hidden');
         grid.className = "grid grid-cols-1 md:grid-cols-3 gap-5";
 
       } else if (isPro) {
@@ -260,7 +267,8 @@
         
         cardTotalLines.classList.remove('hidden');
         cardWriteoff.classList.remove('hidden');
-        cardConsolidatedAgeing.classList.remove('hidden');
+        cardAgeing.classList.remove('hidden');
+        cardConsolidated.classList.remove('hidden');
         grid.className = "grid grid-cols-1 md:grid-cols-3 gap-5";
 
       } else {
@@ -270,7 +278,8 @@
         
         cardTotalLines.classList.add('hidden');
         cardWriteoff.classList.add('hidden');
-        cardConsolidatedAgeing.classList.add('hidden');
+        cardAgeing.classList.add('hidden');
+        cardConsolidated.classList.add('hidden');
         grid.className = "grid grid-cols-1 md:grid-cols-3 gap-5";
       }
     }
@@ -347,7 +356,8 @@
       let totalGrn = 0;
       let totalMargin = 0;
       let totalWriteoff = 0;
-      let totalConsolidatedAgeing = 0;
+      let totalAgeing = 0;
+      let totalConsolidated = 0;
 
       filtered.forEach(r => {
         totalLinesAnalyzed += Number(r.linesProcessed || r.lines_processed || 0);
@@ -357,12 +367,15 @@
         const fileName = String(r.fileName || r.filename || '').toLowerCase();
         const bd = r.leakageBreakdown || r.leakagesDetailed || {};
 
-        const isWOReport = reportType.includes('WRITEOFF') || reportType.includes('WO') || fileName.includes('writeoff') || fileName.includes('write_off');
+        const isConsolidatedReport = reportType.includes('CONSOLIDATED') || fileName.includes('consolidated');
+        const isWOReport = !isConsolidatedReport && (reportType.includes('WRITEOFF') || reportType.includes('WO') || fileName.includes('writeoff') || fileName.includes('write_off'));
         const isSalesReport = reportType.includes('SALES') || fileName.includes('sales');
         const isAgeingReport = reportType.includes('AGEING') || fileName.includes('ageing');
-        const isConsolidatedReport = reportType.includes('CONSOLIDATED') || fileName.includes('consolidated');
 
-        if (isSalesReport) {
+        if (isConsolidatedReport) {
+          totalConsolidated += totalLeak;
+
+        } else if (isSalesReport) {
           const negMargin = Number(bd.negativeMarginSales?.leakageValue ?? r.salesMarginErosion ?? r.marginErosion ?? 0);
           totalMargin += (negMargin > 0 ? negMargin : totalLeak);
 
@@ -370,8 +383,8 @@
           const woVal = Number(bd.shelfLifeExceptions?.leakageValue ?? r.writeOffInventoryLoss ?? r.inventoryLoss ?? 0);
           totalWriteoff += (woVal > 0 ? woVal : totalLeak);
 
-        } else if (isAgeingReport || isConsolidatedReport) {
-          totalConsolidatedAgeing += totalLeak;
+        } else if (isAgeingReport) {
+          totalAgeing += totalLeak;
 
         } else {
           const grnVal = Number(
@@ -395,7 +408,8 @@
       document.getElementById('metricGrn').textContent = `$${Math.round(totalGrn).toLocaleString('en-US')}`;
       document.getElementById('metricMargin').textContent = `$${Math.round(totalMargin).toLocaleString('en-US')}`;
       document.getElementById('metricWriteoff').textContent = `$${Math.round(totalWriteoff).toLocaleString('en-US')}`;
-      document.getElementById('metricConsolidatedAgeing').textContent = `$${Math.round(totalConsolidatedAgeing).toLocaleString('en-US')}`;
+      document.getElementById('metricAgeing').textContent = `$${Math.round(totalAgeing).toLocaleString('en-US')}`;
+      document.getElementById('metricConsolidated').textContent = `$${Math.round(totalConsolidated).toLocaleString('en-US')}`;
 
       document.getElementById('historyCountLabel').textContent = `Showing ${filtered.length} audit runs`;
       const tbody = document.getElementById('auditTableBody');
