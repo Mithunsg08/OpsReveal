@@ -305,7 +305,32 @@
       return `${monthStr}/${dayStr}/${yearStr}`;
     }
 
-    // Helper: Check and enforce quota limits
+    // Helper: Calculate current billing cycle date window based on account creation date
+    function getCurrentBillingCycleWindow(creationTimeStr) {
+      const creationDate = new Date(creationTimeStr || Date.now());
+      const now = new Date();
+
+      let cycleStart = new Date(now.getFullYear(), now.getMonth(), creationDate.getDate(), 0, 0, 0, 0);
+
+      // Handle month boundary edge cases (e.g. created on 31st, current month has 28-30 days)
+      if (cycleStart.getDate() !== creationDate.getDate() && creationDate.getDate() <= 31) {
+        cycleStart = new Date(now.getFullYear(), now.getMonth() + 1, 0, 0, 0, 0, 0);
+      }
+
+      if (cycleStart > now) {
+        cycleStart = new Date(now.getFullYear(), now.getMonth() - 1, creationDate.getDate(), 0, 0, 0, 0);
+        if (cycleStart.getDate() !== creationDate.getDate() && creationDate.getDate() <= 31) {
+          cycleStart = new Date(now.getFullYear(), now.getMonth(), 0, 0, 0, 0, 0);
+        }
+      }
+
+      const cycleEnd = new Date(cycleStart);
+      cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+
+      return { cycleStart, cycleEnd };
+    }
+
+    // Helper: Check and enforce quota limits based on dynamic billing cycle
     async function checkAndEnforceQuota(user, profile) {
       const isGlobalAdmin = user.email && user.email.toLowerCase() === "mithun@preventloss.org";
       if (isGlobalAdmin || isSuperAdmin(user)) return true;
@@ -317,17 +342,17 @@
         const res = await fetch(`${CF_API_URL}?userId=${user.uid}`);
         if (res.ok) {
           const summaries = await res.json();
-          const now = new Date();
+          const { cycleStart, cycleEnd } = getCurrentBillingCycleWindow(user.metadata?.creationTime);
           
-          const currentMonthRecords = (Array.isArray(summaries) ? summaries : []).filter(s => {
+          const currentCycleRecords = (Array.isArray(summaries) ? summaries : []).filter(s => {
             const dateStr = s.uploadedDate || s.uploaded_date || s.createdAt || s.timestamp;
             if (!dateStr) return false;
             const d = new Date(dateStr);
-            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+            return d >= cycleStart && d < cycleEnd;
           });
 
-          const totalUploads = currentMonthRecords.length;
-          const totalLines = currentMonthRecords.reduce((sum, s) => {
+          const totalUploads = currentCycleRecords.length;
+          const totalLines = currentCycleRecords.reduce((sum, s) => {
             return sum + Number(s.linesProcessed || s.lines_processed || s.lines || 0);
           }, 0);
 
