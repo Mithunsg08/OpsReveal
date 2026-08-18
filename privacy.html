@@ -8,7 +8,6 @@
 </head>
 <body class="bg-slate-950 text-slate-300 font-sans antialiased leading-relaxed">
 
-    <!-- Header Navigation -->
     <header class="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-50">
         <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
             <a href="/" class="text-xl font-bold text-white tracking-tight">Ops<span class="text-cyan-400">Reveal</span> <span class="text-xs text-slate-500 font-normal">by PreventLoss.org</span></a>
@@ -26,30 +25,64 @@
             <p class="text-xs text-cyan-400 font-mono mt-2">Last Updated: August 2026</p>
         </div>
 
-        <p>This Privacy Policy explains how <strong>PreventLoss.org</strong> ("we", "us") collects, uses, and safeguards personal information processed through <strong>OpsReveal</strong> (<a href="https://opsreveal.preventloss.org" class="text-cyan-400 underline">opsreveal.preventloss.org</a>).</p>
+        <p>This Privacy Policy explains how <strong>PreventLoss.org</strong> ("we", "us", or "our") collects, processes, and safeguards personal and operational data when you interact with <strong>OpsReveal</strong> (<a href="https://opsreveal.preventloss.org" class="text-cyan-400 underline">opsreveal.preventloss.org</a>).</p>
 
         <section class="space-y-3">
-            <h2 class="text-xl font-bold text-slate-100">1. Information We Collect</h2>
+            <h2 class="text-xl font-bold text-slate-100">1. Zero-Trust In-Browser Data Processing</h2>
+            <p>OpsReveal is engineered with a strict <strong>client-side architecture</strong> to protect your sensitive financial and operational documents:</p>
             <ul class="list-disc pl-6 space-y-2">
-                <li><strong>Account Information:</strong> Name, work email address, company details, and authentication credentials via secure identity providers.</li>
-                <li><strong>Payment & Billing Data:</strong> Payment details, credit card numbers, and billing addresses are processed entirely by our Merchant of Record, <strong>Paddle.com</strong>. PreventLoss.org does not store or handle credit card details directly.</li>
-                <li><strong>System Logs & Telemetry:</strong> Upload counts, usage statistics, and system logs necessary to maintain platform operational efficiency.</li>
+                <li><strong>No Raw Data Storage:</strong> When you upload spreadsheets, invoices, receiving logs, or GRN files to the OpsReveal tool, all file parsing and audits execute <strong>entirely within your web browser</strong>. We cannot access, view, intercept, or store your raw files, row data, or confidential vendor pricing.</li>
+                <li><strong>Cloud Summary & Metadata Retention:</strong> While raw data remains in your local browser memory, high-level non-confidential audit summaries (e.g., total leakage amounts detected, lines processed, report timestamps, and file metadata) are saved to encrypted cloud storage (Firebase & Cloudflare R2) to power your account dashboard and historical audit history.</li>
+                <li><strong>Anonymized & Aggregated Use for Marketing:</strong> We may aggregate and anonymize these high-level summary metrics (e.g., <em>"Over $1M in procurement leakage detected across retail audits"</em>) for industry benchmarking, case studies, and marketing materials. <strong>Your company name, individual identities, and confidential store details are never disclosed or associated with this data.</strong></li>
             </ul>
         </section>
 
         <section class="space-y-3">
-            <h2 class="text-xl font-bold text-slate-100">2. How We Use Information</h2>
-            <p>We use personal data exclusively to deliver and optimize OpsReveal services, verify identity, facilitate customer support, and issue transaction notices.</p>
+            <h2 class="text-xl font-bold text-slate-100">2. Account Information & Payment Processing</h2>
+            <ul class="list-disc pl-6 space-y-2">
+                <li><strong>Account Credentials:</strong> We collect your name, work email address, company profile, and identity authentication credentials via Google OAuth and Firebase Authentication.</li>
+                <li><strong>Payment & Billing Data:</strong> Subscriptions and transaction processing are handled by our Merchant of Record, <strong>Paddle.com</strong>. PreventLoss.org never collects, handles, or stores payment card details directly. Billing information is subject to Paddle’s privacy regulations.</li>
+            </ul>
         </section>
 
         <section class="space-y-3">
-            <h2 class="text-xl font-bold text-slate-100">3. Third-Party Service Providers</h2>
-            <p>We do not sell personal data. We share necessary operational data only with verified service providers required for core infrastructure, including <strong>Paddle.com</strong> (Payments & Billing), <strong>Firebase</strong> (Authentication & Storage), and <strong>Cloudflare</strong> (API Hosting & Security).</p>
+            <h2 class="text-xl font-bold text-slate-100">3. Website Analytics & Behavioral Tracking</h2>
+            <p>To analyze traffic, improve user experience, and optimize our web platform performance, our public website and home page utilize industry-standard analytics tools:</p>
+            <ul class="list-disc pl-6 space-y-2">
+                <li><strong>Google Analytics:</strong> Collects web traffic metrics, browser technical specifications, device information, and acquisition channels.</li>
+                <li><strong>Bing Webmaster Tools:</strong> Helps monitor website indexing, search traffic patterns, and SEO performance.</li>
+                <li><strong>Microsoft Clarity:</strong> Analyzes user interaction behavior (such as session replays, click maps, and heatmaps) to identify usability bottlenecks and improve site navigational design.</li>
+            </ul>
+            <p class="text-sm text-slate-400">These analytics services process pseudonymized website telemetry and do not collect or inspect any data uploaded into the OpsReveal tool environment.</p>
         </section>
 
         <section class="space-y-3">
-            <h2 class="text-xl font-bold text-slate-100">4. Privacy Contact</h2>
-            <p>If you have questions regarding data privacy, account deletion, or your personal information, please reach out to <a href="mailto:info@preventloss.org" class="text-cyan-400 underline">info@preventloss.org</a> or our legal team at <a href="mailto:legal@preventloss.org" class="text-cyan-400 underline">legal@preventloss.org</a>.</p>
+            <h2 class="text-xl font-bold text-slate-100">4. How We Use Information</h2>
+            <p>We use collected account and non-sensitive summary information strictly to:</p>
+            <ul class="list-disc pl-6 space-y-2">
+                <li>Provision, maintain, and secure your OpsReveal workspace and user accounts.</li>
+                <li>Facilitate customer support, system updates, and account security notifications.</li>
+                <li>Analyze aggregate usage patterns to enhance system performance and platform features.</li>
+            </ul>
+        </section>
+
+        <section class="space-y-3">
+            <h2 class="text-xl font-bold text-slate-100">5. Third-Party Service Providers</h2>
+            <p>We do not sell personal or operational data. Necessary infrastructure data is shared only with verified enterprise providers under strict privacy compliance:</p>
+            <ul class="list-disc pl-6 space-y-2">
+                <li><strong>Paddle.com:</strong> Payment processing & Merchant of Record.</li>
+                <li><strong>Firebase / Google Cloud Platform:</strong> Authentication & database infrastructure.</li>
+                <li><strong>Cloudflare:</strong> CDN Edge hosting, worker compute API, and encrypted cloud storage (R2).</li>
+            </ul>
+        </section>
+
+        <section class="space-y-3">
+            <h2 class="text-xl font-bold text-slate-100">6. Privacy Rights & Contact</h2>
+            <p>If you have questions regarding this Privacy Policy, wish to request account deletion, or want to inquire about data rights, please contact us at:</p>
+            <ul class="list-disc pl-6 space-y-1">
+                <li>Support: <a href="mailto:info@preventloss.org" class="text-cyan-400 underline">info@preventloss.org</a></li>
+                <li>Legal & Privacy Officer: <a href="mailto:legal@preventloss.org" class="text-cyan-400 underline">legal@preventloss.org</a></li>
+            </ul>
         </section>
     </main>
 
