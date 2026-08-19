@@ -255,9 +255,20 @@
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
+    const SECRET_SALT = "OpsReveal_Secure_Salt_2026";
     
     let currentUser = null;
     let currentUserProfile = null;
+
+    // Client-side SHA-256 Hashing Helper
+    async function hashValueWithSalt(val) {
+      if (!val) return "";
+      const textToHash = `${String(val).trim().toLowerCase()}_${SECRET_SALT}`;
+      const msgBuffer = new TextEncoder().encode(textToHash);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
 
     // Toast Engine
     window.showToast = function(message, type = 'info') {
@@ -1285,7 +1296,7 @@
     }
 
     // -------------------------------------------------------------
-    // CLOUDFLARE BACKEND STORAGE DISPATCHER
+    // CLOUDFLARE BACKEND STORAGE DISPATCHER (PRIVACY HASHED)
     // -------------------------------------------------------------
     async function saveDetailedSummaryToCloudflare(auditDetails) {
       if (!currentUser) return;
@@ -1298,11 +1309,23 @@
         ? "Medium" 
         : "High";
 
+      // Hash sensitive identification attributes client-side before transmission
+      const hashedUserId = await hashValueWithSalt(currentUser.uid);
+      const hashedUserEmail = await hashValueWithSalt(currentUser.email);
+
+      // Separate file extension and hash the raw filename base
+      const rawFileName = auditDetails.fileName || "unknown_report.xlsx";
+      const extIndex = rawFileName.lastIndexOf('.');
+      const fileExt = extIndex !== -1 ? rawFileName.substring(extIndex) : '';
+      const baseName = extIndex !== -1 ? rawFileName.substring(0, extIndex) : rawFileName;
+      const hashedBaseName = await hashValueWithSalt(baseName);
+      const maskedFileName = `${hashedBaseName}${fileExt}`;
+
       const payload = {
-        userId: currentUser.uid,
-        userEmail: currentUser.email,
+        userId: hashedUserId,
+        userEmail: hashedUserEmail,
         uploadedDate: new Date().toISOString(),
-        fileName: auditDetails.fileName,
+        fileName: maskedFileName,
         reportType: auditDetails.reportType,
         linesProcessed: auditDetails.linesProcessed,
         totalGRNValue: auditDetails.totalGRNValue || 0,
