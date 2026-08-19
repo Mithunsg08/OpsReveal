@@ -683,7 +683,7 @@
     }
 
     // -------------------------------------------------------------
-    // 2. AGEING REPORT PROCESSING ENGINE (UPDATED: SEPARATE CP AND QOH)
+    // 2. AGEING REPORT PROCESSING ENGINE
     // -------------------------------------------------------------
     function processAgeingReport(workbook, fileName) {
       const qohSheet = workbook.Sheets["QOH report"] || workbook.Sheets[workbook.SheetNames[0]];
@@ -823,7 +823,7 @@
     }
 
     // -------------------------------------------------------------
-    // 3. CONSOLIDATED REPORT ENGINE (GRN + WO) (ALL FORMULAS EVALUATED TO STATIC VALUES)
+    // 3. CONSOLIDATED REPORT ENGINE (GRN + WO)
     // -------------------------------------------------------------
     function processConsolidatedReport(workbook, fileName) {
       const grnSheet = workbook.Sheets["GRN"] || workbook.Sheets[workbook.SheetNames[0]];
