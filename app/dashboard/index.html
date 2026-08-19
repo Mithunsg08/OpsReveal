@@ -244,7 +244,7 @@
         currentPlanState = { isPro, isAdmin };
 
         updatePlanUI(isPro, isAdmin);
-        fetchDashboardData(user, isPro, isAdmin);
+        fetchDashboardData(user.uid, isPro, isAdmin);
       });
     });
 
@@ -299,21 +299,10 @@
       }
     }
 
-    async function fetchDashboardData(user, isPro, isAdmin) {
+    async function fetchDashboardData(userId, isPro, isAdmin) {
       try {
-        const token = await user.getIdToken();
-        const res = await fetch(CF_API_URL, {
-          method: "GET",
-          headers: { 
-            'Cache-Control': 'no-cache',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!res.ok) {
-          throw new Error(`Server returned HTTP ${res.status}`);
-        }
-
+        const endpoint = isAdmin ? CF_API_URL : `${CF_API_URL}?userId=${userId}`;
+        const res = await fetch(endpoint);
         allRecords = await res.json();
         if (!Array.isArray(allRecords)) allRecords = [];
 
@@ -432,6 +421,7 @@
         }
       });
       
+      // Rounded integers without decimal places
       document.getElementById('metricOverallLeakage').textContent = `$${Math.round(overallAccountLeakage).toLocaleString('en-US')}`;
       document.getElementById('metricTotalLines').textContent = Math.round(totalLinesAnalyzed).toLocaleString('en-US');
       document.getElementById('metricGrn').textContent = `$${Math.round(totalGrn).toLocaleString('en-US')}`;
@@ -467,7 +457,7 @@
         return `
           <tr class="hover:bg-slate-800/40 transition">
             <td class="py-3 px-4 text-slate-400">${date}</td>
-            <td class="py-3 px-4 font-semibold text-white truncate max-w-xs" title="${fileName}">${fileName}</td>
+            <td class="py-3 px-4 font-semibold text-white">${fileName}</td>
             <td class="py-3 px-4 font-mono">${lines}</td>
             <td class="py-3 px-4 font-mono text-amber-400">${exceptions}</td>
             <td class="py-3 px-4">
