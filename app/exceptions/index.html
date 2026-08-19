@@ -174,6 +174,16 @@
     let currentPlanState = { isPro: false, isAdmin: false };
     let selectedRecordIndex = null;
 
+    // Helper function to generate SHA-256 hash matching backend storage key logic
+    async function hashString(str) {
+      if (!str) return "";
+      const encoder = new TextEncoder();
+      const data = encoder.encode(str);
+      const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+    }
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
         window.location.replace('/login.html');
@@ -229,9 +239,12 @@
       }
     }
 
-    async function fetchExceptionData(userId, isAdmin) {
+    async function fetchExceptionData(rawUserId, isAdmin) {
       try {
-        const endpoint = isAdmin ? CF_API_URL : `${CF_API_URL}?userId=${userId}`;
+        // Hash raw userId to SHA-256 to query backend correctly
+        const hashedUserId = await hashString(rawUserId);
+        const endpoint = isAdmin ? CF_API_URL : `${CF_API_URL}?userId=${hashedUserId}`;
+        
         const res = await fetch(endpoint);
         allRecords = await res.json();
         if (!Array.isArray(allRecords)) allRecords = [];
