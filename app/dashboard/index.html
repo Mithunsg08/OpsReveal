@@ -244,7 +244,7 @@
         currentPlanState = { isPro, isAdmin };
 
         updatePlanUI(isPro, isAdmin);
-        fetchDashboardData(user.uid, isPro, isAdmin);
+        fetchDashboardData(user, isPro, isAdmin);
       });
     });
 
@@ -299,15 +299,21 @@
       }
     }
 
-    async function fetchDashboardData(rawUserId, isPro, isAdmin) {
+    async function fetchDashboardData(user, isPro, isAdmin) {
       try {
-        // Send raw user.uid directly without pre-hashing
-        const endpoint = isAdmin ? CF_API_URL : `${CF_API_URL}?userId=${encodeURIComponent(rawUserId)}`;
-        
-        const res = await fetch(endpoint, {
-          headers: { 'Cache-Control': 'no-cache' }
+        const token = await user.getIdToken();
+        const res = await fetch(CF_API_URL, {
+          method: "GET",
+          headers: { 
+            'Cache-Control': 'no-cache',
+            'Authorization': `Bearer ${token}`
+          }
         });
         
+        if (!res.ok) {
+          throw new Error(`Server returned HTTP ${res.status}`);
+        }
+
         allRecords = await res.json();
         if (!Array.isArray(allRecords)) allRecords = [];
 
