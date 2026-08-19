@@ -193,7 +193,7 @@
 
         currentPlanState = { isPro, isAdmin };
         updatePlanUI(isPro, isAdmin);
-        fetchExceptionData(user);
+        fetchExceptionData(user.uid, isAdmin);
       });
     });
 
@@ -229,26 +229,15 @@
       }
     }
 
-    async function fetchExceptionData(user) {
+    async function fetchExceptionData(userId, isAdmin) {
       try {
-        const token = await user.getIdToken();
-        const res = await fetch(CF_API_URL, {
-          method: "GET",
-          headers: {
-            'Cache-Control': 'no-cache',
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!res.ok) {
-          throw new Error(`Server returned HTTP ${res.status}`);
-        }
-
+        const endpoint = isAdmin ? CF_API_URL : `${CF_API_URL}?userId=${userId}`;
+        const res = await fetch(endpoint);
         allRecords = await res.json();
         if (!Array.isArray(allRecords)) allRecords = [];
 
         const uploadsCount = allRecords.length;
-        const linesCount = allRecords.reduce((sum, r) => sum + Number(r.linesProcessed || r.lines_processed || 0), 0);
+        const linesCount = allRecords.reduce((sum, r) => sum + Number(r.linesProcessed || 0), 0);
 
         updatePlanUI(currentPlanState.isPro, currentPlanState.isAdmin, { uploadsCount, linesCount });
         renderExceptionCards();
