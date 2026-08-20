@@ -847,63 +847,70 @@
       };
 
       async function fetchCloudflareAdminTelemetry() {
-        const refreshSpinner = document.getElementById("refresh-spinner");
-        if (refreshSpinner) refreshSpinner.classList.add("animate-spin");
+  const refreshSpinner = document.getElementById("refresh-spinner");
+  if (refreshSpinner) refreshSpinner.classList.add("animate-spin");
 
-        try {
-          // Fetch directly from Cloudflare Worker endpoint
-          const response = await fetch("https://opsreveal-backend.mithun-gs.workers.dev/api/public/admin-telemetry");
-          
-          if (!response.ok) throw new Error("Cloudflare R2 fetch failed");
-          
-          const uploadLogs = await response.json();
+  try {
+    const response = await fetch("https://opsreveal-backend.mithun-gs.workers.dev/api/public/admin-telemetry");
+    if (!response.ok) throw new Error("Cloudflare R2 fetch failed");
+    
+    const data = await response.json();
+    
+    // Support both an array of logs or a single aggregated summary object
+    const logs = Array.isArray(data) ? data : (data.logs || [data]);
 
-          let aggregated = {
-            totalLines: 0,
-            grnLeakage: 0,
-            salesMarginErosion: 0,
-            writeOffLoss: 0,
-            ageingInventoryLoss: 0,
-            grnVsWoCross: 0,
-            totalLeakage: 0
-          };
+    let aggregated = {
+      totalLines: 0,
+      grnLeakage: 0,
+      salesMarginErosion: 0,
+      writeOffLoss: 0,
+      ageingInventoryLoss: 0,
+      grnVsWoCross: 0,
+      totalLeakage: 0
+    };
 
-          if (Array.isArray(uploadLogs)) {
-            uploadLogs.forEach(entry => {
-              const parsedLines = parseInt(entry.linesProcessed || entry.totalRows || entry.lines || 0, 10);
-              aggregated.totalLines += isNaN(parsedLines) ? 0 : parsedLines;
+    // Safe helper to strip currency symbols ($ or ,) before parsing floats
+    const parseVal = (val) => {
+      if (val === undefined || val === null) return 0;
+      if (typeof val === 'number') return isNaN(val) ? 0 : val;
+      const cleaned = String(val).replace(/[^0-9.-]+/g, "");
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
+    };
 
-              const grn = parseFloat(entry.grnLeakage || entry.receivingLeakage || 0);
-              const sales = parseFloat(entry.salesMarginErosion || entry.salesErosion || 0);
-              const wo = parseFloat(entry.writeoffLoss || entry.writeOffLoss || 0);
-              const ageing = parseFloat(entry.ageingLoss || entry.inventoryAgeingLoss || 0);
-              const cross = parseFloat(entry.grnVsWoCross || entry.crossAuditLoss || 0);
+    logs.forEach(entry => {
+      // Line counting fallback logic
+      aggregated.totalLines += parseVal(entry.linesProcessed || entry.totalRows || entry.lines || entry.rowCount);
 
-              aggregated.grnLeakage += isNaN(grn) ? 0 : grn;
-              aggregated.salesMarginErosion += isNaN(sales) ? 0 : sales;
-              aggregated.writeOffLoss += isNaN(wo) ? 0 : wo;
-              aggregated.ageingInventoryLoss += isNaN(ageing) ? 0 : ageing;
-              aggregated.grnVsWoCross += isNaN(cross) ? 0 : cross;
-            });
+      // Check all common key variants returned by Cloudflare Workers / R2
+      aggregated.grnLeakage += parseVal(entry.grnLeakage ?? entry.receivingLeakage ?? entry.grn_leakage ?? entry.grnLoss);
+      aggregated.salesMarginErosion += parseVal(entry.salesMarginErosion ?? entry.salesErosion ?? entry.sales_margin_erosion ?? entry.salesLoss);
+      aggregated.writeOffLoss += parseVal(entry.writeoffLoss ?? entry.writeOffLoss ?? entry.write_off_loss ?? entry.writeOff);
+      aggregated.ageingInventoryLoss += parseVal(entry.ageingLoss ?? entry.inventoryAgeingLoss ?? entry.ageing_loss ?? entry.stockAgeingLoss);
+      aggregated.grnVsWoCross += parseVal(entry.grnVsWoCross ?? entry.crossAuditLoss ?? entry.grn_vs_wo_cross);
+    });
 
-            aggregated.totalLeakage = aggregated.grnLeakage + aggregated.salesMarginErosion + aggregated.writeOffLoss + aggregated.ageingInventoryLoss + aggregated.grnVsWoCross;
-          }
+    // Calculate total combined leakage
+    aggregated.totalLeakage = parseVal(
+      data.totalLeakage ?? 
+      (aggregated.grnLeakage + aggregated.salesMarginErosion + aggregated.writeOffLoss + aggregated.ageingInventoryLoss + aggregated.grnVsWoCross)
+    );
 
-          // Populate Primary Operational Audit Dashboard UI elements
-          document.getElementById("metric-lines-analyzed").textContent = formatNumber(aggregated.totalLines);
-          document.getElementById("metric-grn-leakage").textContent = formatCurrency(aggregated.grnLeakage);
-          document.getElementById("metric-sales-margin").textContent = formatCurrency(aggregated.salesMarginErosion);
-          document.getElementById("metric-writeoff-loss").textContent = formatCurrency(aggregated.writeOffLoss);
-          document.getElementById("metric-ageing-loss").textContent = formatCurrency(aggregated.ageingInventoryLoss);
-          document.getElementById("metric-grn-wo-cross").textContent = formatCurrency(aggregated.grnVsWoCross);
-          document.getElementById("metric-total-leakage").textContent = formatCurrency(aggregated.totalLeakage);
+    // Update UI elements
+    document.getElementById("metric-lines-analyzed").textContent = formatNumber(aggregated.totalLines);
+    document.getElementById("metric-grn-leakage").textContent = formatCurrency(aggregated.grnLeakage);
+    document.getElementById("metric-sales-margin").textContent = formatCurrency(aggregated.salesMarginErosion);
+    document.getElementById("metric-writeoff-loss").textContent = formatCurrency(aggregated.writeOffLoss);
+    document.getElementById("metric-ageing-loss").textContent = formatCurrency(aggregated.ageingInventoryLoss);
+    document.getElementById("metric-grn-wo-cross").textContent = formatCurrency(aggregated.grnVsWoCross);
+    document.getElementById("metric-total-leakage").textContent = formatCurrency(aggregated.totalLeakage);
 
-        } catch (err) {
-          console.error("Cloudflare Admin Telemetry Fetch Error:", err);
-        } finally {
-          if (refreshSpinner) refreshSpinner.classList.remove("animate-spin");
-        }
-      }
+  } catch (err) {
+    console.error("Cloudflare Admin Telemetry Fetch Error:", err);
+  } finally {
+    if (refreshSpinner) refreshSpinner.classList.remove("animate-spin");
+  }
+}
 
       // Initial Fetch on Load
       fetchCloudflareAdminTelemetry();
