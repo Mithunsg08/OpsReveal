@@ -278,81 +278,53 @@
         <!-- Dashboard UI Container -->
         <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 glow-effect">
           
-          <!-- Top Telemetry Cards Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div class="rounded-xl bg-slate-950/80 border border-slate-800 p-4">
-              <div class="text-xs font-medium text-slate-400">Total Scanned Rows</div>
-              <div class="text-2xl font-extrabold text-white font-mono mt-1">1,248,930</div>
-              <div class="text-[11px] text-emerald-400 mt-1 font-semibold">✓ 100% Client-Side Local RAM</div>
+          <!-- Consolidated Leakage Highlight Box -->
+          <div class="mb-6 p-6 sm:p-8 rounded-2xl bg-slate-950/90 border border-red-500/30 shadow-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center space-x-2.5">
+                <span class="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                <span class="text-xs sm:text-sm font-extrabold tracking-wider text-red-500 font-mono uppercase">TOTAL ACCUMULATED LEAKAGES (OVERALL ACCOUNT LOSS)</span>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-400 mt-1 font-medium">Aggregated financial exposure identified across all audited operational reports and historical logs.</p>
             </div>
-
-            <div class="rounded-xl bg-slate-950/80 border border-rose-500/30 p-4">
-              <div class="text-xs font-medium text-slate-400">Detected Financial Leakage</div>
-              <div class="text-2xl font-extrabold text-rose-400 font-mono mt-1">$42,850.00</div>
-              <div class="text-[11px] text-rose-400 mt-1 font-semibold">▲ Vendor overcharges & Margin loss</div>
-            </div>
-
-            <div class="rounded-xl bg-slate-950/80 border border-amber-500/30 p-4">
-              <div class="text-xs font-medium text-slate-400">Flagged Discrepancies</div>
-              <div class="text-2xl font-extrabold text-amber-400 font-mono mt-1">142 SKUs</div>
-              <div class="text-[11px] text-amber-400 mt-1 font-semibold">⚠ Requires Immediate Remediation</div>
-            </div>
-
-            <div class="rounded-xl bg-slate-950/80 border border-cyan-500/30 p-4">
-              <div class="text-xs font-medium text-slate-400">Audit Completion Time</div>
-              <div class="text-2xl font-extrabold text-cyan-400 font-mono mt-1">0.34s</div>
-              <div class="text-[11px] text-cyan-400 mt-1 font-semibold">⚡ Powered by WebAssembly (Wasm)</div>
+            <div id="metric-total-leakage" class="text-3xl sm:text-5xl font-black font-mono text-red-500 tracking-tight">
+              $0
             </div>
           </div>
 
-          <!-- Dashboard Discrepancies Table -->
-          <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/90">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-900/90 text-slate-300 font-mono uppercase text-[11px] border-b border-slate-800">
-                <tr>
-                  <th class="py-3.5 px-4 font-semibold">Audit Module</th>
-                  <th class="py-3.5 px-4 font-semibold">Issue Identified</th>
-                  <th class="py-3.5 px-4 font-semibold">Impacted SKUs</th>
-                  <th class="py-3.5 px-4 font-semibold">Est. Monetary Loss</th>
-                  <th class="py-3.5 px-4 font-semibold">Risk Level</th>
-                  <th class="py-3.5 px-4 font-semibold text-right">Action Required</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-800/80 text-slate-300 font-mono">
-                <tr class="hover:bg-slate-900/50 transition">
-                  <td class="py-3.5 px-4 font-semibold text-cyan-400">GRN / Receiving</td>
-                  <td class="py-3.5 px-4">Vendor CP Hike on Same MRP Item</td>
-                  <td class="py-3.5 px-4">38 Items</td>
-                  <td class="py-3.5 px-4 font-bold text-rose-400">$18,420.00</td>
-                  <td class="py-3.5 px-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">HIGH</span></td>
-                  <td class="py-3.5 px-4 text-right"><a href="#platform" class="text-cyan-400 hover:underline">Review Details &rarr;</a></td>
-                </tr>
-                <tr class="hover:bg-slate-900/50 transition">
-                  <td class="py-3.5 px-4 font-semibold text-cyan-400">Sales Margin</td>
-                  <td class="py-3.5 px-4">Negative Sales Margin Override</td>
-                  <td class="py-3.5 px-4">24 Items</td>
-                  <td class="py-3.5 px-4 font-bold text-rose-400">$9,150.00</td>
-                  <td class="py-3.5 px-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20">HIGH</span></td>
-                  <td class="py-3.5 px-4 text-right"><a href="#platform" class="text-cyan-400 hover:underline">Review Details &rarr;</a></td>
-                </tr>
-                <tr class="hover:bg-slate-900/50 transition">
-                  <td class="py-3.5 px-4 font-semibold text-cyan-400">Write-Off & Shrink</td>
-                  <td class="py-3.5 px-4">Unusual Waste Spoilage Volume</td>
-                  <td class="py-3.5 px-4">52 Items</td>
-                  <td class="py-3.5 px-4 font-bold text-amber-400">$10,800.00</td>
-                  <td class="py-3.5 px-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">MEDIUM</span></td>
-                  <td class="py-3.5 px-4 text-right"><a href="#platform" class="text-cyan-400 hover:underline">Review Details &rarr;</a></td>
-                </tr>
-                <tr class="hover:bg-slate-900/50 transition">
-                  <td class="py-3.5 px-4 font-semibold text-cyan-400">Stock Ageing</td>
-                  <td class="py-3.5 px-4">Stagnant Inventory > 90 Days</td>
-                  <td class="py-3.5 px-4">28 Items</td>
-                  <td class="py-3.5 px-4 font-bold text-slate-300">$4,480.00</td>
-                  <td class="py-3.5 px-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">LOW</span></td>
-                  <td class="py-3.5 px-4 text-right"><a href="#platform" class="text-cyan-400 hover:underline">Review Details &rarr;</a></td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- Audit Metrics Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            
+            <div class="p-6 rounded-2xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 transition">
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">TOTAL LINES ANALYZED</div>
+              <div id="metric-lines-analyzed" class="text-2xl sm:text-3xl font-extrabold font-mono text-indigo-400 mt-3">0</div>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 transition">
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">RECEIVING / GRN LEAKAGE</div>
+              <div id="metric-grn-leakage" class="text-2xl sm:text-3xl font-extrabold font-mono text-cyan-400 mt-3">$0</div>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 transition">
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">SALES MARGIN EROSION</div>
+              <div id="metric-sales-margin" class="text-2xl sm:text-3xl font-extrabold font-mono text-amber-400 mt-3">$0</div>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 transition">
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">WRITE-OFF LOSS AUDIT</div>
+              <div id="metric-writeoff-loss" class="text-2xl sm:text-3xl font-extrabold font-mono text-rose-400 mt-3">$0</div>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 transition">
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">AGEING INVENTORY LOSS</div>
+              <div id="metric-ageing-loss" class="text-2xl sm:text-3xl font-extrabold font-mono text-purple-400 mt-3">$0</div>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 transition">
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">GRN VS WO CROSS-AUDIT (CONSOLIDATED)</div>
+              <div id="metric-grn-wo-cross" class="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400 mt-3">$0</div>
+            </div>
+
           </div>
 
         </div>
@@ -370,20 +342,78 @@
           <p class="mt-4 text-slate-400 text-sm sm:text-base">Explore how OpsReveal transforms multi-million row ERP and POS logs into clear loss prevention audits in milliseconds.</p>
         </div>
 
-        <!-- Showcase 1: Dashboard with Real-Time Metric Overlay -->
-        <div class="grid lg:grid-cols-12 gap-10 items-center">
-          <div class="lg:col-span-7 relative">
-            
-            <div class="absolute top-6 left-6 z-10 max-w-xs rounded-xl bg-slate-900/90 border border-cyan-500/40 p-3 shadow-2xl backdrop-blur-md hidden sm:block">
-              <div class="flex items-center space-x-2 text-xs font-bold text-cyan-400 mb-1">
+        <!-- Section 1: Dynamic Cloudflare Dashboard Fetch & Render -->
+        <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 glow-effect">
+          
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-800">
+            <div>
+              <div class="flex items-center space-x-2 text-xs font-bold text-cyan-400 font-mono">
                 <span class="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
                 <span>Live Audit Telemetry</span>
               </div>
-              <p class="text-[11px] text-slate-300 leading-tight">
+              <p class="text-slate-300 text-xs sm:text-sm mt-1">
                 Real-time tracking of detected vendor cost hikes, negative-margin POS overrides, and total capital leakages calculated in local RAM.
               </p>
             </div>
+            
+            <button id="refresh-dashboard-btn" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-cyan-400 hover:bg-slate-800 hover:border-cyan-500/50 transition">
+              <svg id="refresh-spinner" class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>SYNC CLOUDFLARE DATA</span>
+            </button>
+          </div>
 
+          <!-- Live Dynamic Telemetry Box (Admin Fetch Data) -->
+          <div class="p-6 rounded-2xl bg-slate-950/90 border border-red-500/30 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center space-x-2.5">
+                <span class="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                <span class="text-xs sm:text-sm font-extrabold tracking-wider text-red-500 font-mono uppercase">CLOUDFLARE ADMIN LEAKAGE TOTAL</span>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-400 mt-1 font-medium">Aggregated total losses fetched directly from Cloudflare R2 Admin storage.</p>
+            </div>
+            <div id="preview-total-leakage" class="text-3xl sm:text-5xl font-black font-mono text-red-500 tracking-tight">
+              $0
+            </div>
+          </div>
+
+          <!-- Dynamic Metrics Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="p-5 rounded-xl bg-slate-950/80 border border-slate-800">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">TOTAL LINES ANALYZED</div>
+              <div id="preview-lines-analyzed" class="text-xl sm:text-2xl font-extrabold font-mono text-indigo-400 mt-2">0</div>
+            </div>
+
+            <div class="p-5 rounded-xl bg-slate-950/80 border border-slate-800">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">RECEIVING / GRN LEAKAGE</div>
+              <div id="preview-grn-leakage" class="text-xl sm:text-2xl font-extrabold font-mono text-cyan-400 mt-2">$0</div>
+            </div>
+
+            <div class="p-5 rounded-xl bg-slate-950/80 border border-slate-800">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">SALES MARGIN EROSION</div>
+              <div id="preview-sales-margin" class="text-xl sm:text-2xl font-extrabold font-mono text-amber-400 mt-2">$0</div>
+            </div>
+
+            <div class="p-5 rounded-xl bg-slate-950/80 border border-slate-800">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">WRITE-OFF LOSS AUDIT</div>
+              <div id="preview-writeoff-loss" class="text-xl sm:text-2xl font-extrabold font-mono text-rose-400 mt-2">$0</div>
+            </div>
+
+            <div class="p-5 rounded-xl bg-slate-950/80 border border-slate-800">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">AGEING INVENTORY LOSS</div>
+              <div id="preview-ageing-loss" class="text-xl sm:text-2xl font-extrabold font-mono text-purple-400 mt-2">$0</div>
+            </div>
+
+            <div class="p-5 rounded-xl bg-slate-950/80 border border-slate-800">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">GRN VS WO CROSS-AUDIT</div>
+              <div id="preview-grn-wo-cross" class="text-xl sm:text-2xl font-extrabold font-mono text-emerald-400 mt-2">$0</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Showcase 1: Dashboard with Real-Time Metric Overlay -->
+        <div class="grid lg:grid-cols-12 gap-10 items-center">
+          <div class="lg:col-span-7 relative">
             <div class="rounded-2xl border border-slate-800 bg-slate-900/90 p-2 sm:p-3 shadow-2xl glow-effect">
               <div class="flex items-center space-x-2 px-3 py-2 border-b border-slate-800/80 mb-2">
                 <span class="h-3 w-3 rounded-full bg-rose-500/80"></span>
@@ -871,5 +901,100 @@
     </div>
   </footer>
 
+  <!-- Script to Fetch Cloudflare R2 Admin Data and Aggregate Dashboard Telemetry -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      
+      const formatCurrency = (val) => {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          maximumFractionDigits: 0
+        }).format(val || 0);
+      };
+
+      const formatNumber = (val) => {
+        return new Intl.NumberFormat('en-US').format(val || 0);
+      };
+
+      async function fetchCloudflareAdminTelemetry() {
+        const refreshSpinner = document.getElementById("refresh-spinner");
+        if (refreshSpinner) refreshSpinner.classList.add("animate-spin");
+
+        try {
+          // Worker endpoint fetching logs stored under Admin/ prefix
+          const adminUserId = "admin"; 
+          const response = await fetch(`/api/upload-history?userId=${adminUserId}`);
+          
+          if (!response.ok) throw new Error("Cloudflare fetch failed");
+          
+          const uploadLogs = await response.json();
+
+          let aggregated = {
+            totalLines: 0,
+            grnLeakage: 0,
+            salesMarginErosion: 0,
+            writeOffLoss: 0,
+            ageingInventoryLoss: 0,
+            grnVsWoCross: 0,
+            totalLeakage: 0
+          };
+
+          if (Array.isArray(uploadLogs)) {
+            uploadLogs.forEach(entry => {
+              const parsedLines = parseInt(entry.linesProcessed || entry.totalRows || entry.lines || 0, 10);
+              aggregated.totalLines += isNaN(parsedLines) ? 0 : parsedLines;
+
+              const grn = parseFloat(entry.grnLeakage || entry.receivingLeakage || 0);
+              const sales = parseFloat(entry.salesMarginErosion || entry.salesErosion || 0);
+              const wo = parseFloat(entry.writeoffLoss || entry.writeOffLoss || 0);
+              const ageing = parseFloat(entry.ageingLoss || entry.inventoryAgeingLoss || 0);
+              const cross = parseFloat(entry.grnVsWoCross || entry.crossAuditLoss || 0);
+
+              aggregated.grnLeakage += isNaN(grn) ? 0 : grn;
+              aggregated.salesMarginErosion += isNaN(sales) ? 0 : sales;
+              aggregated.writeOffLoss += isNaN(wo) ? 0 : wo;
+              aggregated.ageingInventoryLoss += isNaN(ageing) ? 0 : ageing;
+              aggregated.grnVsWoCross += isNaN(cross) ? 0 : cross;
+            });
+
+            aggregated.totalLeakage = aggregated.grnLeakage + aggregated.salesMarginErosion + aggregated.writeOffLoss + aggregated.ageingInventoryLoss + aggregated.grnVsWoCross;
+          }
+
+          // Populate Hero Section / Section 2 Dashboard Metrics
+          document.getElementById("metric-lines-analyzed").textContent = formatNumber(aggregated.totalLines);
+          document.getElementById("metric-grn-leakage").textContent = formatCurrency(aggregated.grnLeakage);
+          document.getElementById("metric-sales-margin").textContent = formatCurrency(aggregated.salesMarginErosion);
+          document.getElementById("metric-writeoff-loss").textContent = formatCurrency(aggregated.writeOffLoss);
+          document.getElementById("metric-ageing-loss").textContent = formatCurrency(aggregated.ageingInventoryLoss);
+          document.getElementById("metric-grn-wo-cross").textContent = formatCurrency(aggregated.grnVsWoCross);
+          document.getElementById("metric-total-leakage").textContent = formatCurrency(aggregated.totalLeakage);
+
+          // Populate Interactive Platform Preview Section Metrics
+          document.getElementById("preview-lines-analyzed").textContent = formatNumber(aggregated.totalLines);
+          document.getElementById("preview-grn-leakage").textContent = formatCurrency(aggregated.grnLeakage);
+          document.getElementById("preview-sales-margin").textContent = formatCurrency(aggregated.salesMarginErosion);
+          document.getElementById("preview-writeoff-loss").textContent = formatCurrency(aggregated.writeOffLoss);
+          document.getElementById("preview-ageing-loss").textContent = formatCurrency(aggregated.ageingInventoryLoss);
+          document.getElementById("preview-grn-wo-cross").textContent = formatCurrency(aggregated.grnVsWoCross);
+          document.getElementById("preview-total-leakage").textContent = formatCurrency(aggregated.totalLeakage);
+
+        } catch (err) {
+          console.warn("Using baseline operational fallback values:", err);
+        } finally {
+          if (refreshSpinner) refreshSpinner.classList.remove("animate-spin");
+        }
+      }
+
+      // Initial Fetch on Load
+      fetchCloudflareAdminTelemetry();
+
+      // Refresh Button Event Listener
+      const refreshBtn = document.getElementById("refresh-dashboard-btn");
+      if (refreshBtn) {
+        refreshBtn.addEventListener("click", fetchCloudflareAdminTelemetry);
+      }
+    });
+  </script>
 </body>
 </html>
