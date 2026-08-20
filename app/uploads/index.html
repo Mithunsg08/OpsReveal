@@ -100,12 +100,6 @@
         </div>
       </div>
 
-      <!-- PROFESSIONAL PLAN FOOTNOTE (Conditional UI) -->
-      <div id="proRoiFootnote" class="hidden p-2.5 rounded-lg bg-emerald-950/40 border border-emerald-800/50 text-[10px] text-emerald-300 leading-tight">
-        <span class="font-bold block text-emerald-400 mb-0.5">★ 115% ROI Guarantee Active</span>
-        <p class="text-slate-400">Methodology: ROI is calculated against detected loss recovery across retail inventory leakage benchmarks.</p>
-      </div>
-
       <button onclick="logoutUser()" class="w-full bg-slate-950 hover:bg-slate-800 text-xs text-slate-400 py-2 rounded-xl border border-slate-800 font-semibold transition">
         Sign Out
       </button>
@@ -417,10 +411,6 @@
       if (isPro) {
         document.getElementById('planLabel').innerText = isGlobalAdmin ? "Global Admin Tier" : "Professional Tier";
         
-        // Show Professional Plan Footnote / Guarantee Methodology
-        const roiFootnote = document.getElementById('proRoiFootnote');
-        if (roiFootnote) roiFootnote.classList.remove('hidden');
-
         ['optWriteoff', 'optAgeing', 'optConsolidated'].forEach(id => {
           const el = document.getElementById(id);
           if (el) {
