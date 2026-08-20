@@ -32,7 +32,6 @@
   <meta name="title" content="OpsReveal | Zero-Trust In-Browser Security & Financial Audit Tool">
   <meta name="description" content="OpsReveal is an in-browser, zero-trust retail loss prevention software that audits GRN receiving logs, sales margin erosion, inventory ageing, and write-offs locally with 100% data privacy.">
   <meta name="keywords" content="Retail Loss Prevention Tool, Vendor Fraud Detection, GRN Audit Software, Sales Margin Erosion, Inventory Ageing Audit, Write-off Loss Audit, Client-Side Data Auditing, Zero-Trust Financial Analytics, Shrinkage Prevention">
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
   <link rel="canonical" href="https://opsreveal.preventloss.org">
   <meta name="author" content="PreventLoss.org">
 
@@ -257,16 +256,16 @@
       </div>
     </section>
 
-    <!-- Section 2: Single Live Operational Audit Dashboard -->
+    <!-- Section 2: Standalone Embedded Operational Audit Dashboard (No Sidebar, Filters, or History) -->
     <section id="dashboard-section" class="py-16 bg-slate-900/80 border-t border-slate-800/80">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <!-- Dashboard Section Header with Dynamic Sync Button -->
+        <!-- Dashboard Header -->
         <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-10">
           <div class="text-left max-w-3xl">
             <div class="inline-flex items-center space-x-2 rounded-full bg-cyan-950/80 border border-cyan-500/30 px-3 py-1 text-xs font-bold text-cyan-400 font-mono mb-3">
               <span class="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
-              <span>Live Audit Console</span>
+              <span>Live Cloudflare Telemetry Console</span>
             </div>
             <h2 class="text-3xl sm:text-4xl font-extrabold text-white font-heading">Operational Audit Dashboard</h2>
             <p class="mt-2 text-slate-400 text-sm sm:text-base">Real-time financial leakage tracking fetched directly from Cloudflare Admin Storage.</p>
@@ -847,70 +846,70 @@
       };
 
       async function fetchCloudflareAdminTelemetry() {
-  const refreshSpinner = document.getElementById("refresh-spinner");
-  if (refreshSpinner) refreshSpinner.classList.add("animate-spin");
+        const refreshSpinner = document.getElementById("refresh-spinner");
+        if (refreshSpinner) refreshSpinner.classList.add("animate-spin");
 
-  try {
-    const response = await fetch("https://opsreveal-backend.mithun-gs.workers.dev/api/public/admin-telemetry");
-    if (!response.ok) throw new Error("Cloudflare R2 fetch failed");
-    
-    const data = await response.json();
-    
-    // Support both an array of logs or a single aggregated summary object
-    const logs = Array.isArray(data) ? data : (data.logs || [data]);
+        try {
+          const response = await fetch("https://opsreveal-backend.mithun-gs.workers.dev/api/public/admin-telemetry");
+          if (!response.ok) throw new Error("Cloudflare R2 fetch failed");
+          
+          const data = await response.json();
+          
+          // Support both an array of logs or a single aggregated summary object
+          const logs = Array.isArray(data) ? data : (data.logs || [data]);
 
-    let aggregated = {
-      totalLines: 0,
-      grnLeakage: 0,
-      salesMarginErosion: 0,
-      writeOffLoss: 0,
-      ageingInventoryLoss: 0,
-      grnVsWoCross: 0,
-      totalLeakage: 0
-    };
+          let aggregated = {
+            totalLines: 0,
+            grnLeakage: 0,
+            salesMarginErosion: 0,
+            writeOffLoss: 0,
+            ageingInventoryLoss: 0,
+            grnVsWoCross: 0,
+            totalLeakage: 0
+          };
 
-    // Safe helper to strip currency symbols ($ or ,) before parsing floats
-    const parseVal = (val) => {
-      if (val === undefined || val === null) return 0;
-      if (typeof val === 'number') return isNaN(val) ? 0 : val;
-      const cleaned = String(val).replace(/[^0-9.-]+/g, "");
-      const parsed = parseFloat(cleaned);
-      return isNaN(parsed) ? 0 : parsed;
-    };
+          // Safe helper to strip currency symbols ($ or ,) before parsing floats
+          const parseVal = (val) => {
+            if (val === undefined || val === null) return 0;
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
+            const cleaned = String(val).replace(/[^0-9.-]+/g, "");
+            const parsed = parseFloat(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
+          };
 
-    logs.forEach(entry => {
-      // Line counting fallback logic
-      aggregated.totalLines += parseVal(entry.linesProcessed || entry.totalRows || entry.lines || entry.rowCount);
+          logs.forEach(entry => {
+            // Line counting fallback logic
+            aggregated.totalLines += parseVal(entry.linesProcessed || entry.totalRows || entry.lines || entry.rowCount);
 
-      // Check all common key variants returned by Cloudflare Workers / R2
-      aggregated.grnLeakage += parseVal(entry.grnLeakage ?? entry.receivingLeakage ?? entry.grn_leakage ?? entry.grnLoss);
-      aggregated.salesMarginErosion += parseVal(entry.salesMarginErosion ?? entry.salesErosion ?? entry.sales_margin_erosion ?? entry.salesLoss);
-      aggregated.writeOffLoss += parseVal(entry.writeoffLoss ?? entry.writeOffLoss ?? entry.write_off_loss ?? entry.writeOff);
-      aggregated.ageingInventoryLoss += parseVal(entry.ageingLoss ?? entry.inventoryAgeingLoss ?? entry.ageing_loss ?? entry.stockAgeingLoss);
-      aggregated.grnVsWoCross += parseVal(entry.grnVsWoCross ?? entry.crossAuditLoss ?? entry.grn_vs_wo_cross);
-    });
+            // Check all common key variants returned by Cloudflare Workers / R2
+            aggregated.grnLeakage += parseVal(entry.grnLeakage ?? entry.receivingLeakage ?? entry.grn_leakage ?? entry.grnLoss);
+            aggregated.salesMarginErosion += parseVal(entry.salesMarginErosion ?? entry.salesErosion ?? entry.sales_margin_erosion ?? entry.salesLoss);
+            aggregated.writeOffLoss += parseVal(entry.writeoffLoss ?? entry.writeOffLoss ?? entry.write_off_loss ?? entry.writeOff);
+            aggregated.ageingInventoryLoss += parseVal(entry.ageingLoss ?? entry.inventoryAgeingLoss ?? entry.ageing_loss ?? entry.stockAgeingLoss);
+            aggregated.grnVsWoCross += parseVal(entry.grnVsWoCross ?? entry.crossAuditLoss ?? entry.grn_vs_wo_cross);
+          });
 
-    // Calculate total combined leakage
-    aggregated.totalLeakage = parseVal(
-      data.totalLeakage ?? 
-      (aggregated.grnLeakage + aggregated.salesMarginErosion + aggregated.writeOffLoss + aggregated.ageingInventoryLoss + aggregated.grnVsWoCross)
-    );
+          // Calculate total combined leakage
+          aggregated.totalLeakage = parseVal(
+            data.totalLeakage ?? 
+            (aggregated.grnLeakage + aggregated.salesMarginErosion + aggregated.writeOffLoss + aggregated.ageingInventoryLoss + aggregated.grnVsWoCross)
+          );
 
-    // Update UI elements
-    document.getElementById("metric-lines-analyzed").textContent = formatNumber(aggregated.totalLines);
-    document.getElementById("metric-grn-leakage").textContent = formatCurrency(aggregated.grnLeakage);
-    document.getElementById("metric-sales-margin").textContent = formatCurrency(aggregated.salesMarginErosion);
-    document.getElementById("metric-writeoff-loss").textContent = formatCurrency(aggregated.writeOffLoss);
-    document.getElementById("metric-ageing-loss").textContent = formatCurrency(aggregated.ageingInventoryLoss);
-    document.getElementById("metric-grn-wo-cross").textContent = formatCurrency(aggregated.grnVsWoCross);
-    document.getElementById("metric-total-leakage").textContent = formatCurrency(aggregated.totalLeakage);
+          // Update UI elements
+          document.getElementById("metric-lines-analyzed").textContent = formatNumber(aggregated.totalLines);
+          document.getElementById("metric-grn-leakage").textContent = formatCurrency(aggregated.grnLeakage);
+          document.getElementById("metric-sales-margin").textContent = formatCurrency(aggregated.salesMarginErosion);
+          document.getElementById("metric-writeoff-loss").textContent = formatCurrency(aggregated.writeOffLoss);
+          document.getElementById("metric-ageing-loss").textContent = formatCurrency(aggregated.ageingInventoryLoss);
+          document.getElementById("metric-grn-wo-cross").textContent = formatCurrency(aggregated.grnVsWoCross);
+          document.getElementById("metric-total-leakage").textContent = formatCurrency(aggregated.totalLeakage);
 
-  } catch (err) {
-    console.error("Cloudflare Admin Telemetry Fetch Error:", err);
-  } finally {
-    if (refreshSpinner) refreshSpinner.classList.remove("animate-spin");
-  }
-}
+        } catch (err) {
+          console.error("Cloudflare Admin Telemetry Fetch Error:", err);
+        } finally {
+          if (refreshSpinner) refreshSpinner.classList.remove("animate-spin");
+        }
+      }
 
       // Initial Fetch on Load
       fetchCloudflareAdminTelemetry();
