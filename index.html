@@ -168,7 +168,7 @@
     <a href="#guarantee" class="text-cyan-400 font-bold underline hover:text-cyan-300 ml-1">115% ROI Guarantee &rarr;</a>
   </aside>
 
-  <!-- Navigation (5 Primary Items) -->
+  <!-- Navigation -->
   <nav class="sticky top-0 z-50 border-b border-slate-800/80 glass-nav">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
       <div class="flex items-center space-x-3">
@@ -183,7 +183,6 @@
         </a>
       </div>
 
-      <!-- Cleaned 5 Navigation Items -->
       <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
         <a href="#dashboard-section" class="hover:text-cyan-400 transition">Dashboard</a>
         <a href="#platform" class="hover:text-cyan-400 transition">Platform</a>
@@ -193,7 +192,6 @@
         <a href="#faq" class="hover:text-cyan-400 transition">FAQ</a>
       </div>
 
-      <!-- Free Plan CTA Button -->
       <div class="flex items-center space-x-4">
         <a href="https://opsreveal.preventloss.org/login.html" class="text-xs sm:text-sm font-semibold text-slate-300 hover:text-white transition">
           Log In
@@ -228,7 +226,6 @@
           Stop retail shrinkage, vendor fraud, and margin erosion with full client-side privacy. OpsReveal automatically audits GRN receiving records, POS sales, write-offs, and inventory ageing locally in your browser memory—no raw store files ever leave your machine.
         </p>
 
-        <!-- CTA Updating to Free Plan -->
         <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <a href="https://opsreveal.preventloss.org/signup.html" class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-cyan-400 px-8 py-4 text-sm sm:text-base font-bold text-slate-950 hover:bg-cyan-300 transition shadow-xl shadow-cyan-500/25 active:scale-95 font-heading">
             Start Free Audit
@@ -238,7 +235,6 @@
           </a>
         </div>
 
-        <!-- SEO / Trust Badges -->
         <div class="mt-16 pt-10 border-t border-slate-800/80 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-slate-300 text-xs font-medium uppercase tracking-wider">
           <div class="flex items-center justify-center space-x-2 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/60 backdrop-blur-sm">
             <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
@@ -261,18 +257,25 @@
       </div>
     </section>
 
-    <!-- Section 2: Live Interactive Audit Dashboard -->
+    <!-- Section 2: Single Live Operational Audit Dashboard -->
     <section id="dashboard-section" class="py-16 bg-slate-900/80 border-t border-slate-800/80">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <!-- Dashboard Section Header -->
-        <div class="text-center max-w-3xl mx-auto mb-10">
-          <div class="inline-flex items-center space-x-2 rounded-full bg-cyan-950/80 border border-cyan-500/30 px-3 py-1 text-xs font-bold text-cyan-400 font-mono mb-3">
-            <span class="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
-            <span>Live Audit Console</span>
+        <!-- Dashboard Section Header with Dynamic Sync Button -->
+        <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-10">
+          <div class="text-left max-w-3xl">
+            <div class="inline-flex items-center space-x-2 rounded-full bg-cyan-950/80 border border-cyan-500/30 px-3 py-1 text-xs font-bold text-cyan-400 font-mono mb-3">
+              <span class="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
+              <span>Live Audit Console</span>
+            </div>
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-white font-heading">Operational Audit Dashboard</h2>
+            <p class="mt-2 text-slate-400 text-sm sm:text-base">Real-time financial leakage tracking fetched directly from Cloudflare Admin Storage.</p>
           </div>
-          <h2 class="text-3xl sm:text-4xl font-extrabold text-white font-heading">Operational Audit Dashboard</h2>
-          <p class="mt-2 text-slate-400 text-sm sm:text-base">Real-time financial leakage tracking and automated risk identification calculated locally in memory.</p>
+
+          <button id="refresh-dashboard-btn" class="inline-flex items-center space-x-2 px-5 py-3 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-cyan-400 hover:bg-slate-800 hover:border-cyan-500/50 transition shadow-lg shrink-0">
+            <svg id="refresh-spinner" class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>SYNC CLOUDFLARE DATA</span>
+          </button>
         </div>
 
         <!-- Dashboard UI Container -->
@@ -285,7 +288,7 @@
                 <span class="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse"></span>
                 <span class="text-xs sm:text-sm font-extrabold tracking-wider text-red-500 font-mono uppercase">TOTAL ACCUMULATED LEAKAGES (OVERALL ACCOUNT LOSS)</span>
               </div>
-              <p class="text-xs sm:text-sm text-slate-400 mt-1 font-medium">Aggregated financial exposure identified across all audited operational reports and historical logs.</p>
+              <p class="text-xs sm:text-sm text-slate-400 mt-1 font-medium">Aggregated financial exposure identified across all audited operational reports and Cloudflare R2 logs.</p>
             </div>
             <div id="metric-total-leakage" class="text-3xl sm:text-5xl font-black font-mono text-red-500 tracking-tight">
               $0
@@ -331,7 +334,7 @@
       </div>
     </section>
 
-    <!-- Platform Preview Showcase Section -->
+    <!-- Platform Showcase Section -->
     <section id="platform" class="py-20 bg-slate-950 border-t border-slate-800/80">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
         
@@ -342,76 +345,7 @@
           <p class="mt-4 text-slate-400 text-sm sm:text-base">Explore how OpsReveal transforms multi-million row ERP and POS logs into clear loss prevention audits in milliseconds.</p>
         </div>
 
-        <!-- Section 1: Dynamic Cloudflare Dashboard Fetch & Render -->
-        <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-800 glow-effect">
-          
-          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-slate-800">
-            <div>
-              <div class="flex items-center space-x-2 text-xs font-bold text-cyan-400 font-mono">
-                <span class="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
-                <span>Live Audit Telemetry</span>
-              </div>
-              <p class="text-slate-300 text-xs sm:text-sm mt-1">
-                Real-time tracking of detected vendor cost hikes, negative-margin POS overrides, and total capital leakages calculated in local RAM.
-              </p>
-            </div>
-            
-            <button id="refresh-dashboard-btn" class="inline-flex items-center space-x-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-cyan-400 hover:bg-slate-800 hover:border-cyan-500/50 transition">
-              <svg id="refresh-spinner" class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              <span>SYNC CLOUDFLARE DATA</span>
-            </button>
-          </div>
-
-          <!-- Live Dynamic Telemetry Box (Admin Fetch Data) -->
-          <div class="p-6 rounded-2xl bg-slate-950/90 border border-red-500/30 mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div>
-              <div class="flex items-center space-x-2.5">
-                <span class="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse"></span>
-                <span class="text-xs sm:text-sm font-extrabold tracking-wider text-red-500 font-mono uppercase">CLOUDFLARE ADMIN LEAKAGE TOTAL</span>
-              </div>
-              <p class="text-xs sm:text-sm text-slate-400 mt-1 font-medium">Aggregated total losses fetched directly from Cloudflare R2 Admin storage.</p>
-            </div>
-            <div id="preview-total-leakage" class="text-3xl sm:text-5xl font-black font-mono text-red-500 tracking-tight">
-              $0
-            </div>
-          </div>
-
-          <!-- Dynamic Metrics Grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            <div class="p-5 rounded-xl bg-slate-950/80 border border-slate-800">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">TOTAL LINES ANALYZED</div>
-              <div id="preview-lines-analyzed" class="text-xl sm:text-2xl font-extrabold font-mono text-indigo-400 mt-2">0</div>
-            </div>
-
-            <div class="p-5 rounded-xl bg-slate-950/80 border border-slate-800">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">RECEIVING / GRN LEAKAGE</div>
-              <div id="preview-grn-leakage" class="text-xl sm:text-2xl font-extrabold font-mono text-cyan-400 mt-2">$0</div>
-            </div>
-
-            <div class="p-5 rounded-xl bg-slate-950/80 border border-slate-800">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">SALES MARGIN EROSION</div>
-              <div id="preview-sales-margin" class="text-xl sm:text-2xl font-extrabold font-mono text-amber-400 mt-2">$0</div>
-            </div>
-
-            <div class="p-5 rounded-xl bg-slate-950/80 border border-slate-800">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">WRITE-OFF LOSS AUDIT</div>
-              <div id="preview-writeoff-loss" class="text-xl sm:text-2xl font-extrabold font-mono text-rose-400 mt-2">$0</div>
-            </div>
-
-            <div class="p-5 rounded-xl bg-slate-950/80 border border-slate-800">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">AGEING INVENTORY LOSS</div>
-              <div id="preview-ageing-loss" class="text-xl sm:text-2xl font-extrabold font-mono text-purple-400 mt-2">$0</div>
-            </div>
-
-            <div class="p-5 rounded-xl bg-slate-950/80 border border-slate-800">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 font-mono">GRN VS WO CROSS-AUDIT</div>
-              <div id="preview-grn-wo-cross" class="text-xl sm:text-2xl font-extrabold font-mono text-emerald-400 mt-2">$0</div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Showcase 1: Dashboard with Real-Time Metric Overlay -->
+        <!-- Showcase 1: Dashboard Overview -->
         <div class="grid lg:grid-cols-12 gap-10 items-center">
           <div class="lg:col-span-7 relative">
             <div class="rounded-2xl border border-slate-800 bg-slate-900/90 p-2 sm:p-3 shadow-2xl glow-effect">
@@ -752,8 +686,6 @@
               Most Popular
             </div>
             <div>
-              
-              <!-- Limited Offer Badge -->
               <div class="inline-block bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md mb-3">
                 🔥 Limited to First 100 Customers
               </div>
@@ -810,7 +742,7 @@
       </div>
     </section>
 
-    <!-- FAQ Section (GEO Optimized) -->
+    <!-- FAQ Section -->
     <section id="faq" class="py-20 sm:py-28 bg-slate-900/30 border-t border-slate-800/80">
       <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-3xl mx-auto mb-16">
@@ -849,7 +781,6 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
       
       <div class="grid grid-cols-1 md:grid-cols-12 gap-8 text-xs text-slate-400">
-        <!-- Brand Info -->
         <div class="md:col-span-6 space-y-3">
           <div class="flex items-center space-x-2">
             <span class="font-bold text-white text-base font-heading">OpsReveal</span>
@@ -861,7 +792,6 @@
           </p>
         </div>
 
-        <!-- Links -->
         <div class="md:col-span-3 space-y-2">
           <h4 class="font-bold text-white uppercase tracking-wider text-[11px] font-heading">Navigation</h4>
           <ul class="space-y-1.5">
@@ -875,7 +805,6 @@
           </ul>
         </div>
 
-        <!-- Infrastructure Status -->
         <div class="md:col-span-3 space-y-2">
           <h4 class="font-bold text-white uppercase tracking-wider text-[11px] font-heading">Security Protocol</h4>
           <p class="text-slate-500 leading-relaxed">
@@ -901,7 +830,7 @@
     </div>
   </footer>
 
-  <!-- Script to Fetch Cloudflare R2 Admin Data and Aggregate Dashboard Telemetry -->
+  <!-- Real Cloudflare Data Fetching Logic for Primary Dashboard -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       
@@ -922,11 +851,11 @@
         if (refreshSpinner) refreshSpinner.classList.add("animate-spin");
 
         try {
-          // Worker endpoint fetching logs stored under Admin/ prefix
+          // Fetch Cloudflare R2 Admin upload history logs
           const adminUserId = "admin"; 
-          const response = await fetch(`/api/upload-history?userId=${adminUserId}`);
+          const response = await fetch(`/api/public/admin-telemetry`);
           
-          if (!response.ok) throw new Error("Cloudflare fetch failed");
+          if (!response.ok) throw new Error("Cloudflare R2 fetch failed");
           
           const uploadLogs = await response.json();
 
@@ -961,7 +890,7 @@
             aggregated.totalLeakage = aggregated.grnLeakage + aggregated.salesMarginErosion + aggregated.writeOffLoss + aggregated.ageingInventoryLoss + aggregated.grnVsWoCross;
           }
 
-          // Populate Hero Section / Section 2 Dashboard Metrics
+          // Populate Primary Operational Audit Dashboard UI elements
           document.getElementById("metric-lines-analyzed").textContent = formatNumber(aggregated.totalLines);
           document.getElementById("metric-grn-leakage").textContent = formatCurrency(aggregated.grnLeakage);
           document.getElementById("metric-sales-margin").textContent = formatCurrency(aggregated.salesMarginErosion);
@@ -970,17 +899,8 @@
           document.getElementById("metric-grn-wo-cross").textContent = formatCurrency(aggregated.grnVsWoCross);
           document.getElementById("metric-total-leakage").textContent = formatCurrency(aggregated.totalLeakage);
 
-          // Populate Interactive Platform Preview Section Metrics
-          document.getElementById("preview-lines-analyzed").textContent = formatNumber(aggregated.totalLines);
-          document.getElementById("preview-grn-leakage").textContent = formatCurrency(aggregated.grnLeakage);
-          document.getElementById("preview-sales-margin").textContent = formatCurrency(aggregated.salesMarginErosion);
-          document.getElementById("preview-writeoff-loss").textContent = formatCurrency(aggregated.writeOffLoss);
-          document.getElementById("preview-ageing-loss").textContent = formatCurrency(aggregated.ageingInventoryLoss);
-          document.getElementById("preview-grn-wo-cross").textContent = formatCurrency(aggregated.grnVsWoCross);
-          document.getElementById("preview-total-leakage").textContent = formatCurrency(aggregated.totalLeakage);
-
         } catch (err) {
-          console.warn("Using baseline operational fallback values:", err);
+          console.error("Cloudflare Admin Telemetry Fetch Error:", err);
         } finally {
           if (refreshSpinner) refreshSpinner.classList.remove("animate-spin");
         }
@@ -989,7 +909,7 @@
       // Initial Fetch on Load
       fetchCloudflareAdminTelemetry();
 
-      // Refresh Button Event Listener
+      // Refresh Sync Button Trigger
       const refreshBtn = document.getElementById("refresh-dashboard-btn");
       if (refreshBtn) {
         refreshBtn.addEventListener("click", fetchCloudflareAdminTelemetry);
