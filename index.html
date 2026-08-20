@@ -851,9 +851,8 @@
         if (refreshSpinner) refreshSpinner.classList.add("animate-spin");
 
         try {
-          // Fetch Cloudflare R2 Admin upload history logs
-          const adminUserId = "admin"; 
-          const response = await fetch(`/api/public/admin-telemetry`);
+          // Fetch directly from Cloudflare Worker endpoint
+          const response = await fetch("https://opsreveal-backend.mithun-gs.workers.dev/api/public/admin-telemetry");
           
           if (!response.ok) throw new Error("Cloudflare R2 fetch failed");
           
