@@ -101,6 +101,21 @@
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
+
+    /* Infinite Marquee Animation for Badges */
+    @keyframes marquee {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .animate-marquee {
+      display: flex;
+      animation: marquee 35s linear infinite;
+    }
+
+    .animate-marquee:hover {
+      animation-play-state: paused;
+    }
   </style>
 
   <!-- Structured Data / JSON-LD for SEO & Generative Engine Optimization (GEO) -->
@@ -256,7 +271,7 @@
       </div>
     </section>
 
-    <!-- Section 2: Standalone Embedded Operational Audit Dashboard (No Sidebar, Filters, or History) -->
+    <!-- Section 2: Standalone Embedded Operational Audit Dashboard -->
     <section id="dashboard-section" class="py-16 bg-slate-900/80 border-t border-slate-800/80">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -619,7 +634,7 @@
             <div class="space-y-4 text-xs font-mono">
               <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
                 <div class="text-slate-400 mb-1">1. LOCAL FILE INGESTION (RAM & Wasm Engine)</div>
-                <div class="text-emerald-400 font-semibold">[User Device] Stores_Data.xlsx &rrr; Wasm Binary Processing</div>
+                <div class="text-emerald-400 font-semibold">[User Device] Stores_Data.xlsx &rarr; Wasm Binary Processing</div>
                 <div class="text-slate-500 mt-1 text-[11px]">Zero cloud uploads. Multi-million rows parsed in RAM instantly.</div>
               </div>
               <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
@@ -814,6 +829,24 @@
         </div>
       </div>
 
+      <!-- Infinite Scrolling "FEATURED ON" Marquee -->
+      <div class="pt-6 space-y-3">
+        <div class="text-center text-[11px] font-bold tracking-widest text-slate-500 uppercase font-mono">
+          FEATURED ON
+        </div>
+
+        <div class="relative w-full overflow-hidden border-y border-slate-800/80 bg-slate-900/40 py-4">
+          <!-- Gradient Mask Side Effects -->
+          <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-slate-950 to-transparent"></div>
+          <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-slate-950 to-transparent"></div>
+
+          <!-- Dynamic Auto-Scrolling Marquee Track -->
+          <div id="marquee-track" class="flex w-max items-center gap-6 animate-marquee">
+            <!-- Badges auto-rendered via JS loop -->
+          </div>
+        </div>
+      </div>
+
       <div class="pt-6 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-500 space-y-3 sm:space-y-0">
         <div>
           &copy; <script>document.write(new Date().getFullYear())</script> <b>OpsReveal</b> by <a href="https://preventloss.org" target="_blank" rel="noopener noreferrer" class="hover:text-slate-300 underline">PreventLoss.org</a>. All rights reserved.
@@ -829,10 +862,86 @@
     </div>
   </footer>
 
- <!-- Real Cloudflare Data Fetching & Aggregation Logic -->
+ <!-- Script Logic for Continuous Marquee & Cloudflare Telemetry -->
 <script>
   document.addEventListener("DOMContentLoaded", () => {
     
+    // --- 1. Multi-Platform Badges Dynamic Marquee System ---
+    const platformBadges = [
+      {
+        title: "Featured on PostYourStartup",
+        url: "https://postyourstartup.co/startup/opsreveal?ref=badge",
+        badgeUrl: "https://postyourstartup.co/api/badge/opsreveal?theme=light"
+      },
+      {
+        title: "Listed on Turbo0",
+        url: "https://turbo0.com",
+        badgeUrl: "https://turbo0.com/badge.svg"
+      },
+      {
+        title: "ProductBurst Product of the Day",
+        url: "https://productburst.com",
+        badgeUrl: "https://productburst.com/badge.svg"
+      },
+      {
+        title: "Launched on Fazier",
+        url: "https://fazier.com",
+        badgeUrl: "https://fazier.com/badge.svg"
+      },
+      {
+        title: "Featured on ScrollLaunch",
+        url: "https://scrolllaunch.com",
+        badgeUrl: "https://scrolllaunch.com/badge.svg"
+      },
+      {
+        title: "Featured on Open-Launch",
+        url: "https://openlaunch.com",
+        badgeUrl: "https://openlaunch.com/badge.svg"
+      },
+      {
+        title: "Verified by KittyLaunch",
+        url: "https://kittylaunch.com",
+        badgeUrl: "https://kittylaunch.com/badge.svg"
+      },
+      {
+        title: "Featured on EarlyHunt",
+        url: "https://earlyhunt.com",
+        badgeUrl: "https://earlyhunt.com/badge.svg"
+      },
+      {
+        title: "Featured on BuildrShip",
+        url: "https://buildrship.com",
+        badgeUrl: "https://buildrship.com/badge.svg"
+      },
+      {
+        title: "Featured on Aura++",
+        url: "https://auraplusplus.com",
+        badgeUrl: "https://auraplusplus.com/badge.svg"
+      },
+      {
+        title: "Featured on ListMySaaS",
+        url: "https://listmysaas.xyz/",
+        badgeUrl: "https://listmysaas.xyz/listmysaasbadgenormal.svg"
+      }
+    ];
+
+    function renderMarqueeBadges() {
+      const track = document.getElementById("marquee-track");
+      if (!track) return;
+
+      // Duplicate array items to enable seamless, infinite CSS scrolling
+      const seamlessBadges = [...platformBadges, ...platformBadges];
+
+      track.innerHTML = seamlessBadges.map(badge => `
+        <a href="${badge.url}" target="_blank" rel="dofollow noopener" title="${badge.title}" class="shrink-0 transition hover:scale-105">
+          <img src="${badge.badgeUrl}" alt="${badge.title}" height="44" class="h-10 w-auto max-w-none object-contain" loading="lazy" decoding="async" />
+        </a>
+      `).join('');
+    }
+
+    renderMarqueeBadges();
+
+    // --- 2. Cloudflare Data Fetching & Telemetry Aggregation ---
     const formatCurrency = (val) => {
       return new Intl.NumberFormat('en-US', {
         style: 'currency',
@@ -862,8 +971,6 @@
         if (!response.ok) throw new Error("Cloudflare R2 fetch failed");
         
         const data = await response.json();
-        
-        // Ensure we correctly handle data whether it's an array or wrapped in an object
         const items = Array.isArray(data) ? data : (data.logs || data.data || [data]);
 
         let aggregated = {
@@ -876,13 +983,11 @@
           totalLeakage: 0
         };
 
-        // Accumulate metrics across all uploaded entries/files returned from network
         items.forEach(entry => {
           aggregated.totalLines += parseVal(entry.linesProcessed || entry.totalRows || entry.lines || entry.rowCount);
 
           const breakdown = entry.leakageBreakdown || {};
 
-          // 1. Receiving / GRN Leakage (marginLeakages)
           const grnVal = parseVal(
             entry.grnLeakage ?? 
             entry.receivingLeakage ?? 
@@ -891,7 +996,6 @@
             entry.marginLeakages?.leakageValue
           );
 
-          // 2. Sales Margin Erosion (negativeMarginSales)
           const salesVal = parseVal(
             entry.salesMarginErosion ?? 
             entry.salesErosion ?? 
@@ -900,7 +1004,6 @@
             entry.negativeMarginSales?.leakageValue
           );
 
-          // 3. Write-Off Loss Audit
           const writeOffVal = parseVal(
             entry.writeOffLoss ?? 
             entry.writeoffLoss ?? 
@@ -909,7 +1012,6 @@
             (entry.reportType === "WriteOff" ? entry.totalLeakages : 0)
           );
 
-          // 4. Ageing Inventory Loss
           const ageingVal = parseVal(
             entry.ageingLoss ?? 
             entry.inventoryAgeingLoss ?? 
@@ -917,7 +1019,6 @@
             (entry.reportType === "Ageing" ? entry.totalLeakages : 0)
           );
 
-          // 5. GRN vs WO Cross Audit (Consolidated)
           const cpWholeVal = parseVal(
             entry.cpLeakageWhole?.leakageValue ?? 
             breakdown.cpLeakageWhole?.leakageValue ?? 
@@ -931,16 +1032,13 @@
           aggregated.ageingInventoryLoss += ageingVal;
           aggregated.grnVsWoCross += cpWholeVal;
 
-          // Track explicitly passed totalLeakages
           aggregated.totalLeakage += parseVal(entry.totalLeakages);
         });
 
-        // Fallback calculation for total leakage if item.totalLeakages wasn't populated or summed
         if (aggregated.totalLeakage === 0) {
           aggregated.totalLeakage = aggregated.grnLeakage + aggregated.salesMarginErosion + aggregated.writeOffLoss + aggregated.ageingInventoryLoss + aggregated.grnVsWoCross;
         }
 
-        // Update DOM Dashboard Elements
         document.getElementById("metric-lines-analyzed").textContent = formatNumber(aggregated.totalLines);
         document.getElementById("metric-grn-leakage").textContent = formatCurrency(aggregated.grnLeakage);
         document.getElementById("metric-sales-margin").textContent = formatCurrency(aggregated.salesMarginErosion);
@@ -956,10 +1054,8 @@
       }
     }
 
-    // Initial fetch call
     fetchCloudflareAdminTelemetry();
 
-    // Refresh Button Event Listener
     const refreshBtn = document.getElementById("refresh-dashboard-btn");
     if (refreshBtn) {
       refreshBtn.addEventListener("click", fetchCloudflareAdminTelemetry);
