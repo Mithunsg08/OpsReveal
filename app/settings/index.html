@@ -116,9 +116,9 @@
         </a>
 
         <a href="/app/exceptions/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-    <span>Exceptions</span>
-  </a>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          <span>Exceptions</span>
+        </a>
         
         <a href="/app/settings" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 shadow-sm transition">
           <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -229,7 +229,7 @@
       </div>
 
       <!-- SUBSCRIPTION PLAN & PADDLE PAYMENTS -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
         <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider">Subscription Plan</h3>
         
         <div id="starterPlanBox" class="bg-slate-950/60 border border-slate-800 p-5 rounded-xl space-y-4">
@@ -260,6 +260,59 @@
             </div>
             <span class="bg-emerald-500 text-slate-950 px-3 py-1 rounded-full text-xs font-extrabold shadow-md shadow-emerald-500/20">Active Plan</span>
           </div>
+        </div>
+
+        <!-- DYNAMIC 115% ROI GUARANTEE CONTAINER -->
+        <div class="bg-gradient-to-br from-amber-500/10 via-slate-950 to-slate-950 border border-amber-500/30 p-6 rounded-2xl space-y-4">
+          <div class="flex items-start justify-between">
+            <div class="flex items-center space-x-3">
+              <div class="h-10 w-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              </div>
+              <div>
+                <h4 class="font-extrabold text-amber-400 text-base font-heading">115% ROI Guarantee Status</h4>
+                <p class="text-xs text-slate-300 mt-0.5">We guarantee OpsReveal uncovers at least $113.85 (115% of your $99 subscription cost).</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-full uppercase tracking-wider">Zero Risk</span>
+          </div>
+
+          <!-- STATE 1: Leakage Under 115% with 75k+ lines (Claim Option) -->
+          <div id="guaranteeClaimState" class="hidden space-y-3">
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Your audit processed over 75,000 lines/transactions, but OpsReveal identified less than $113.85 (115% ROI) in financial leakage. You are eligible to claim a refund or credit.
+            </p>
+            <p class="text-xs text-slate-400">
+              Click below to send your claim. Our team will verify your scan telemetry and process your request within <strong>24–48 hours</strong>.
+            </p>
+            <div class="pt-1">
+              <button id="claimGuaranteeBtn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold px-5 py-2.5 rounded-xl text-xs transition shadow-lg shadow-amber-500/20 inline-flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <span>Claim Refund via Email</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- STATE 2: Leakage Exceeds 115% (Success Message) -->
+          <div id="guaranteeExceededState" class="hidden space-y-2">
+            <div class="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl space-y-1">
+              <span class="text-xs font-bold text-emerald-400 block">Guarantee Threshold Met!</span>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                OpsReveal found more than 115% of the subscription cost ($113.85+) in financial leakage. The tool has successfully covered its cost, so no claim is required for this cycle.
+              </p>
+            </div>
+          </div>
+
+          <!-- STATE 3: 75k Criteria Not Met -->
+          <div id="guaranteeUnmatchedState" class="hidden space-y-2">
+            <div class="p-4 bg-slate-950/80 border border-slate-800 rounded-xl space-y-1">
+              <span class="text-xs font-bold text-slate-400 block">Criteria Not Met</span>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                To qualify for the 115% ROI guarantee claim, your account must process at least <strong>75,000 lines or transactions</strong> within the billing period.
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -466,6 +519,46 @@
       }
     }
 
+    // 115% ROI Guarantee Evaluation Logic
+    function evaluateROIGuarantee(totalLinesProcessed, totalLeakageFound, isPro) {
+      const claimState = document.getElementById('guaranteeClaimState');
+      const exceededState = document.getElementById('guaranteeExceededState');
+      const unmatchedState = document.getElementById('guaranteeUnmatchedState');
+
+      claimState.classList.add('hidden');
+      exceededState.classList.add('hidden');
+      unmatchedState.classList.add('hidden');
+
+      const REQUIRED_LINES = 75000;
+      const REQUIRED_LEAKAGE_TARGET = 113.85; // $99 * 115%
+
+      if (totalLinesProcessed >= REQUIRED_LINES) {
+        if (totalLeakageFound < REQUIRED_LEAKAGE_TARGET) {
+          claimState.classList.remove('hidden');
+        } else {
+          exceededState.classList.remove('hidden');
+        }
+      } else {
+        unmatchedState.classList.remove('hidden');
+      }
+    }
+
+    // Email Claim Listener
+    const claimBtn = document.getElementById('claimGuaranteeBtn');
+    if (claimBtn) {
+      claimBtn.addEventListener('click', () => {
+        const userEmail = currentUser ? currentUser.email : '';
+        const company = document.getElementById('profCompany') ? document.getElementById('profCompany').value : 'N/A';
+        
+        const subject = encodeURIComponent("115% ROI Guarantee Claim - OpsReveal");
+        const body = encodeURIComponent(
+          `Hello OpsReveal Team,\n\nI am requesting to claim the 115% ROI Guarantee for my subscription.\n\nAccount Email: ${userEmail}\nCompany Name: ${company}\nRequirement Checked: 75,000+ lines processed, less than $113.85 leakage uncovered.\n\nPlease audit my account metrics and process my request within 24-48 hours.\n\nThank you!`
+        );
+
+        window.location.href = `mailto:contact@preventloss.org?subject=${subject}&body=${body}`;
+      });
+    }
+
     // Usage Metrics Fetcher
     async function fetchMonthlyUsage(userId, isPro) {
       try {
@@ -482,6 +575,7 @@
 
         const uploads = currentMonthRecords.length;
         const lines = currentMonthRecords.reduce((sum, r) => sum + Number(r.linesProcessed || r.lines_processed || 0), 0);
+        const totalLeakage = currentMonthRecords.reduce((sum, r) => sum + Number(r.leakageAmount || r.leakage_amount || 0), 0);
 
         document.getElementById('meterUploads').textContent = `${uploads} / ${isPro ? '∞' : '4'}`;
         document.getElementById('meterLines').textContent = `${lines.toLocaleString('en-US')} / ${isPro ? '∞' : '20k'}`;
@@ -502,6 +596,9 @@
           document.getElementById('usageUploadsBar').classList.replace('bg-amber-500', 'bg-cyan-500');
           document.getElementById('usageLinesBar').classList.replace('bg-amber-500', 'bg-cyan-500');
         }
+
+        evaluateROIGuarantee(lines, totalLeakage, isPro);
+
       } catch (e) {
         console.error("Failed to load usage stats:", e);
       }
