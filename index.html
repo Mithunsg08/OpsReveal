@@ -30,7 +30,7 @@
   <!-- Core Primary & SEO / GEO Metadata -->
   <title>OpsReveal | Zero-Trust In-Browser Security & Financial Audit Tool</title>
   <meta name="title" content="OpsReveal | Zero-Trust In-Browser Security & Financial Audit Tool">
-  <meta name="description" content="OpsReveal is an in-browser, zero-trust retail loss prevention software that audits GRN receiving logs, sales margin erosion, inventory ageing, and write-offs locally with 100% data privacy.">
+  <meta name="description" content="OpsReveal is an in-browser, zero-trust retail loss prevention software that audits GRN receiving logs, sales margins, stock ageing, and write-offs locally with 100% data privacy. No raw data or file names leave your device.">
   <meta name="keywords" content="Retail Loss Prevention Tool, Vendor Fraud Detection, GRN Audit Software, Sales Margin Erosion, Inventory Ageing Audit, Write-off Loss Audit, Client-Side Data Auditing, Zero-Trust Financial Analytics, Shrinkage Prevention">
   <link rel="canonical" href="https://opsreveal.preventloss.org">
   <meta name="author" content="PreventLoss.org">
@@ -39,7 +39,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://opsreveal.preventloss.org">
   <meta property="og:title" content="OpsReveal | Zero-Trust In-Browser Security for Retail Audit">
-  <meta property="og:description" content="Automate GRN, Sales, Write-off, and Inventory Ageing audits instantly in your browser with zero raw data uploads.">
+  <meta property="og:description" content="Automate GRN, Sales, Write-off, and Inventory Ageing audits instantly on your device with zero raw data uploads and strict file-name privacy.">
   <meta property="og:image" content="https://opsreveal.preventloss.org/asset/dashboard.png">
   <meta property="og:site_name" content="OpsReveal">
 
@@ -47,7 +47,7 @@
   <meta property="twitter:card" content="summary_large_image">
   <meta property="twitter:url" content="https://opsreveal.preventloss.org">
   <meta property="twitter:title" content="OpsReveal | Zero-Trust In-Browser Retail Audit Engine">
-  <meta property="twitter:description" content="Identify vendor overcharges, negative margins, and write-off losses safely in your local browser memory.">
+  <meta property="twitter:description" content="Identify vendor overcharges, negative margins, and write-off losses safely in your local browser memory. Cloudflare EU summary storage only.">
   <meta property="twitter:image" content="https://opsreveal.preventloss.org/asset/dashboard.png">
 
   <!-- Tailwind CSS & Google Fonts -->
@@ -118,7 +118,7 @@
     }
   </style>
 
-  <!-- Structured Data / JSON-LD for SEO & Generative Engine Optimization (GEO) -->
+  <!-- Structured Data / JSON-LD -->
   <script type="application/ld+json">
   [
     {
@@ -134,7 +134,7 @@
         "highPrice": "99",
         "offerCount": "3"
       },
-      "description": "Client-side retail loss prevention software that audits receiving logs, sales margins, write-offs, and stock ageing locally inside the browser memory.",
+      "description": "Client-side retail loss prevention software that audits GRN receiving, sales margins, write-offs, and stock ageing locally inside local browser RAM. Zero raw data uploads.",
       "publisher": {
         "@type": "Organization",
         "name": "PreventLoss.org",
@@ -147,26 +147,26 @@
       "mainEntity": [
         {
           "@type": "Question",
-          "name": "How does OpsReveal protect store data privacy?",
+          "name": "How does OpsReveal guarantee full file & data privacy?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "OpsReveal uses a 100% client-side local browser engine built on WebAssembly (Wasm). Your CSV and Excel sales, GRN, and inventory files are parsed and audited directly in your machine's local RAM. Raw files and individual transaction rows are never uploaded to any external cloud server."
+            "text": "OpsReveal runs 100% locally inside your browser memory. We value your total privacy—we do not upload your raw files, nor do we store or read your file names. Only high-level aggregated summary reports are synced to secure Cloudflare (EU) infrastructure."
           }
         },
         {
           "@type": "Question",
-          "name": "What operational leakages can OpsReveal detect?",
+          "name": "How do format matching and template downloads work?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "OpsReveal detects vendor cost-price hikes on same-MRP items, negative sales margins, unauthorized discount overrides, write-off shrinkage, stock ageing, and over-procurement relative to waste rates."
+            "text": "Each audit module (GRN, Sales Margin, Write-Off, Stock Ageing, GRN vs. Write-Off) provides a downloadable standard template. Populate the matching format and upload it. The browser processes it on your device and instantly auto-downloads your leakage findings."
           }
         },
         {
           "@type": "Question",
-          "name": "What is the 115% ROI Guarantee?",
+          "name": "What are the rules for the 115% ROI Guarantee?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "If OpsReveal Professional fails to deliver measurable financial value or detect cost leaks exceeding your subscription fee during your billing period, your next billing cycle is completely free."
+            "text": "To qualify for the 115% ROI Guarantee, a minimum threshold of 75,000 rows or 75,000 transactions must be processed through the platform during your billing cycle."
           }
         }
       ]
@@ -176,10 +176,10 @@
 </head>
 <body class="bg-slate-950 text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950 flex flex-col min-h-screen">
 
-  <!-- Top Announcement Bar with Direct Hero Link -->
+  <!-- Top Announcement Bar -->
   <aside aria-label="Announcement" class="bg-gradient-to-r from-cyan-900/60 via-slate-900 to-blue-900/60 border-b border-cyan-500/20 py-2 text-center text-xs text-slate-300 font-medium">
-    <span>🔒 Guaranteed Subscription Value: Scale retail audits with our </span>
-    <a href="#guarantee" class="text-cyan-400 font-bold underline hover:text-cyan-300 ml-1">115% ROI Guarantee &rarr;</a>
+    <span>🔒 Privacy-First Audit Engine: We don't even store your file names. </span>
+    <a href="#guarantee" class="text-cyan-400 font-bold underline hover:text-cyan-300 ml-1">115% ROI Guarantee (75K+ Rows) &rarr;</a>
   </aside>
 
   <!-- Navigation -->
@@ -199,9 +199,9 @@
 
       <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
         <a href="#dashboard-section" class="hover:text-cyan-400 transition">Dashboard</a>
-        <a href="#platform" class="hover:text-cyan-400 transition">Platform</a>
-        <a href="#security" class="hover:text-cyan-400 transition">Privacy & Architecture</a>
-        <a href="#guarantee" class="hover:text-cyan-400 transition">115% ROI Guarantee</a>
+        <a href="#platform" class="hover:text-cyan-400 transition">How It Works</a>
+        <a href="#security" class="hover:text-cyan-400 transition">Privacy Architecture</a>
+        <a href="#guarantee" class="hover:text-cyan-400 transition">115% Guarantee</a>
         <a href="#pricing" class="hover:text-cyan-400 transition">Pricing</a>
         <a href="#faq" class="hover:text-cyan-400 transition">FAQ</a>
       </div>
@@ -226,18 +226,18 @@
         
         <div class="inline-flex items-center space-x-2 rounded-full bg-cyan-950/80 border border-cyan-500/30 px-4 py-1.5 text-xs font-semibold text-cyan-400 mb-8 backdrop-blur-md">
           <span class="flex h-2 w-2 rounded-full bg-cyan-400 animate-pulse"></span>
-          <span>Client-Side Local RAM Processing — Zero Server Data Ingestion</span>
+          <span>100% In-Device Processing — We Don't Save Raw Data or File Names</span>
         </div>
 
         <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.12] font-heading">
-          Zero-Trust In-Browser Security <br class="hidden sm:inline"/>
+          Zero-Trust Retail Audit <br class="hidden sm:inline"/>
           <span class="bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
-            For Retail Loss Prevention
+            Powered Entirely In Your Browser
           </span>
         </h1>
 
         <p class="mt-6 text-base sm:text-xl text-slate-300 max-w-3xl mx-auto font-normal leading-relaxed">
-          Stop retail shrinkage, vendor fraud, and margin erosion with full client-side privacy. OpsReveal automatically audits GRN receiving records, POS sales, write-offs, and inventory ageing locally in your browser memory—no raw store files ever leave your machine.
+          Download matching audit templates, populate your store records, and detect leakages directly inside your machine's memory. Uncover receiving overcharges, negative sales margins, stock ageing, and shrink losses instantly.
         </p>
 
         <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -245,33 +245,33 @@
             Start Free Audit
           </a>
           <a href="#platform" class="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-slate-700 bg-slate-900/80 px-8 py-4 text-sm sm:text-base font-semibold text-slate-200 hover:bg-slate-800 hover:text-white transition backdrop-blur-sm font-heading">
-            Explore Platform & Algorithms
+            Explore 5 Audit Modules
           </a>
         </div>
 
         <div class="mt-16 pt-10 border-t border-slate-800/80 grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-slate-300 text-xs font-medium uppercase tracking-wider">
           <div class="flex items-center justify-center space-x-2 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/60 backdrop-blur-sm">
             <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            <span class="text-[11px] font-semibold">100% Local Browser Engine</span>
+            <span class="text-[11px] font-semibold">Strict File Name Privacy</span>
           </div>
           <div class="flex items-center justify-center space-x-2 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/60 backdrop-blur-sm">
-            <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span class="text-[11px] font-semibold">Vendor Fraud Detection</span>
+            <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span class="text-[11px] font-semibold">Downloadable Formats</span>
           </div>
           <div class="flex items-center justify-center space-x-2 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/60 backdrop-blur-sm">
             <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-            <span class="text-[11px] font-semibold">Wasm High-Speed RAM Engine</span>
+            <span class="text-[11px] font-semibold">Local Memory Processing</span>
           </div>
           <div class="flex items-center justify-center space-x-2 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/60 backdrop-blur-sm">
-            <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-            <span class="text-[11px] font-semibold">Ageing & Write-Off Audits</span>
+            <svg class="w-4 h-4 text-cyan-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 001-9.999 5.002 5.002 0 00-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+            <span class="text-[11px] font-semibold">Cloudflare EU Summaries</span>
           </div>
         </div>
 
       </div>
     </section>
 
-    <!-- Section 2: Standalone Embedded Operational Audit Dashboard -->
+    <!-- Section 2: Dashboard -->
     <section id="dashboard-section" class="py-16 bg-slate-900/80 border-t border-slate-800/80">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
@@ -280,15 +280,15 @@
           <div class="text-left max-w-3xl">
             <div class="inline-flex items-center space-x-2 rounded-full bg-cyan-950/80 border border-cyan-500/30 px-3 py-1 text-xs font-bold text-cyan-400 font-mono mb-3">
               <span class="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
-              <span>Live Cloudflare Telemetry Console</span>
+              <span>Cloudflare (EU) Encrypted Telemetry Console</span>
             </div>
             <h2 class="text-3xl sm:text-4xl font-extrabold text-white font-heading">Operational Audit Dashboard</h2>
-            <p class="mt-2 text-slate-400 text-sm sm:text-base">Real-time financial leakage tracking fetched directly from Cloudflare Admin Storage.</p>
+            <p class="mt-2 text-slate-400 text-sm sm:text-base">Displays high-level summary metrics stored in Cloudflare (EU). Zero raw transaction records or original file names are retained.</p>
           </div>
 
           <button id="refresh-dashboard-btn" class="inline-flex items-center space-x-2 px-5 py-3 rounded-xl bg-slate-900 border border-slate-700 text-xs font-mono font-bold text-cyan-400 hover:bg-slate-800 hover:border-cyan-500/50 transition shadow-lg shrink-0">
             <svg id="refresh-spinner" class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            <span>SYNC CLOUDFLARE DATA</span>
+            <span>SYNC SUMMARY DATA</span>
           </button>
         </div>
 
@@ -300,9 +300,9 @@
             <div>
               <div class="flex items-center space-x-2.5">
                 <span class="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse"></span>
-                <span class="text-xs sm:text-sm font-extrabold tracking-wider text-red-500 font-mono uppercase">TOTAL ACCUMULATED LEAKAGES (OVERALL ACCOUNT LOSS)</span>
+                <span class="text-xs sm:text-sm font-extrabold tracking-wider text-red-500 font-mono uppercase">TOTAL ACCUMULATED LEAKAGES (OVERALL LOSS)</span>
               </div>
-              <p class="text-xs sm:text-sm text-slate-400 mt-1 font-medium">Aggregated financial exposure identified across all audited operational reports and Cloudflare R2 logs.</p>
+              <p class="text-xs sm:text-sm text-slate-400 mt-1 font-medium">Aggregated monetary exposure calculated locally on your device across all 5 audit types.</p>
             </div>
             <div id="metric-total-leakage" class="text-3xl sm:text-5xl font-black font-mono text-red-500 tracking-tight">
               $0
@@ -313,7 +313,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             
             <div class="p-6 rounded-2xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 transition">
-              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">TOTAL LINES ANALYZED</div>
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">TOTAL LINES AUDITED</div>
               <div id="metric-lines-analyzed" class="text-2xl sm:text-3xl font-extrabold font-mono text-indigo-400 mt-3">0</div>
             </div>
 
@@ -328,7 +328,7 @@
             </div>
 
             <div class="p-6 rounded-2xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 transition">
-              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">WRITE-OFF LOSS AUDIT</div>
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">WRITE-OFF & SHRINK AUDIT</div>
               <div id="metric-writeoff-loss" class="text-2xl sm:text-3xl font-extrabold font-mono text-rose-400 mt-3">$0</div>
             </div>
 
@@ -338,7 +338,7 @@
             </div>
 
             <div class="p-6 rounded-2xl bg-slate-950/80 border border-slate-800/80 hover:border-slate-700 transition">
-              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">GRN VS WO CROSS-AUDIT (CONSOLIDATED)</div>
+              <div class="text-xs font-bold uppercase tracking-wider text-slate-400 font-mono">GRN VS WO CROSS-AUDIT</div>
               <div id="metric-grn-wo-cross" class="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-400 mt-3">$0</div>
             </div>
 
@@ -348,103 +348,47 @@
       </div>
     </section>
 
-    <!-- Platform Showcase Section -->
+    <!-- How It Works & Upload Workflow -->
     <section id="platform" class="py-20 bg-slate-950 border-t border-slate-800/80">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
         
         <!-- Section Header -->
         <div class="text-center max-w-3xl mx-auto">
-          <h2 class="text-xs font-bold uppercase tracking-widest text-cyan-400 font-heading">Interactive Platform Preview</h2>
-          <p class="mt-3 text-3xl font-extrabold text-white sm:text-4xl font-heading">Built for Speed, Precision & Zero-Trust Privacy</p>
-          <p class="mt-4 text-slate-400 text-sm sm:text-base">Explore how OpsReveal transforms multi-million row ERP and POS logs into clear loss prevention audits in milliseconds.</p>
+          <h2 class="text-xs font-bold uppercase tracking-widest text-cyan-400 font-heading">4-Step In-Device Process</h2>
+          <p class="mt-3 text-3xl font-extrabold text-white sm:text-4xl font-heading">Download Format. Populate Data. Auto-Audit.</p>
+          <p class="mt-4 text-slate-400 text-sm sm:text-base">We engineered OpsReveal around privacy. Your original file names and raw line items never leave your local device memory.</p>
         </div>
 
-        <!-- Showcase 1: Dashboard Overview -->
-        <div class="grid lg:grid-cols-12 gap-10 items-center">
+        <!-- 4 Steps Breakdown -->
+        <div class="grid md:grid-cols-4 gap-6">
+          <div class="glass-card p-6 rounded-2xl border border-slate-800">
+            <div class="text-cyan-400 font-mono font-bold text-lg mb-2">STEP 01</div>
+            <h4 class="text-white font-bold font-heading mb-2">Select Audit Type & Download Format</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">Choose from GRN, Sales Margin, Write-Off, Stock Ageing, or Cross-Audit. Download the corresponding pre-structured file format template.</p>
+          </div>
+
+          <div class="glass-card p-6 rounded-2xl border border-slate-800">
+            <div class="text-cyan-400 font-mono font-bold text-lg mb-2">STEP 02</div>
+            <h4 class="text-white font-bold font-heading mb-2">Set Custom Parameters</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">Adjust thresholds. For GRN: set Target Shelf Life % (Default: 60%) & Target Margin % (Default: 20%). For Ageing: set target threshold days.</p>
+          </div>
+
+          <div class="glass-card p-6 rounded-2xl border border-slate-800">
+            <div class="text-cyan-400 font-mono font-bold text-lg mb-2">STEP 03</div>
+            <h4 class="text-white font-bold font-heading mb-2">Format Validation & Local Engine</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">Upload your file. If it matches the downloaded format, your local device parses and computes leakage findings instantly inside browser RAM.</p>
+          </div>
+
+          <div class="glass-card p-6 rounded-2xl border border-slate-800">
+            <div class="text-cyan-400 font-mono font-bold text-lg mb-2">STEP 04</div>
+            <h4 class="text-white font-bold font-heading mb-2">Auto-Download & EU Cloud Sync</h4>
+            <p class="text-xs text-slate-400 leading-relaxed">The exception report auto-downloads locally. Only high-level summary metrics are sent to Cloudflare (EU)—no raw data or file names are ever saved.</p>
+          </div>
+        </div>
+
+        <!-- Showcase Graphic Container -->
+        <div class="grid lg:grid-cols-12 gap-10 items-center pt-8">
           <div class="lg:col-span-7 relative">
-            <div class="rounded-2xl border border-slate-800 bg-slate-900/90 p-2 sm:p-3 shadow-2xl glow-effect">
-              <div class="flex items-center space-x-2 px-3 py-2 border-b border-slate-800/80 mb-2">
-                <span class="h-3 w-3 rounded-full bg-rose-500/80"></span>
-                <span class="h-3 w-3 rounded-full bg-amber-500/80"></span>
-                <span class="h-3 w-3 rounded-full bg-emerald-500/80"></span>
-                <span class="text-[11px] font-mono text-slate-500 ml-2">https://opsreveal.preventloss.org/dashboard</span>
-              </div>
-              <img src="https://opsreveal.preventloss.org/asset/dashboard.png" alt="OpsReveal Loss Prevention Dashboard Overview" class="rounded-xl border border-slate-800 w-full object-cover">
-            </div>
-          </div>
-
-          <div class="lg:col-span-5 space-y-5">
-            <div class="inline-flex items-center space-x-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 px-3 py-1 text-xs font-bold text-cyan-400 font-mono">
-              01 / Loss Control Dashboard
-            </div>
-            <h3 class="text-2xl font-bold text-white font-heading">Centralized Loss Prevention Command</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">
-              Consolidate operational leakage metrics across all store branches into a single screen. Monitor cost discrepancies, stock shrinkage, and margin erosion with automated risk categorization.
-            </p>
-
-            <ul class="space-y-3 text-sm">
-              <li class="flex items-start">
-                <span class="text-cyan-400 font-bold mr-3 mt-0.5">•</span>
-                <div>
-                  <strong class="text-white">Unified Telemetry:</strong>
-                  <span class="text-slate-400 block text-xs mt-0.5">Aggregates GRN leakages, negative sales margins, and write-offs.</span>
-                </div>
-              </li>
-              <li class="flex items-start">
-                <span class="text-cyan-400 font-bold mr-3 mt-0.5">•</span>
-                <div>
-                  <strong class="text-white">Audit Execution Logs:</strong>
-                  <span class="text-slate-400 block text-xs mt-0.5">Track historical files analyzed, rows scanned, and flagged discrepancies.</span>
-                </div>
-              </li>
-              <li class="flex items-start">
-                <span class="text-cyan-400 font-bold mr-3 mt-0.5">•</span>
-                <div>
-                  <strong class="text-white">Risk Scoring:</strong>
-                  <span class="text-slate-400 block text-xs mt-0.5">Automatically ranks batches (HIGH, MEDIUM, LOW) based on monetary loss.</span>
-                </div>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <!-- Showcase 2: Upload Reports Workflow -->
-        <div class="grid lg:grid-cols-12 gap-10 items-center">
-          <div class="lg:col-span-5 space-y-5">
-            <div class="inline-flex items-center space-x-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-400 font-mono">
-              02 / In-Browser Upload Engine
-            </div>
-            <h3 class="text-2xl font-bold text-white font-heading">Instant Report Upload & Local Processing</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">
-              Upload raw CSV or Excel store data using predefined header templates. Real-time client-side analysis flags financial leakages and calculates risk profiles instantly before downloading sanitized audit results.
-            </p>
-
-            <ul class="space-y-3 text-sm">
-              <li class="flex items-start">
-                <span class="text-emerald-400 font-bold mr-3 mt-0.5">•</span>
-                <div>
-                  <strong class="text-white">Standardized Templates:</strong>
-                  <span class="text-slate-400 block text-xs mt-0.5">Download standard headers for Receiving/GRN, Sales, Write-offs, and Ageing.</span>
-                </div>
-              </li>
-              <li class="flex items-start">
-                <span class="text-emerald-400 font-bold mr-3 mt-0.5">•</span>
-                <div>
-                  <strong class="text-white">Customizable Audit Parameters:</strong>
-                  <span class="text-slate-400 block text-xs mt-0.5">Configure Target Shelf Life % and Target Margin % thresholds on the fly.</span>
-                </div>
-              </li>
-              <li class="flex items-start">
-                <span class="text-emerald-400 font-bold mr-3 mt-0.5">•</span>
-                <div>
-                  <strong class="text-white">Real-Time Telemetry & Upload History:</strong>
-                  <span class="text-slate-400 block text-xs mt-0.5">Track total processed lines, monetary leakage values, risk scores, and 7-day upload activity archives securely.</span>
-                </div>
-              </li>
-            </ul>
-          </div>
-
-          <div class="lg:col-span-7">
             <div class="rounded-2xl border border-slate-800 bg-slate-900/90 p-2 sm:p-3 shadow-2xl glow-effect">
               <div class="flex items-center space-x-2 px-3 py-2 border-b border-slate-800/80 mb-2">
                 <span class="h-3 w-3 rounded-full bg-rose-500/80"></span>
@@ -452,47 +396,39 @@
                 <span class="h-3 w-3 rounded-full bg-emerald-500/80"></span>
                 <span class="text-[11px] font-mono text-slate-500 ml-2">https://opsreveal.preventloss.org/app/uploads</span>
               </div>
-              <img src="https://opsreveal.preventloss.org/asset/upload.png" alt="OpsReveal Upload Reports Interface" class="rounded-xl border border-slate-800 w-full object-cover">
-            </div>
-          </div>
-        </div>
-
-        <!-- Showcase 3: Exceptions & RCA -->
-        <div class="grid lg:grid-cols-12 gap-10 items-center">
-          <div class="lg:col-span-7">
-            <div class="rounded-2xl border border-slate-800 bg-slate-900/90 p-2 sm:p-3 shadow-2xl glow-effect">
-              <div class="flex items-center space-x-2 px-3 py-2 border-b border-slate-800/80 mb-2">
-                <span class="h-3 w-3 rounded-full bg-rose-500/80"></span>
-                <span class="h-3 w-3 rounded-full bg-amber-500/80"></span>
-                <span class="h-3 w-3 rounded-full bg-emerald-500/80"></span>
-                <span class="text-[11px] font-mono text-slate-500 ml-2">https://opsreveal.preventloss.org/exceptions</span>
-              </div>
-              <img src="https://opsreveal.preventloss.org/asset/exceptions.png" alt="OpsReveal Audit Exceptions and Root Cause Analysis Screen" class="rounded-xl border border-slate-800 w-full object-cover">
+              <img src="https://opsreveal.preventloss.org/asset/upload.png" alt="OpsReveal Format Matching and Upload Module" class="rounded-xl border border-slate-800 w-full object-cover">
             </div>
           </div>
 
           <div class="lg:col-span-5 space-y-5">
-            <div class="inline-flex items-center space-x-2 rounded-lg bg-blue-500/10 border border-blue-500/20 px-3 py-1 text-xs font-bold text-blue-400 font-mono">
-              03 / Exception Discrepancy RCA
+            <div class="inline-flex items-center space-x-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-400 font-mono">
+              Format Matching & Parameter Controls
             </div>
-            <h3 class="text-2xl font-bold text-white font-heading">Granular Root Cause Analysis & Remediation</h3>
+            <h3 class="text-2xl font-bold text-white font-heading">Custom Parameters For Tailored Auditing</h3>
             <p class="text-slate-400 text-sm leading-relaxed">
-              Drill down into individual SKU discrepancies, analyze root causes, and execute recommended vendor recovery and re-order capping procedures.
+              Every retail operation has unique vendor terms and inventory rules. Set your exact metrics before matching your formatted file for instant local execution.
             </p>
 
             <ul class="space-y-3 text-sm">
               <li class="flex items-start">
-                <span class="text-blue-400 font-bold mr-3 mt-0.5">•</span>
+                <span class="text-emerald-400 font-bold mr-3 mt-0.5">•</span>
                 <div>
-                  <strong class="text-white">Cost Driver Identification:</strong>
-                  <span class="text-slate-400 block text-xs mt-0.5">Isolate exact SKUs driving receiving overcharges or margin compression.</span>
+                  <strong class="text-white">GRN Target Shelf Life % (Default: 60%):</strong>
+                  <span class="text-slate-400 block text-xs mt-0.5">Automatically flags receiving shipments arriving with less than your target remaining shelf life.</span>
                 </div>
               </li>
               <li class="flex items-start">
-                <span class="text-blue-400 font-bold mr-3 mt-0.5">•</span>
+                <span class="text-emerald-400 font-bold mr-3 mt-0.5">•</span>
                 <div>
-                  <strong class="text-white">Actionable Corrective Steps:</strong>
-                  <span class="text-slate-400 block text-xs mt-0.5">Receive clear procedures to adjust purchasing thresholds and reject invalid vendor invoices.</span>
+                  <strong class="text-white">GRN Target Margin % (Default: 20%):</strong>
+                  <span class="text-slate-400 block text-xs mt-0.5">Flags vendor cost spikes where cost price compresses item gross margin below target.</span>
+                </div>
+              </li>
+              <li class="flex items-start">
+                <span class="text-emerald-400 font-bold mr-3 mt-0.5">•</span>
+                <div>
+                  <strong class="text-white">Custom Ageing Threshold (Days):</strong>
+                  <span class="text-slate-400 block text-xs mt-0.5">Configure the exact holding day limit to flag stagnant stock and prevent capital lockup.</span>
                 </div>
               </li>
             </ul>
@@ -507,8 +443,8 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center max-w-3xl mx-auto">
           <h2 class="text-xs font-bold uppercase tracking-widest text-cyan-400 font-heading">Comprehensive Loss Audit Engine</h2>
-          <p class="mt-3 text-3xl font-extrabold text-white sm:text-4xl font-heading">5 Targeted Loss Prevention Algorithms</p>
-          <p class="mt-4 text-slate-400 text-sm sm:text-base">Purpose-built detection algorithms designed to capture hidden financial leakages across the retail supply chain.</p>
+          <p class="mt-3 text-3xl font-extrabold text-white sm:text-4xl font-heading">5 Dedicated Audit Modules</p>
+          <p class="mt-4 text-slate-400 text-sm sm:text-base">Each module requires a matching downloadable format template to ensure zero data ingestion errors.</p>
         </div>
 
         <div class="mt-16 grid lg:grid-cols-3 gap-8">
@@ -519,12 +455,12 @@
               <div class="h-12 w-12 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mb-6 font-bold text-lg font-mono">01</div>
               <h3 class="text-xl font-bold text-white mb-3 font-heading">GRN / Receiving Audit</h3>
               <p class="text-sm text-slate-400 leading-relaxed mb-4">
-                Detects vendor overcharges, price manipulation, and shelf-life compliance failures at receiving.
+                Detects vendor cost price hikes and shelf-life compliance breaches at receiving.
               </p>
               <ul class="space-y-2.5 text-xs text-slate-300">
-                <li class="flex items-start"><span class="text-cyan-400 font-bold mr-2">•</span><b>Cost Price (CP) Spikes:</b> Flags unexpected cost price increases on identical MRP items.</li>
-                <li class="flex items-start"><span class="text-cyan-400 font-bold mr-2">•</span><b>Same-Day Multi-CP Fraud:</b> Identifies different CP rates billed on the same receiving date.</li>
-                <li class="flex items-start"><span class="text-cyan-400 font-bold mr-2">•</span><b>Expiry Compliance:</b> Blocks stock arriving near or past acceptable expiration thresholds.</li>
+                <li class="flex items-start"><span class="text-cyan-400 font-bold mr-2">•</span><b>Format-Matched Ingestion:</b> Downloads standard GRN CSV template.</li>
+                <li class="flex items-start"><span class="text-cyan-400 font-bold mr-2">•</span><b>Configurable Thresholds:</b> Set Min Target Shelf Life (60%) & Target Margin (20%).</li>
+                <li class="flex items-start"><span class="text-cyan-400 font-bold mr-2">•</span><b>Exception Findings:</b> Auto-downloads calculated leakage file directly to your device.</li>
               </ul>
             </div>
           </div>
@@ -565,11 +501,11 @@
               <div class="h-12 w-12 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400 flex items-center justify-center mb-6 font-bold text-lg font-mono">04</div>
               <h3 class="text-xl font-bold text-white mb-3 font-heading">Stock Ageing Audit</h3>
               <p class="text-sm text-slate-400 leading-relaxed mb-4">
-                Combines GRN receipt dates with Quantity-on-Hand (QOH) to identify dead inventory.
+                Calculates days in stock from receipt date to flag dead inventory.
               </p>
               <ul class="space-y-2.5 text-xs text-slate-300">
-                <li class="flex items-start"><span class="text-purple-400 font-bold mr-2">•</span><b>Receiving Date Tracking:</b> Maps working capital locked in stale inventory.</li>
-                <li class="flex items-start"><span class="text-purple-400 font-bold mr-2">•</span><b>Stagnant Stock Alerts:</b> Identifies SKUs sitting un-moved beyond target holding periods.</li>
+                <li class="flex items-start"><span class="text-purple-400 font-bold mr-2">•</span><b>Custom Day Threshold:</b> Define after how many days inventory is considered aged.</li>
+                <li class="flex items-start"><span class="text-purple-400 font-bold mr-2">•</span><b>Capital Lockup Detection:</b> Highlights dead working capital sitting in stockrooms.</li>
               </ul>
             </div>
           </div>
@@ -593,36 +529,36 @@
       </div>
     </section>
 
-    <!-- Architecture, WebAssembly & Privacy Section -->
+    <!-- Privacy Architecture -->
     <section id="security" class="py-20 sm:py-28 relative overflow-hidden">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid lg:grid-cols-2 gap-12 items-center">
           <div>
             <div class="inline-flex items-center space-x-2 rounded-full bg-emerald-950/80 border border-emerald-500/30 px-3.5 py-1 text-xs font-semibold text-emerald-400 mb-6">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-              <span>Zero-Trust Local Browser Execution Engine</span>
+              <span>Zero Raw Data Uploads & Zero File Name Retention</span>
             </div>
             <h2 class="text-3xl font-extrabold text-white sm:text-4xl leading-tight font-heading">
-              Your Sensitive Financial Data Never Leaves Your Device
+              We Value Your Privacy. Even Your File Names Stay Private.
             </h2>
             <p class="mt-4 text-slate-300 leading-relaxed text-sm sm:text-base">
-              Traditional cloud audit tools require uploading entire transaction histories, margins, and vendor price sheets to third-party servers. OpsReveal processes everything locally with maximum client-side privacy.
+              Traditional SaaS platforms upload your raw spreadsheets to foreign cloud servers. OpsReveal is engineered so that raw files are processed inside your device memory. We don't want to see your store transactions—or even the names of your files.
             </p>
 
             <div class="mt-8 space-y-4">
               <div class="flex items-start space-x-4">
                 <div class="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-1">✓</div>
                 <div>
-                  <h4 class="font-bold text-white font-heading">High-Speed WebAssembly (Wasm) Compilation</h4>
-                  <p class="text-xs sm:text-sm text-slate-400">Leverages native Wasm compilation to process multi-million row datasets directly in local browser RAM near-instantly without memory crashes or cloud latency.</p>
+                  <h4 class="font-bold text-white font-heading">Format Matching Validation</h4>
+                  <p class="text-xs sm:text-sm text-slate-400">Files process locally only when they match our pre-configured downloadable templates, eliminating data parsing errors.</p>
                 </div>
               </div>
 
               <div class="flex items-start space-x-4">
                 <div class="h-8 w-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-1">✓</div>
                 <div>
-                  <h4 class="font-bold text-white font-heading">Zero Raw Row Ingestion</h4>
-                  <p class="text-xs sm:text-sm text-slate-400">Only high-level aggregated audit summary metadata is preserved—zero individual raw store rows are ever transmitted or stored.</p>
+                  <h4 class="font-bold text-white font-heading">Cloudflare (EU) Summary Protocol</h4>
+                  <p class="text-xs sm:text-sm text-slate-400">Once audit exceptions are auto-downloaded to your device, only non-identifying aggregated summary totals are synced to Cloudflare (EU) for account dashboard display.</p>
                 </div>
               </div>
             </div>
@@ -630,20 +566,20 @@
 
           <!-- Technical Workflow Visual -->
           <div class="glass-card rounded-2xl p-6 sm:p-8 glow-effect">
-            <h3 class="text-lg font-bold text-white mb-6 font-heading">Client-Side Data Protocol</h3>
+            <h3 class="text-lg font-bold text-white mb-6 font-heading">Zero-Trust Data Protocol</h3>
             <div class="space-y-4 text-xs font-mono">
               <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                <div class="text-slate-400 mb-1">1. LOCAL FILE INGESTION (RAM & Wasm Engine)</div>
-                <div class="text-emerald-400 font-semibold">[User Device] Stores_Data.xlsx &rarr; Wasm Binary Processing</div>
-                <div class="text-slate-500 mt-1 text-[11px]">Zero cloud uploads. Multi-million rows parsed in RAM instantly.</div>
+                <div class="text-slate-400 mb-1">1. LOCAL FORMAT VALIDATION (Device RAM)</div>
+                <div class="text-emerald-400 font-semibold">[Your Device] File Upload &rarr; Format Check & Process</div>
+                <div class="text-slate-500 mt-1 text-[11px]">No raw rows transmitted. File names are neither read nor stored.</div>
               </div>
               <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                <div class="text-slate-400 mb-1">2. AUDIT DISCREPANCY DETECTOR</div>
-                <div class="text-cyan-400 font-semibold">{ Vendor_Overcharges: "$14,280.00", Margin_Loss: 42 }</div>
+                <div class="text-slate-400 mb-1">2. AUTO-DOWNLOAD LEAKAGE REPORT</div>
+                <div class="text-cyan-400 font-semibold">In-Memory Audit &rarr; Leakage_Findings.csv (Saved Locally)</div>
               </div>
               <div class="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                <div class="text-slate-400 mb-1">3. ENCRYPTED METADATA SYNC</div>
-                <div class="text-blue-400 font-semibold">HTTPS POST &rarr; Aggregated Audit Report Saved</div>
+                <div class="text-slate-400 mb-1">3. AGGREGATED SUMMARY SYNC</div>
+                <div class="text-blue-400 font-semibold">HTTPS POST &rarr; Cloudflare (EU) [Summary Totals Only]</div>
               </div>
             </div>
           </div>
@@ -659,8 +595,12 @@
         </div>
         <h2 class="text-3xl font-extrabold text-white sm:text-4xl font-heading">115% ROI Guarantee</h2>
         <p class="mt-4 text-base sm:text-lg text-slate-300 max-w-3xl mx-auto leading-relaxed">
-          We guarantee the Professional Plan pays for itself—and then some. If OpsReveal Professional does not uncover financial leakage exceeding <b>115% of your subscription cost</b>, your next month is 100% free.
+          We guarantee OpsReveal Professional pays for itself. If OpsReveal Professional does not uncover financial leakages exceeding <b>115% of your subscription cost</b>, your next billing cycle is completely free.
         </p>
+        
+        <div class="mt-6 inline-flex items-center space-x-2 rounded-xl bg-slate-950/80 border border-cyan-500/40 px-5 py-3 text-xs sm:text-sm font-semibold text-cyan-300 font-mono">
+          <span>⚡ Guarantee Condition: Minimum 75,000 rows processed OR at least 75,000 total transactions audited.</span>
+        </div>
       </div>
     </section>
 
@@ -674,7 +614,7 @@
 
         <div class="grid md:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
           
-          <!-- Starter Plan (Free Tier) -->
+          <!-- Starter Plan -->
           <div class="glass-card rounded-2xl p-8 flex flex-col justify-between hover:border-slate-700 transition">
             <div>
               <h3 class="text-xl font-bold text-white font-heading">Starter</h3>
@@ -685,8 +625,8 @@
               <ul class="space-y-3.5 text-sm text-slate-300">
                 <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> <b>4 Uploads</b> or <b>20,000 Rows</b> / Mo</li>
                 <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> <b>2 Report Analyses</b> (GRN & Sales)</li>
-                <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> Local Browser Processing</li>
-                <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> Standard Discrepancy Reports</li>
+                <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> Local Device Processing</li>
+                <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> Standard Format Templates</li>
               </ul>
             </div>
             <a href="https://opsreveal.preventloss.org/signup.html" class="mt-8 w-full block text-center rounded-xl border border-slate-700 bg-slate-800 py-3 text-sm font-semibold text-white hover:bg-slate-700 transition font-heading">
@@ -701,19 +641,19 @@
             </div>
             <div>
               <div class="inline-block bg-amber-400/10 border border-amber-400/30 text-amber-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md mb-3">
-                🔥 Limited to First 100 Customers
+                🔥 Limited Offer
               </div>
 
               <h3 class="text-xl font-bold text-white font-heading">Professional</h3>
-              <p class="text-slate-400 text-xs mt-1">Full loss prevention engine for growing retail businesses.</p>
+              <p class="text-slate-400 text-xs mt-1">Full loss prevention engine for growing retail operations.</p>
               <div class="my-6">
                 <span class="text-4xl font-extrabold text-white font-heading">$99</span>
                 <span class="text-slate-400 text-sm">/ month</span>
               </div>
               <ul class="space-y-3.5 text-sm text-slate-300">
                 <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> <b>Unlimited Uploads & Rows</b></li>
-                <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> <b>All 5 Report Analyses</b> (GRN, Sales, WO, Ageing, GRN vs WO)</li>
-                <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> Local Wasm Browser Engine</li>
+                <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> <b>All 5 Audit Modules</b></li>
+                <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> Downloadable Templates & Controls</li>
                 <li class="flex items-center font-semibold text-cyan-300"><span class="text-cyan-400 font-bold mr-2">✓</span> 115% ROI Guarantee Included*</li>
               </ul>
             </div>
@@ -724,7 +664,7 @@
               </a>
 
               <p class="text-[10px] text-slate-500 mt-3 text-center leading-tight">
-                *115% ROI Guarantee Methodology: Based on average detected leakages across retail client benchmark datasets.
+                *Requires min. 75,000 rows processed or 75,000 transactions audited during billing period.
               </p>
             </div>
           </div>
@@ -736,18 +676,18 @@
                 <h3 class="text-xl font-bold text-white font-heading">Enterprise</h3>
                 <span class="text-[10px] font-bold uppercase bg-slate-800 text-cyan-400 px-2 py-0.5 rounded font-mono">Yearly Only</span>
               </div>
-              <p class="text-slate-400 text-xs mt-1">For multi-location retail chains and custom enterprise workflows.</p>
+              <p class="text-slate-400 text-xs mt-1">For multi-location retail chains and enterprise operations.</p>
               <div class="my-6">
                 <span class="text-3xl font-extrabold text-white font-heading">Custom</span>
               </div>
               <ul class="space-y-3.5 text-sm text-slate-300">
                 <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> <b>Everything in Professional</b></li>
                 <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> <b>Multi-Location Cross Analysis</b></li>
-                <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> <b>Custom Rules & Audit Scripts</b></li>
-                <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> Dedicated Account Audit Lead</li>
+                <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> <b>Custom File Format Integration</b></li>
+                <li class="flex items-center"><span class="text-cyan-400 font-bold mr-2">✓</span> Dedicated Audit Account Lead</li>
               </ul>
             </div>
-            <a href="mailto:sales@preventloss.org?subject=Inquiry%20Regarding%20Enterprise%20Plan%20-%20OpsReveal&body=Hello%20OpsReveal%20Sales%20Team%2C%0A%0AI%20am%20interested%20in%20learning%20more%20about%20the%20Enterprise%20Plan%20for%20OpsReveal.%20Please%20provide%20more%20information%20regarding%20pricing%2C%20multiple%20location%20analysis%2C%20and%20custom%20report%20configurations.%0A%0ABest%20regards%2C" class="mt-8 w-full block text-center rounded-xl border border-slate-700 bg-slate-900 py-3 text-sm font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition font-heading">
+            <a href="mailto:sales@preventloss.org?subject=Inquiry%20Regarding%20Enterprise%20Plan%20-%20OpsReveal" class="mt-8 w-full block text-center rounded-xl border border-slate-700 bg-slate-900 py-3 text-sm font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition font-heading">
               Contact Sales
             </a>
           </div>
@@ -766,23 +706,23 @@
 
         <div class="space-y-6">
           <div class="glass-card rounded-2xl p-6 sm:p-8">
-            <h3 class="text-lg font-bold text-white font-heading">How does OpsReveal maintain zero data risk?</h3>
+            <h3 class="text-lg font-bold text-white font-heading">Why do you strictly enforce format matching?</h3>
             <p class="mt-3 text-sm text-slate-300 leading-relaxed">
-              OpsReveal processes all raw spreadsheets directly inside your browser memory using WebAssembly (Wasm) and client-side JavaScript. Raw spreadsheets containing cost prices, sales volumes, and vendor names never cross the internet.
+              Because all parsing and mathematical audit algorithms execute locally on your device in browser memory, your data must strictly match the downloaded template structure. This ensures error-free calculations without sending any files to external cloud servers.
             </p>
           </div>
 
           <div class="glass-card rounded-2xl p-6 sm:p-8">
-            <h3 class="text-lg font-bold text-white font-heading">What file formats are supported?</h3>
+            <h3 class="text-lg font-bold text-white font-heading">What data is sent to Cloudflare (EU)?</h3>
             <p class="mt-3 text-sm text-slate-300 leading-relaxed">
-              OpsReveal natively supports CSV, XLSX, and XLS exports from major ERP and POS platforms including SAP, Oracle Retail, LS Retail, Tally, Microsoft Dynamics, and custom POS CSV dumps.
+              Only high-level, non-identifying summary statistics (e.g., total monetary leakage identified and line counts) are stored in Cloudflare (EU) to populate your dashboard history. Raw file contents, transaction records, and file names are never sent to or saved in the cloud.
             </p>
           </div>
 
           <div class="glass-card rounded-2xl p-6 sm:p-8">
-            <h3 class="text-lg font-bold text-white font-heading">How does the 115% ROI Guarantee work?</h3>
+            <h3 class="text-lg font-bold text-white font-heading">What are the eligibility requirements for the 115% ROI Guarantee?</h3>
             <p class="mt-3 text-sm text-slate-300 leading-relaxed">
-              If OpsReveal Professional fails to detect operational loss or cost savings equal to at least 115% of your subscription cost during your active billing period, your next billing cycle is completely free.
+              To qualify for the 115% ROI Guarantee on the Professional plan, your account must process a minimum of 75,000 rows or audit at least 75,000 individual transactions during the billing month.
             </p>
           </div>
         </div>
@@ -802,7 +742,7 @@
             <a href="https://preventloss.org" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:underline font-semibold">preventloss.org</a>
           </div>
           <p class="text-slate-400 leading-relaxed max-w-md">
-            OpsReveal is a specialized retail loss prevention & audit software built by <a href="https://preventloss.org" target="_blank" rel="noopener noreferrer" class="text-slate-300 hover:text-cyan-400 underline transition">PreventLoss.org</a>. Engineered to detect vendor price hikes, negative margins, and inventory shrinkage 100% locally in browser memory.
+            Built by <a href="https://preventloss.org" target="_blank" rel="noopener noreferrer" class="text-slate-300 hover:text-cyan-400 underline transition">PreventLoss.org</a>. Engineered to detect retail vendor overcharges, negative sales margins, stock ageing, and inventory shrink 100% locally on your device.
           </p>
         </div>
 
@@ -811,39 +751,34 @@
           <ul class="space-y-1.5">
             <li><a href="https://opsreveal.preventloss.org/login.html" class="hover:text-cyan-400 transition">Log In</a></li>
             <li><a href="https://opsreveal.preventloss.org/signup.html" class="hover:text-cyan-400 transition">Create Free Account</a></li>
-            <li><a href="#platform" class="hover:text-cyan-400 transition">Platform & Algorithms</a></li>
+            <li><a href="#platform" class="hover:text-cyan-400 transition">How It Works</a></li>
             <li><a href="#security" class="hover:text-cyan-400 transition">Privacy Architecture</a></li>
-            <li><a href="#guarantee" class="hover:text-cyan-400 transition">115% ROI Guarantee</a></li>
+            <li><a href="#guarantee" class="hover:text-cyan-400 transition">115% Guarantee Condition</a></li>
             <li><a href="#faq" class="hover:text-cyan-400 transition">FAQ</a></li>
-            <li><a href="mailto:sales@preventloss.org?subject=Inquiry%20Regarding%20OpsReveal&body=Hello%20OpsReveal%20Team%2C%0A%0AI%20would%20like%20to%20get%20in%20touch%20regarding%20OpsReveal.%0A%0ABest%20regards%2C" class="hover:text-cyan-400 transition">Contact Sales</a></li>
           </ul>
         </div>
 
         <div class="md:col-span-3 space-y-2">
           <h4 class="font-bold text-white uppercase tracking-wider text-[11px] font-heading">Security Protocol</h4>
           <p class="text-slate-500 leading-relaxed">
-            Client-Side Local RAM Parsing.<br>
-            Protected by WebAssembly Engine.<br>
-            No Raw CSV/XLS Data Ingestion.
+            In-Device Memory Processing.<br>
+            Zero File Name Data Store.<br>
+            Summary Only in Cloudflare (EU).
           </p>
         </div>
       </div>
 
-      <!-- Infinite Scrolling "FEATURED ON" Marquee -->
+      <!-- Marquee -->
       <div class="pt-6 space-y-3">
         <div class="text-center text-[11px] font-bold tracking-widest text-slate-500 uppercase font-mono">
           FEATURED ON
         </div>
 
         <div class="relative w-full overflow-hidden border-y border-slate-800/80 bg-slate-900/40 py-4">
-          <!-- Gradient Mask Side Effects -->
           <div class="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-slate-950 to-transparent"></div>
           <div class="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-slate-950 to-transparent"></div>
 
-          <!-- Dynamic Auto-Scrolling Marquee Track -->
-          <div id="marquee-track" class="flex w-max items-center gap-6 animate-marquee">
-            <!-- Badges auto-rendered via JS loop -->
-          </div>
+          <div id="marquee-track" class="flex w-max items-center gap-6 animate-marquee"></div>
         </div>
       </div>
 
@@ -862,57 +797,22 @@
     </div>
   </footer>
 
-  <!-- Directory Verification Fallbacks Container -->
-  <!-- Crawlers (like Tools.cafe) scan static raw HTML for exact anchor/image matches without executing JS. -->
-  <div id="directory-verification-fallbacks" style="display: none;" aria-hidden="true">
-    <!-- Tools.cafe Verification Badge -->
-    <a href="https://tools.cafe/p/tool-1787679067419" target="_blank" rel="noopener">
-      <img src="https://tools.cafe/b/light.svg" alt="Listed on tools.cafe" width="180" height="54" />
-    </a>
-    
-    <!-- Add future platform crawler verification embeds below this line -->
-  </div>
-
-  <!-- Script Logic for Continuous Marquee & Cloudflare Telemetry -->
+  <!-- Script Logic -->
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       
-      // --- 1. Multi-Platform Badges Dynamic Marquee System ---
       const platformBadges = [
-        {
-          title: "Featured on PostYourStartup",
-          url: "https://postyourstartup.co/startup/opsreveal?ref=badge",
-          badgeUrl: "https://postyourstartup.co/api/badge/opsreveal?theme=light"
-        },
-        {
-          title: "Listed on Fazier",
-          url: "https://fazier.com/launches/opsreveal.preventloss.org",
-          badgeUrl: "https://fazier.com/api/v1/public/badges/launch_badges.svg?badge_type=launched&theme=dark"
-        },
-        {
-          title: "Featured on ListMySaaS",
-          url: "https://listmysaas.xyz/directory/opsreveal",
-          badgeUrl: "https://listmysaas.xyz/listmysaasbadgenormal.svg"
-        },
-        {
-          title: "Featured on Tools Cafe",
-          url: "https://tools.cafe/p/tool-1787679067419",
-          badgeUrl: "https://tools.cafe/b/light.svg"
-        },
-        {
-          title: "Featured on Earlyhunt",
-          url: "https://earlyhunt.com/project/opsreveal",
-          badgeUrl: "https://earlyhunt.com/badges/earlyhunt-badge-light.svg"
-        }
+        { title: "Featured on PostYourStartup", url: "https://postyourstartup.co/startup/opsreveal?ref=badge", badgeUrl: "https://postyourstartup.co/api/badge/opsreveal?theme=light" },
+        { title: "Listed on Fazier", url: "https://fazier.com/launches/opsreveal.preventloss.org", badgeUrl: "https://fazier.com/api/v1/public/badges/launch_badges.svg?badge_type=launched&theme=dark" },
+        { title: "Featured on ListMySaaS", url: "https://listmysaas.xyz/directory/opsreveal", badgeUrl: "https://listmysaas.xyz/listmysaasbadgenormal.svg" },
+        { title: "Featured on Tools Cafe", url: "https://tools.cafe/p/tool-1787679067419", badgeUrl: "https://tools.cafe/b/light.svg" },
+        { title: "Featured on Earlyhunt", url: "https://earlyhunt.com/project/opsreveal", badgeUrl: "https://earlyhunt.com/badges/earlyhunt-badge-light.svg" }
       ];
 
       function renderMarqueeBadges() {
         const track = document.getElementById("marquee-track");
         if (!track) return;
-
-        // Duplicate array items to enable seamless, infinite CSS scrolling
         const seamlessBadges = [...platformBadges, ...platformBadges];
-
         track.innerHTML = seamlessBadges.map(badge => `
           <a href="${badge.url}" target="_blank" rel="dofollow noopener" title="${badge.title}" class="shrink-0 transition hover:scale-105">
             <img src="${badge.badgeUrl}" alt="${badge.title}" height="44" class="h-10 w-auto max-w-none object-contain" loading="lazy" decoding="async" />
@@ -922,24 +822,12 @@
 
       renderMarqueeBadges();
 
-      // --- 2. Cloudflare Data Fetching & Telemetry Aggregation ---
-      const formatCurrency = (val) => {
-        return new Intl.NumberFormat('en-US', {
-          style: 'currency',
-          currency: 'USD',
-          maximumFractionDigits: 0
-        }).format(val || 0);
-      };
-
-      const formatNumber = (val) => {
-        return new Intl.NumberFormat('en-US').format(val || 0);
-      };
-
+      const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val || 0);
+      const formatNumber = (val) => new Intl.NumberFormat('en-US').format(val || 0);
       const parseVal = (val) => {
         if (val === undefined || val === null) return 0;
         if (typeof val === 'number') return isNaN(val) ? 0 : val;
-        const cleaned = String(val).replace(/[^0-9.-]+/g, "");
-        const parsed = parseFloat(cleaned);
+        const parsed = parseFloat(String(val).replace(/[^0-9.-]+/g, ""));
         return isNaN(parsed) ? 0 : parsed;
       };
 
@@ -954,65 +842,17 @@
           const data = await response.json();
           const items = Array.isArray(data) ? data : (data.logs || data.data || [data]);
 
-          let aggregated = {
-            totalLines: 0,
-            grnLeakage: 0,
-            salesMarginErosion: 0,
-            writeOffLoss: 0,
-            ageingInventoryLoss: 0,
-            grnVsWoCross: 0,
-            totalLeakage: 0
-          };
+          let aggregated = { totalLines: 0, grnLeakage: 0, salesMarginErosion: 0, writeOffLoss: 0, ageingInventoryLoss: 0, grnVsWoCross: 0, totalLeakage: 0 };
 
           items.forEach(entry => {
             aggregated.totalLines += parseVal(entry.linesProcessed || entry.totalRows || entry.lines || entry.rowCount);
-
             const breakdown = entry.leakageBreakdown || {};
 
-            const grnVal = parseVal(
-              entry.grnLeakage ?? 
-              entry.receivingLeakage ?? 
-              entry.grn_leakage ?? 
-              breakdown.marginLeakages?.leakageValue ?? 
-              entry.marginLeakages?.leakageValue
-            );
-
-            const salesVal = parseVal(
-              entry.salesMarginErosion ?? 
-              entry.salesErosion ?? 
-              breakdown.salesMarginErosion?.leakageValue ?? 
-              breakdown.negativeMarginSales?.leakageValue ?? 
-              entry.negativeMarginSales?.leakageValue
-            );
-
-            const writeOffVal = parseVal(
-              entry.writeOffLoss ?? 
-              entry.writeoffLoss ?? 
-              breakdown.writeOffLoss?.leakageValue ?? 
-              breakdown.totalWOValue ?? 
-              (entry.reportType === "WriteOff" ? entry.totalLeakages : 0)
-            );
-
-            const ageingVal = parseVal(
-              entry.ageingLoss ?? 
-              entry.inventoryAgeingLoss ?? 
-              breakdown.shelfLifeExceptions?.leakageValue ?? 
-              (entry.reportType === "Ageing" ? entry.totalLeakages : 0)
-            );
-
-            const cpWholeVal = parseVal(
-              entry.cpLeakageWhole?.leakageValue ?? 
-              breakdown.cpLeakageWhole?.leakageValue ?? 
-              (entry.reportType === "Consolidated (GRN+WO)" ? entry.totalLeakages : 0) ??
-              entry.grnVsWoCross
-            );
-
-            aggregated.grnLeakage += grnVal;
-            aggregated.salesMarginErosion += salesVal;
-            aggregated.writeOffLoss += writeOffVal;
-            aggregated.ageingInventoryLoss += ageingVal;
-            aggregated.grnVsWoCross += cpWholeVal;
-
+            aggregated.grnLeakage += parseVal(entry.grnLeakage ?? entry.receivingLeakage ?? entry.grn_leakage ?? breakdown.marginLeakages?.leakageValue);
+            aggregated.salesMarginErosion += parseVal(entry.salesMarginErosion ?? entry.salesErosion ?? breakdown.salesMarginErosion?.leakageValue);
+            aggregated.writeOffLoss += parseVal(entry.writeOffLoss ?? entry.writeoffLoss ?? breakdown.writeOffLoss?.leakageValue);
+            aggregated.ageingInventoryLoss += parseVal(entry.ageingLoss ?? entry.inventoryAgeingLoss ?? breakdown.shelfLifeExceptions?.leakageValue);
+            aggregated.grnVsWoCross += parseVal(entry.cpLeakageWhole?.leakageValue ?? breakdown.cpLeakageWhole?.leakageValue ?? entry.grnVsWoCross);
             aggregated.totalLeakage += parseVal(entry.totalLeakages);
           });
 
@@ -1038,9 +878,7 @@
       fetchCloudflareAdminTelemetry();
 
       const refreshBtn = document.getElementById("refresh-dashboard-btn");
-      if (refreshBtn) {
-        refreshBtn.addEventListener("click", fetchCloudflareAdminTelemetry);
-      }
+      if (refreshBtn) refreshBtn.addEventListener("click", fetchCloudflareAdminTelemetry);
     });
   </script>
 </body>
