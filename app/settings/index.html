@@ -134,29 +134,6 @@
     </div>
 
     <div class="p-4 border-t border-slate-800 space-y-3">
-      <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800/80 text-xs space-y-2">
-        <div>
-          <span class="text-[10px] text-slate-500 block font-semibold uppercase">Active Plan</span>
-          <span id="planLabel" class="font-bold text-cyan-400">Starter Tier</span>
-        </div>
-        
-        <div id="usageMeters" class="pt-2 border-t border-slate-800/60 space-y-1.5">
-          <div class="flex justify-between text-[11px]">
-            <span class="text-slate-400">Monthly Uploads:</span>
-            <span id="meterUploads" class="font-mono font-semibold text-slate-200">0 / 4</span>
-          </div>
-          <div class="flex justify-between text-[11px]">
-            <span class="text-slate-400">Monthly Lines:</span>
-            <span id="meterLines" class="font-mono font-semibold text-slate-200">0 / 20k</span>
-          </div>
-        </div>
-
-        <div class="flex items-center space-x-2 pt-2 border-t border-slate-800/60">
-          <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-          <span id="userEmailDisplay" class="text-xs font-medium text-slate-300 truncate">loading...</span>
-        </div>
-      </div>
-
       <button onclick="logoutUser()" class="w-full bg-slate-950 hover:bg-slate-800 text-xs text-slate-400 py-2 rounded-xl border border-slate-800 font-semibold transition">
         Sign Out
       </button>
@@ -169,38 +146,7 @@
       
       <div>
         <h1 class="text-3xl font-extrabold text-white font-heading tracking-tight">Account Settings</h1>
-        <p class="text-xs text-slate-400 mt-1">Manage your profile details, resource limits, and subscription.</p>
-      </div>
-
-      <!-- MONTHLY RESOURCE USAGE CARD -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-        <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider">Monthly Resource Usage</h3>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Uploads Bar -->
-          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-2">
-            <div class="flex justify-between text-xs font-semibold">
-              <span class="text-slate-400">Report Uploads (Monthly)</span>
-              <span id="usageUploadsText" class="text-cyan-400 font-mono">0 / 4</span>
-            </div>
-            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div id="usageUploadsBar" class="bg-cyan-500 h-full w-0 transition-all duration-500"></div>
-            </div>
-            <p id="uploadsLimitLabel" class="text-[10px] text-slate-500">Starter limit: Maximum 4 uploads per month.</p>
-          </div>
-
-          <!-- Lines Bar -->
-          <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-2">
-            <div class="flex justify-between text-xs font-semibold">
-              <span class="text-slate-400">Lines Processed (Monthly)</span>
-              <span id="usageLinesText" class="text-cyan-400 font-mono">0 / 20,000</span>
-            </div>
-            <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-              <div id="usageLinesBar" class="bg-cyan-500 h-full w-0 transition-all duration-500"></div>
-            </div>
-            <p id="linesLimitLabel" class="text-[10px] text-slate-500">Starter limit: Maximum 20,000 report lines per month.</p>
-          </div>
-        </div>
+        <p class="text-xs text-slate-400 mt-1">Manage your profile details and subscription.</p>
       </div>
 
       <!-- PROFILE INFO -->
@@ -297,24 +243,6 @@
         </div>
       </div>
 
-      <!-- API KEYS & INTEGRATIONS -->
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-        <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider">API Keys & Integrations</h3>
-        <p class="text-xs text-slate-400">Generate API tokens for custom ERP, WMS, or accounting platform integrations.</p>
-        
-        <div class="space-y-3">
-          <div class="flex items-center gap-3">
-            <input type="text" readonly id="apiKeyDisplay" value="ops_live_************************" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-400 font-mono focus:outline-none">
-            <button onclick="copyApiKey()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs transition shrink-0">
-              Copy Key
-            </button>
-            <button onclick="regenerateApiKey()" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-bold px-4 py-2.5 rounded-xl text-xs transition shrink-0">
-              Regenerate
-            </button>
-          </div>
-        </div>
-      </div>
-
       <!-- PRODUCT FEEDBACK FORM -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
         <h3 class="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
@@ -376,7 +304,6 @@
     // CONFIGURATION
     const PADDLE_CLIENT_TOKEN = "live_3fa85341ad9e33a1d40b0049173"; 
     const PADDLE_PRO_PRICE_ID = "pri_01kz8vbb5st84h4x80r1521ecm"; 
-    const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
 
     let currentUser = null;
     let pollingInterval = null;
@@ -431,16 +358,6 @@
       window.location.href = `mailto:help@preventloss.com?subject=${subject}&body=${body}`;
     };
 
-    // API Key Tools
-    window.copyApiKey = function() {
-      navigator.clipboard.writeText("ops_live_98a7f6e5d4c3b2a10987");
-      showToast("API Key copied to clipboard!", "info");
-    };
-
-    window.regenerateApiKey = function() {
-      showToast("New API Key generated successfully.", "info");
-    };
-
     // Authentication Guard & Initialization
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -448,7 +365,6 @@
         return;
       }
       currentUser = user;
-      document.getElementById('userEmailDisplay').textContent = user.email;
       document.getElementById('profEmail').value = user.email;
 
       const profile = await ensureUserProfile(user);
@@ -461,7 +377,6 @@
       updatePlanUI(isPro);
 
       document.body.style.display = 'flex';
-      fetchMonthlyUsage(user.uid, isPro);
     });
 
     // Profile updates handler
@@ -591,7 +506,6 @@
         showToast("Payment successful! Account upgraded to Professional Tier.", "info");
 
         updatePlanUI(true);
-        fetchMonthlyUsage(currentUser.uid, true);
       } catch (error) {
         console.error("Error updating profile post-payment:", error);
         showToast("Payment succeeded! Upgrading account...", "info");
@@ -602,55 +516,9 @@
     // Dynamic UI Renderer
     function updatePlanUI(isPro) {
       if (isPro) {
-        document.getElementById('planLabel').innerText = 'Professional Tier';
         document.getElementById('starterActiveBadge').classList.add('hidden');
         document.getElementById('paddleUpgradeContainer').classList.add('hidden');
         document.getElementById('proPlanBox').classList.remove('hidden');
-        
-        document.getElementById('uploadsLimitLabel').textContent = 'Professional Limit: Unlimited uploads';
-        document.getElementById('linesLimitLabel').textContent = 'Professional Limit: Unlimited lines';
-      }
-    }
-
-    // Usage Metrics Fetcher
-    async function fetchMonthlyUsage(userId, isPro) {
-      try {
-        const res = await fetch(`${CF_API_URL}?userId=${userId}`);
-        const records = await res.json();
-        
-        const now = new Date();
-        const currentMonthRecords = (Array.isArray(records) ? records : []).filter(item => {
-          const dateStr = item.uploadedDate || item.uploaded_date || item.createdAt || item.timestamp;
-          if (!dateStr) return false;
-          const d = new Date(dateStr);
-          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        });
-
-        const uploads = currentMonthRecords.length;
-        const lines = currentMonthRecords.reduce((sum, r) => sum + Number(r.linesProcessed || r.lines_processed || 0), 0);
-
-        document.getElementById('meterUploads').textContent = `${uploads} / ${isPro ? '∞' : '4'}`;
-        document.getElementById('meterLines').textContent = `${lines.toLocaleString('en-US')} / ${isPro ? '∞' : '20k'}`;
-
-        document.getElementById('usageUploadsText').textContent = `${uploads} / ${isPro ? 'Unlimited' : '4'}`;
-        document.getElementById('usageLinesText').textContent = `${lines.toLocaleString('en-US')} / ${isPro ? 'Unlimited' : '20,000'}`;
-
-        const uploadPct = isPro ? 10 : Math.min(100, (uploads / 4) * 100);
-        const linePct = isPro ? 10 : Math.min(100, (lines / 20000) * 100);
-
-        document.getElementById('usageUploadsBar').style.width = `${uploadPct}%`;
-        document.getElementById('usageLinesBar').style.width = `${linePct}%`;
-
-        if (!isPro && (uploads >= 4 || lines >= 20000)) {
-          document.getElementById('usageUploadsBar').classList.replace('bg-cyan-500', 'bg-amber-500');
-          document.getElementById('usageLinesBar').classList.replace('bg-cyan-500', 'bg-amber-500');
-        } else {
-          document.getElementById('usageUploadsBar').classList.replace('bg-amber-500', 'bg-cyan-500');
-          document.getElementById('usageLinesBar').classList.replace('bg-amber-500', 'bg-cyan-500');
-        }
-
-      } catch (e) {
-        console.error("Failed to load usage stats:", e);
       }
     }
 
