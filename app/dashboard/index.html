@@ -48,9 +48,9 @@
         </a>
 
         <a href="/app/exceptions/" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
-  <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-  <span>Exceptions</span>
-</a>
+          <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          <span>Exceptions</span>
+        </a>
         
         <a href="/app/settings" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-xs font-semibold text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
@@ -91,7 +91,7 @@
 
   <!-- MAIN DASHBOARD CONTENT -->
   <main class="flex-1 min-w-0 overflow-y-auto px-8 py-8">
-    <div class="max-w-7xl mx-auto space-y-8">
+    <div class="max-w-7xl mx-auto space-y-6">
       
       <div class="flex items-center justify-between">
         <div>
@@ -114,21 +114,42 @@
         </div>
       </div>
 
-      <!-- EXCEEDED BANNER -->
-      <div id="upgradeBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center justify-between">
-        <div>
-          <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Free Starter Usage Limit Exceeded</h4>
-          <p class="text-xs text-amber-200/80 mt-0.5">Your free usage is over (4 uploads or 20,000 lines this month). Upgrade to Professional for $99/mo with unlimited uploads, unlimited lines, and up to 5 additional team seats.</p>
+      <!-- EXPIRATION WARNING REMINDER BANNER (2-3 DAYS BEFORE EXPIRY) -->
+      <div id="expiryReminderBanner" class="hidden bg-amber-500/10 border border-amber-500/40 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+        <div class="flex items-center space-x-3">
+          <div class="p-2 bg-amber-500/20 rounded-xl text-amber-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider">Subscription Expiry Warning</h4>
+            <p id="expiryReminderText" class="text-xs text-amber-200/80 mt-0.5">Your Pro Plan subscription expires in <span id="daysRemaining">--</span> days. Don't lose access to unlimited report processing and advanced audit features.</p>
+          </div>
         </div>
         <a href="/app/settings" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl shrink-0 transition">
-          Upgrade for $99
+          Renew Subscription
+        </a>
+      </div>
+
+      <!-- STARTER EXCEEDED BANNER -->
+      <div id="upgradeBanner" class="hidden bg-red-500/10 border border-red-500/30 rounded-2xl p-4 flex items-center justify-between shadow-lg">
+        <div class="flex items-center space-x-3">
+          <div class="p-2 bg-red-500/20 rounded-xl text-red-400">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+          <div>
+            <h4 class="text-xs font-bold text-red-400 uppercase tracking-wider">Free Starter Quota Completed</h4>
+            <p class="text-xs text-slate-300 mt-0.5">You have reached the free plan limits (20,000 lines or 4 uploads within 30 days). Your quota will automatically renew at the end of your 30-day window, or you can upgrade to Professional now.</p>
+          </div>
+        </div>
+        <a href="/app/settings" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold px-4 py-2 rounded-xl shrink-0 transition">
+          Upgrade to Pro ($99/mo)
         </a>
       </div>
 
       <!-- METRICS CARDS GRID -->
       <div id="metricsGrid" class="grid grid-cols-1 md:grid-cols-3 gap-5">
         
-        <!-- NEW TOTAL LEAKAGES CARD (FULL WIDTH HERO CARD) -->
+        <!-- TOTAL LEAKAGES CARD -->
         <div id="cardOverallLeakage" class="bg-gradient-to-r from-red-950/40 via-slate-900 to-slate-900 border border-red-500/30 rounded-2xl p-6 shadow-xl md:col-span-3 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <div class="flex items-center gap-2">
@@ -212,12 +233,13 @@
   <script type="module">
     import { auth, db } from '/app/auth-guard.js';
     import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const CF_API_URL = "https://opsreveal-backend.mithun-gs.workers.dev/api/upload-history";
     let currentUser = null;
     let allRecords = [];
     let currentPlanState = { isPro: false, isAdmin: false };
+    let userProfileData = {};
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -232,16 +254,56 @@
         window.history.replaceState({}, document.title, window.location.pathname);
       }
 
-      onSnapshot(doc(db, "users", user.uid), (docSnap) => {
-        const profile = docSnap.data() || {};
+      onSnapshot(doc(db, "users", user.uid), async (docSnap) => {
+        userProfileData = docSnap.data() || {};
         
-        const rawRole = String(profile.role || '').toLowerCase();
-        const rawPlan = String(profile.plan || '').toLowerCase();
+        const rawRole = String(userProfileData.role || '').toLowerCase();
+        let rawPlan = String(userProfileData.plan || '').toLowerCase();
         
         const isAdmin = rawRole === 'superadmin' || rawRole === 'admin' || rawPlan === 'admin' || user.email.toLowerCase() === 'mithun@preventloss.org';
-        const isPro = !isAdmin && (rawPlan.includes('pro') || rawPlan.includes('professional') || rawPlan.includes('tier'));
+        let isPro = !isAdmin && (rawPlan.includes('pro') || rawPlan.includes('professional') || rawPlan.includes('tier'));
 
-        currentPlanState = { isPro, isAdmin };
+        const now = new Date();
+        const cycleDays = 30;
+
+        // 1. SUBSCRIPTION EXPIRY & REVERSION LOGIC (30 DAYS)
+        if (isPro && userProfileData.subscribedAt) {
+          const subDate = userProfileData.subscribedAt.toDate ? userProfileData.subscribedAt.toDate() : new Date(userProfileData.subscribedAt);
+          const diffDays = (now - subDate) / (1000 * 60 * 60 * 24);
+          
+          if (diffDays >= cycleDays) {
+            // Subscription expired: Revert to starter tier in database
+            isPro = false;
+            rawPlan = 'starter';
+            await updateDoc(doc(db, "users", user.uid), {
+              plan: 'starter',
+              quotaStartDate: new Date() // Reset 30-day window upon falling back
+            });
+          } else {
+            // Daily Reminders 2-3 days before expiry
+            const daysRemaining = Math.ceil(cycleDays - diffDays);
+            if (daysRemaining <= 3 && daysRemaining >= 0) {
+              const reminderBanner = document.getElementById('expiryReminderBanner');
+              const daysElem = document.getElementById('daysRemaining');
+              if (daysElem) daysElem.textContent = daysRemaining;
+              reminderBanner.classList.remove('hidden');
+            }
+          }
+        }
+
+        // 2. ROLLING 30-DAY FREE QUOTA WINDOW & RESET LOGIC
+        let quotaStartDate = userProfileData.quotaStartDate ? (userProfileData.quotaStartDate.toDate ? userProfileData.quotaStartDate.toDate() : new Date(userProfileData.quotaStartDate)) : new Date();
+        const quotaAgeDays = (now - quotaStartDate) / (1000 * 60 * 60 * 24);
+
+        if (quotaAgeDays >= cycleDays) {
+          // Reset 30-day cycle start
+          quotaStartDate = new Date();
+          await updateDoc(doc(db, "users", user.uid), {
+            quotaStartDate: quotaStartDate
+          });
+        }
+
+        currentPlanState = { isPro, isAdmin, quotaStartDate };
 
         updatePlanUI(isPro, isAdmin);
         fetchDashboardData(user.uid, isPro, isAdmin);
@@ -315,16 +377,18 @@
     function calculateAndRenderData(isPro, isAdmin) {
       const filter = document.getElementById('timeFilter').value;
       const now = new Date();
+      const quotaStartDate = currentPlanState.quotaStartDate || new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-      const monthRecords = allRecords.filter(r => {
+      // Filter usage by active 30-day window
+      const currentCycleRecords = allRecords.filter(r => {
         const dateStr = r.uploadedDate || r.uploaded_date || r.createdAt || r.timestamp;
         if (!dateStr) return false;
         const d = new Date(dateStr);
-        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        return d >= quotaStartDate;
       });
 
-      const monthUploads = monthRecords.length;
-      const monthLines = monthRecords.reduce((acc, r) => acc + Number(r.linesProcessed || r.lines_processed || 0), 0);
+      const monthUploads = currentCycleRecords.length;
+      const monthLines = currentCycleRecords.reduce((acc, r) => acc + Number(r.linesProcessed || r.lines_processed || 0), 0);
 
       const isUnlimited = isPro || isAdmin;
       document.getElementById('meterUploads').textContent = isUnlimited ? 'Unlimited' : `${monthUploads} / 4`;
@@ -362,7 +426,7 @@
           return dateStr && new Date(dateStr) >= oneWeekAgo;
         });
       } else if (filter === 'month') {
-        filtered = monthRecords;
+        filtered = currentCycleRecords;
       }
 
       document.getElementById('metricReports').textContent = filtered.length;
@@ -421,7 +485,6 @@
         }
       });
       
-      // Rounded integers without decimal places
       document.getElementById('metricOverallLeakage').textContent = `$${Math.round(overallAccountLeakage).toLocaleString('en-US')}`;
       document.getElementById('metricTotalLines').textContent = Math.round(totalLinesAnalyzed).toLocaleString('en-US');
       document.getElementById('metricGrn').textContent = `$${Math.round(totalGrn).toLocaleString('en-US')}`;
