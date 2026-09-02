@@ -150,8 +150,52 @@
       "publisher": {
         "@type": "Organization",
         "name": "PreventLoss.org",
-        "url": "https://preventloss.org"
+        "url": "https://preventloss.org",
+        "logo": "https://opsreveal.preventloss.org/favicon.png"
       }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "OpsReveal",
+      "url": "https://opsreveal.preventloss.org",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://opsreveal.preventloss.org/#faq?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "OpsReveal Retail Loss Prevention Audit Modules",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Vendor Fraud & GRN Receiving Audit"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Sales Margin Erosion Audit"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Inventory Write-Off & Shrink Audit"
+        },
+        {
+          "@type": "ListItem",
+          "position": 4,
+          "name": "Inventory Ageing Audit"
+        },
+        {
+          "@type": "ListItem",
+          "position": 5,
+          "name": "GRN vs. Write-Off Cross Audit"
+        }
+      ]
     },
     {
       "@context": "https://schema.org",
@@ -212,6 +256,7 @@
       <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-300">
         <a href="#platform" class="hover:text-cyan-400 transition">How It Works</a>
         <a href="#modules" class="hover:text-cyan-400 transition">Audit Modules</a>
+        <a href="#calculator" class="hover:text-cyan-400 transition">ROI Calculator</a>
         <a href="#security" class="hover:text-cyan-400 transition">Privacy & File Security</a>
         <a href="#pricing" class="hover:text-cyan-400 transition">Pricing</a>
         <a href="#faq" class="hover:text-cyan-400 transition">FAQ</a>
@@ -625,6 +670,113 @@
       </div>
     </section>
 
+    <!-- NEW SECTION: Interactive Retail Loss Prevention Calculator (Increases Dwell Time & Long-tail SEO) -->
+    <section id="calculator" class="py-20 bg-slate-950 border-t border-slate-800/80">
+      <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-12">
+          <div class="inline-flex items-center space-x-2 rounded-full bg-cyan-950/80 border border-cyan-500/30 px-3.5 py-1 text-xs font-bold text-cyan-400 font-mono mb-3">
+            <span>INTERACTIVE FINANCIAL LEAKAGE ESTIMATOR</span>
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white font-heading tracking-tight">
+            Estimate Your Store's Recoverable Revenue
+          </h2>
+          <p class="mt-3 text-slate-400 text-sm sm:text-base">
+            Calculate estimated losses caused by vendor overcharges, inventory ageing, and sales margin erosion based on industry benchmarks.
+          </p>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 sm:p-10 border border-slate-800 shadow-2xl">
+          <div class="grid md:grid-cols-2 gap-8 items-center">
+            
+            <div class="space-y-6">
+              <div>
+                <label for="annual-revenue" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 font-mono">
+                  Annual Store Sales Revenue ($ USD)
+                </label>
+                <input 
+                  type="number" 
+                  id="annual-revenue" 
+                  value="2500000" 
+                  step="50000" 
+                  class="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white font-mono text-lg focus:border-cyan-400 focus:outline-none transition" 
+                  oninput="calculateLosses()"
+                />
+              </div>
+
+              <div>
+                <label for="store-locations" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2 font-mono">
+                  Number of Retail Outlets
+                </label>
+                <input 
+                  type="number" 
+                  id="store-locations" 
+                  value="3" 
+                  min="1" 
+                  max="100" 
+                  class="w-full rounded-xl bg-slate-900 border border-slate-700 px-4 py-3 text-white font-mono text-lg focus:border-cyan-400 focus:outline-none transition" 
+                  oninput="calculateLosses()"
+                />
+              </div>
+
+              <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400 space-y-1">
+                <p>• Estimated Vendor Overcharge Rate: <strong class="text-cyan-400">1.4%</strong></p>
+                <p>• Ageing & Dead Stock Capital Lockup: <strong class="text-purple-400">2.1%</strong></p>
+                <p>• Sales Margin Erosion & Negative Pricing: <strong class="text-blue-400">0.8%</strong></p>
+              </div>
+            </div>
+
+            <!-- Output Side -->
+            <div class="p-6 rounded-xl bg-slate-900 border border-cyan-500/30 flex flex-col justify-between text-center md:text-left space-y-6">
+              <div>
+                <span class="text-xs font-mono font-bold text-slate-400 uppercase">Estimated Annual Recoverable Loss</span>
+                <div id="total-loss-output" class="text-4xl sm:text-5xl font-black font-mono text-cyan-400 mt-2">$107,500</div>
+                <p class="text-slate-400 text-xs mt-2">Potential unrecovered financial leakage hiding across your inventory receiving and point-of-sale systems.</p>
+              </div>
+
+              <div class="space-y-2 pt-4 border-t border-slate-800 text-xs font-mono">
+                <div class="flex justify-between text-slate-300">
+                  <span>Vendor Fraud & Overcharges:</span>
+                  <span id="vendor-loss-output" class="text-cyan-400 font-bold">$35,000</span>
+                </div>
+                <div class="flex justify-between text-slate-300">
+                  <span>Dead Stock Lockup:</span>
+                  <span id="ageing-loss-output" class="text-purple-400 font-bold">$52,500</span>
+                </div>
+                <div class="flex justify-between text-slate-300">
+                  <span>Negative Margin Erosion:</span>
+                  <span id="margin-loss-output" class="text-blue-400 font-bold">$20,000</span>
+                </div>
+              </div>
+
+              <a href="https://opsreveal.preventloss.org/signup.html" class="w-full inline-flex items-center justify-center rounded-xl bg-cyan-400 py-3 text-xs font-bold text-slate-950 hover:bg-cyan-300 transition font-heading">
+                Audit Store Leakage Now &rarr;
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- NEW SECTION: ERP Compatibility & Formats Section (Improves Technical Keywords) -->
+    <section id="compatibility" class="py-16 bg-slate-900/50 border-t border-slate-800/80">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-3xl mx-auto mb-10">
+          <h2 class="text-xs font-bold uppercase tracking-widest text-cyan-400 font-heading">Universal POS & ERP Compatibility</h2>
+          <p class="mt-2 text-2xl sm:text-3xl font-extrabold text-white font-heading">Works with Any Standard CSV or XLSX Export</p>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 text-center">
+          <div class="p-4 rounded-xl glass-card border border-slate-800 text-xs font-semibold text-slate-300">SAP Retail CSV</div>
+          <div class="p-4 rounded-xl glass-card border border-slate-800 text-xs font-semibold text-slate-300">Oracle NetSuite</div>
+          <div class="p-4 rounded-xl glass-card border border-slate-800 text-xs font-semibold text-slate-300">Microsoft Dynamics 365</div>
+          <div class="p-4 rounded-xl glass-card border border-slate-800 text-xs font-semibold text-slate-300">Shopify POS Exports</div>
+          <div class="p-4 rounded-xl glass-card border border-slate-800 text-xs font-semibold text-slate-300">Lightspeed & Square</div>
+          <div class="p-4 rounded-xl glass-card border border-slate-800 text-xs font-semibold text-slate-300">Custom Excel Sheets</div>
+        </div>
+      </div>
+    </section>
+
     <!-- Section 5: Data Privacy & File Security Architecture -->
     <section id="security" class="py-20 sm:py-28 relative overflow-hidden">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -825,6 +977,24 @@
         </div>
       </div>
     </section>
+
+    <!-- NEW SECTION: SEO Keyword Cloud / Topic Glossary (Drives Long-Tail Indexing) -->
+    <section aria-label="Retail Loss Topics" class="py-12 bg-slate-950 border-t border-slate-800/80">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h4 class="text-xs font-mono font-bold uppercase tracking-widest text-slate-500 mb-4 text-center">Retail Loss Prevention Key Topics</h4>
+        <div class="flex flex-wrap justify-center gap-2 text-[11px] text-slate-400 font-mono">
+          <span class="px-3 py-1 rounded-md bg-slate-900 border border-slate-800">Retail Loss Prevention Software</span>
+          <span class="px-3 py-1 rounded-md bg-slate-900 border border-slate-800">Vendor Overcharge Detection</span>
+          <span class="px-3 py-1 rounded-md bg-slate-900 border border-slate-800">Inventory Ageing Audit</span>
+          <span class="px-3 py-1 rounded-md bg-slate-900 border border-slate-800">GRN Receiving Log Analysis</span>
+          <span class="px-3 py-1 rounded-md bg-slate-900 border border-slate-800">Negative Margin Detection</span>
+          <span class="px-3 py-1 rounded-md bg-slate-900 border border-slate-800">Client-Side Data Audit</span>
+          <span class="px-3 py-1 rounded-md bg-slate-900 border border-slate-800">Retail Inventory Management</span>
+          <span class="px-3 py-1 rounded-md bg-slate-900 border border-slate-800">Zero-Trust Loss Tool</span>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <!-- Footer -->
@@ -850,6 +1020,7 @@
             <li><a href="https://opsreveal.preventloss.org/signup.html" class="hover:text-cyan-400 transition">Create Free Account</a></li>
             <li><a href="#platform" class="hover:text-cyan-400 transition">How Template Reuse Works</a></li>
             <li><a href="#modules" class="hover:text-cyan-400 transition">Retail Audit Modules</a></li>
+            <li><a href="#calculator" class="hover:text-cyan-400 transition">ROI Calculator</a></li>
             <li><a href="#security" class="hover:text-cyan-400 transition">Privacy Architecture</a></li>
             <li><a href="#guarantee" class="hover:text-cyan-400 transition">115% Guarantee Terms</a></li>
             <li><a href="#faq" class="hover:text-cyan-400 transition">FAQ</a></li>
@@ -895,8 +1066,27 @@
     </div>
   </footer>
 
-  <!-- Telemetry & Dynamic Logic -->
+  <!-- Telemetry, Calculator & Dynamic Logic -->
   <script>
+    function calculateLosses() {
+      const revenue = parseFloat(document.getElementById('annual-revenue').value) || 0;
+      const stores = parseInt(document.getElementById('store-locations').value) || 1;
+      
+      const totalRev = revenue * stores;
+      
+      const vendorLoss = totalRev * 0.014;
+      const ageingLoss = totalRev * 0.021;
+      const marginLoss = totalRev * 0.008;
+      const totalLoss = vendorLoss + ageingLoss + marginLoss;
+
+      const fmt = (num) => '$' + Math.round(num).toLocaleString();
+
+      document.getElementById('total-loss-output').innerText = fmt(totalLoss);
+      document.getElementById('vendor-loss-output').innerText = fmt(vendorLoss);
+      document.getElementById('ageing-loss-output').innerText = fmt(ageingLoss);
+      document.getElementById('margin-loss-output').innerText = fmt(marginLoss);
+    }
+
     document.addEventListener("DOMContentLoaded", () => {
       
       const platformBadges = [
@@ -919,6 +1109,7 @@
       }
 
       renderMarqueeBadges();
+      calculateLosses();
     });
   </script>
 </body>
