@@ -86,7 +86,7 @@
         </div>
       </div>
 
-      <button onclick="logoutUser()" class="w-full bg-slate-950 hover:bg-slate-800 text-xs text-slate-400 py-2 rounded-xl border border-slate-800 font-semibold transition">
+      <button id="logoutBtn" class="w-full bg-slate-950 hover:bg-slate-800 text-xs text-slate-400 py-2 rounded-xl border border-slate-800 font-semibold transition">
         Sign Out
       </button>
     </div>
@@ -94,28 +94,96 @@
 
   <!-- MAIN CONTENT AREA -->
   <main class="flex-1 min-w-0 overflow-y-auto px-8 py-8">
-    <div class="max-w-7xl mx-auto space-y-8">
+    <div class="max-w-7xl mx-auto space-y-6">
       
       <!-- HEADER -->
-      <div class="flex items-center justify-between">
+      <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 class="text-3xl font-extrabold text-white font-heading tracking-tight">Audit Exception Cards</h1>
           <p class="text-xs text-slate-400 mt-1">Granular breakdown of operational leakages, Root Cause Analysis (RCA), and remediation procedures.</p>
         </div>
         
         <div class="flex items-center gap-3">
-          <select id="reportTypeFilter" class="bg-slate-900 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500 font-medium">
-            <option value="all">All Report Types</option>
+          <button id="batchDownloadBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-sm">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            <span>Export All Cards</span>
+          </button>
+          <a href="/app/uploads/" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-md shadow-cyan-500/10">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>New Audit</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- ANALYTICS SUMMARY OVERVIEW BAR -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Filtered Leakage</span>
+            <span id="totalLeakageSum" class="text-xl font-extrabold font-mono text-rose-400 mt-0.5 block">$0</span>
+          </div>
+          <div class="p-2.5 bg-rose-500/10 text-rose-400 rounded-xl border border-rose-500/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Total Exceptions</span>
+            <span id="totalExceptionsSum" class="text-xl font-extrabold font-mono text-amber-400 mt-0.5 block">0</span>
+          </div>
+          <div class="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl border border-amber-500/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Avg Leakage Ratio</span>
+            <span id="avgLeakageRatio" class="text-xl font-extrabold font-mono text-cyan-400 mt-0.5 block">0.00%</span>
+          </div>
+          <div class="p-2.5 bg-cyan-500/10 text-cyan-400 rounded-xl border border-cyan-500/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider block">Active Records</span>
+            <span id="visibleRecordsCount" class="text-xl font-extrabold font-mono text-emerald-400 mt-0.5 block">0</span>
+          </div>
+          <div class="p-2.5 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- FILTER & SEARCH CONTROL BAR -->
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex-1 min-w-[240px]">
+          <div class="relative">
+            <input type="text" id="searchInput" placeholder="Search report name, ID, or audit type..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition font-medium">
+            <svg class="w-4 h-4 text-slate-500 absolute left-3.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <select id="reportTypeFilter" class="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500 font-medium">
+            <option value="all">All Audit Types</option>
             <option value="GRN">GRN Audit</option>
             <option value="Sales">Sales Margin Audit</option>
             <option value="WriteOff">Write-Off Loss Audit</option>
             <option value="Ageing">Ageing Inventory Audit</option>
             <option value="Consolidated">Consolidated GRN vs WO</option>
           </select>
-          <a href="/app/uploads/" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center space-x-1.5 shadow-md shadow-cyan-500/10">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            <span>New Audit</span>
-          </a>
+
+          <select id="sortControl" class="bg-slate-950 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500 font-medium">
+            <option value="date-desc">Newest First</option>
+            <option value="date-asc">Oldest First</option>
+            <option value="leakage-desc">Highest Leakage</option>
+            <option value="leakage-asc">Lowest Leakage</option>
+            <option value="exceptions-desc">Most Exceptions</option>
+          </select>
         </div>
       </div>
 
@@ -152,7 +220,7 @@
       </div>
 
       <div class="flex items-center justify-end space-x-3 pt-2">
-        <button onclick="closePrivacyModal()" class="px-4 py-2 rounded-xl border border-slate-800 text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
+        <button id="cancelPrivacyBtn" class="px-4 py-2 rounded-xl border border-slate-800 text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition">
           Cancel
         </button>
         <button id="confirmPrivacyBtn" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold transition shadow-lg shadow-cyan-500/10">
@@ -171,6 +239,7 @@
     
     let currentUser = null;
     let allRecords = [];
+    let currentFilteredRecords = [];
     let currentPlanState = { isPro: false, isAdmin: false };
     let selectedRecordIndex = null;
 
@@ -197,9 +266,9 @@
       });
     });
 
-    window.logoutUser = () => {
+    document.getElementById('logoutBtn').addEventListener('click', () => {
       signOut(auth).then(() => window.location.replace('/login.html'));
-    };
+    });
 
     function updatePlanUI(isPro, isAdmin, usage = { uploadsCount: 0, linesCount: 0 }) {
       const planLabel = document.getElementById('planLabel');
@@ -240,7 +309,7 @@
         const linesCount = allRecords.reduce((sum, r) => sum + Number(r.linesProcessed || 0), 0);
 
         updatePlanUI(currentPlanState.isPro, currentPlanState.isAdmin, { uploadsCount, linesCount });
-        renderExceptionCards();
+        applyFiltersAndRender();
       } catch (err) {
         console.error("Error fetching exception logs:", err);
         document.getElementById('cardsContainer').innerHTML = `
@@ -251,11 +320,14 @@
       }
     }
 
-    function renderExceptionCards() {
-      const container = document.getElementById('cardsContainer');
+    function applyFiltersAndRender() {
       const filter = document.getElementById('reportTypeFilter').value;
+      const search = document.getElementById('searchInput').value.toLowerCase().trim();
+      const sortBy = document.getElementById('sortControl').value;
 
       let filtered = [...allRecords];
+
+      // 1. Report Type Filtering
       if (filter !== 'all') {
         filtered = filtered.filter(r => {
           const type = (r.reportType || '').toUpperCase();
@@ -265,16 +337,70 @@
         });
       }
 
-      if (filtered.length === 0) {
+      // 2. Search Text Filtering
+      if (search) {
+        filtered = filtered.filter(r => {
+          const fname = String(r.fileName || r.filename || '').toLowerCase();
+          const rType = String(r.reportType || '').toLowerCase();
+          const recId = String(r.id || '').toLowerCase();
+          return fname.includes(search) || rType.includes(search) || recId.includes(search);
+        });
+      }
+
+      // 3. Sorting Logic
+      filtered.sort((a, b) => {
+        const dateA = new Date(a.uploadedDate || a.uploaded_date || a.timestamp || 0);
+        const dateB = new Date(b.uploadedDate || b.uploaded_date || b.timestamp || 0);
+        const leakageA = Number(a.totalLeakages || a.totalLeakage || a.financial_leakage || 0);
+        const leakageB = Number(b.totalLeakages || b.totalLeakage || b.financial_leakage || 0);
+        const excA = Number(a.flaggedExceptionsCount || a.exceptionsCount || a.flagged_exceptions || 0);
+        const excB = Number(b.flaggedExceptionsCount || b.exceptionsCount || b.flagged_exceptions || 0);
+
+        if (sortBy === 'date-desc') return dateB - dateA;
+        if (sortBy === 'date-asc') return dateA - dateB;
+        if (sortBy === 'leakage-desc') return leakageB - leakageA;
+        if (sortBy === 'leakage-asc') return leakageA - leakageB;
+        if (sortBy === 'exceptions-desc') return excB - excA;
+        return 0;
+      });
+
+      currentFilteredRecords = filtered;
+      updateSummaryMetrics(filtered);
+      renderExceptionCards(filtered);
+    }
+
+    function updateSummaryMetrics(records) {
+      let totalLeakage = 0;
+      let totalExceptions = 0;
+      let totalBaseValue = 0;
+
+      records.forEach(r => {
+        totalLeakage += Number(r.totalLeakages || r.totalLeakage || r.financial_leakage || 0);
+        totalExceptions += Number(r.flaggedExceptionsCount || r.exceptionsCount || r.flagged_exceptions || 0);
+        totalBaseValue += Number(r.totalGRNValue || r.total_value || r.baseValue || r.totalValuation || 0);
+      });
+
+      const avgRatio = totalBaseValue > 0 ? ((totalLeakage / totalBaseValue) * 100).toFixed(2) : '0.00';
+
+      document.getElementById('totalLeakageSum').textContent = `$${Math.round(totalLeakage).toLocaleString('en-US')}`;
+      document.getElementById('totalExceptionsSum').textContent = Math.round(totalExceptions).toLocaleString();
+      document.getElementById('avgLeakageRatio').textContent = `${avgRatio}%`;
+      document.getElementById('visibleRecordsCount').textContent = records.length;
+    }
+
+    function renderExceptionCards(records) {
+      const container = document.getElementById('cardsContainer');
+
+      if (records.length === 0) {
         container.innerHTML = `
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center text-slate-500">
-            <p class="text-sm">No exception records found for this category.</p>
+            <p class="text-sm">No exception records found matching your filters.</p>
           </div>
         `;
         return;
       }
 
-      container.innerHTML = filtered.map((r, index) => {
+      container.innerHTML = records.map((r, index) => {
         const dateStr = r.uploadedDate || r.uploaded_date || r.timestamp || new Date().toISOString();
         const formattedDate = new Date(dateStr).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
         const fileName = r.fileName || r.filename || 'Report_Audit.xlsx';
@@ -431,11 +557,11 @@
           takeawaysHTML = `
             <div class="space-y-2.5 text-xs text-slate-300">
               <div class="p-3 bg-slate-950/80 rounded-xl border border-amber-500/20">
-                <span class="text-amber-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Working Capital Exposure</span>
+                <span class="text-amber-400 font-bold mb-1 uppercase text-[10px] tracking-wider block">Working Capital Exposure</span>
                 <p class="leading-relaxed">Capital is trapped in slow-moving/obsolete inventory aged over 90 days, increasing holding cost and liquidation risk.</p>
               </div>
               <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
-                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Remediation Strategy</span>
+                <span class="text-cyan-400 font-bold mb-1 uppercase text-[10px] tracking-wider block">Remediation Strategy</span>
                 <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
                   <li>Trigger automated markdown or promotional liquidation for inventory aged >120 days.</li>
                   <li>Re-evaluate procurement reorder points for slow-moving categories.</li>
@@ -461,11 +587,11 @@
           takeawaysHTML = `
             <div class="space-y-2.5 text-xs text-slate-300">
               <div class="p-3 bg-slate-950/80 rounded-xl border border-amber-500/20">
-                <span class="text-amber-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Margin Erosion Risk</span>
+                <span class="text-amber-400 font-bold mb-1 uppercase text-[10px] tracking-wider block">Margin Erosion Risk</span>
                 <p class="leading-relaxed">Products are being billed below landing cost due to unauthorized discount stacks or outdated cost master files.</p>
               </div>
               <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
-                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Remediation Strategy</span>
+                <span class="text-cyan-400 font-bold mb-1 uppercase text-[10px] tracking-wider block">Remediation Strategy</span>
                 <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
                   <li>Lock POS system minimum price guardrails based on real-time landed cost.</li>
                   <li>Review pricing engine promotional override permissions for store managers.</li>
@@ -518,11 +644,11 @@
           takeawaysHTML = `
             <div class="space-y-2.5 text-xs text-slate-300">
               <div class="p-3 bg-slate-950/80 rounded-xl border border-cyan-500/20">
-                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Receiving Cost Discrepancy</span>
+                <span class="text-cyan-400 font-bold mb-1 uppercase text-[10px] tracking-wider block">Receiving Cost Discrepancy</span>
                 <p class="leading-relaxed">Purchase price variance and agreed vendor cost price mismatches detected during inward receiving.</p>
               </div>
               <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-800">
-                <span class="text-cyan-400 font-bold block mb-1 uppercase text-[10px] tracking-wider">Remediation Strategy</span>
+                <span class="text-cyan-400 font-bold mb-1 uppercase text-[10px] tracking-wider block">Remediation Strategy</span>
                 <ul class="list-disc list-inside space-y-1 text-slate-400 text-[11px]">
                   <li>Automate PO vs GRN cost price matching before inward invoice posting.</li>
                   <li>Debit note auto-generation for supplier cost overcharges.</li>
@@ -555,7 +681,7 @@
                 </div>
 
                 <div class="flex items-center space-x-4">
-                  <button data-html2canvas-ignore="true" onclick="downloadCardImage(${index})" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                  <button data-html2canvas-ignore="true" data-action="download" data-index="${index}" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center space-x-1.5 shadow-sm">
                     <svg class="w-3.5 h-3.5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                     <span>Download Card Data</span>
                   </button>
@@ -612,7 +738,7 @@
                       <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                       Audit Insights & Remediation Strategy
                     </h4>
-                    <button data-html2canvas-ignore="true" id="btn-rca-${index}" onclick="openPrivacyModal(${index})" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-lg text-[11px] font-semibold transition flex items-center space-x-1">
+                    <button data-html2canvas-ignore="true" data-action="gemini" data-index="${index}" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 px-3 py-1 rounded-lg text-[11px] font-semibold transition flex items-center space-x-1">
                       <span>Export to Gemini</span>
                     </button>
                   </div>
@@ -634,12 +760,22 @@
           </div>
         `;
       }).join('');
+
+      // Delegate Click Events dynamically for render elements
+      container.querySelectorAll('button[data-action]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const action = btn.getAttribute('data-action');
+          const idx = parseInt(btn.getAttribute('data-index'), 10);
+          if (action === 'download') downloadCardImage(idx);
+          if (action === 'gemini') openPrivacyModal(idx);
+        });
+      });
     }
 
     // DOWNLOAD CARD AS PNG IMAGE
-    window.downloadCardImage = async (index) => {
+    async function downloadCardImage(index) {
       const cardElement = document.getElementById(`card-element-${index}`);
-      const record = allRecords[index];
+      const record = currentFilteredRecords[index];
       if (!cardElement || !record) return;
 
       try {
@@ -662,24 +798,43 @@
       } catch (err) {
         console.error("Failed to generate image:", err);
       }
-    };
+    }
+
+    // BATCH EXPORT ALL VISIBLE CARDS
+    async function batchExportAllCards() {
+      if (currentFilteredRecords.length === 0) return;
+      const btn = document.getElementById('batchDownloadBtn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<span>Exporting...</span>`;
+      btn.disabled = true;
+
+      for (let i = 0; i < currentFilteredRecords.length; i++) {
+        await downloadCardImage(i);
+        await new Promise(r => setTimeout(r, 200)); // Stagger downloads slightly
+      }
+
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
 
     // PRIVACY MODAL & GEMINI FLOW
-    window.openPrivacyModal = (index) => {
+    function openPrivacyModal(index) {
       selectedRecordIndex = index;
       document.getElementById('privacyModal').classList.remove('hidden');
-    };
+    }
 
-    window.closePrivacyModal = () => {
+    function closePrivacyModal() {
       selectedRecordIndex = null;
       document.getElementById('privacyModal').classList.add('hidden');
-    };
+    }
+
+    document.getElementById('cancelPrivacyBtn').addEventListener('click', closePrivacyModal);
 
     document.getElementById('confirmPrivacyBtn').addEventListener('click', async () => {
       if (selectedRecordIndex === null) return;
       
       const index = selectedRecordIndex;
-      const record = allRecords[index];
+      const record = currentFilteredRecords[index];
 
       // 1. Download card PNG image
       await downloadCardImage(index);
@@ -700,7 +855,11 @@
       window.open('https://gemini.google.com/app', '_blank');
     });
 
-    document.getElementById('reportTypeFilter').addEventListener('change', renderExceptionCards);
+    // EVENT LISTENERS FOR SEARCH AND FILTERS
+    document.getElementById('reportTypeFilter').addEventListener('change', applyFiltersAndRender);
+    document.getElementById('searchInput').addEventListener('input', applyFiltersAndRender);
+    document.getElementById('sortControl').addEventListener('change', applyFiltersAndRender);
+    document.getElementById('batchDownloadBtn').addEventListener('click', batchExportAllCards);
   </script>
 </body>
 </html>
